@@ -34,4 +34,16 @@ class MethodTest extends TestCase
         $this->assertEquals($request[':result'], 15);
         $this->assertEquals($request->result(), 15);
     }
+
+    public function testOutParameterMethodCall() {
+        $method = MethodRegistry::get('CalcTwice', ['method' => 'CALC.TWICE']);
+        $request = $method->newRequest(['A' => 5, 'B' => null]);
+        $this->assertTrue($request->isNew());
+        $this->assertTrue($method->execute($request));
+        $this->assertFalse($request->isNew());
+
+        $this->assertEquals($request->get('B'), 10);
+        $this->assertEquals($request[':result'], 'OK');
+        $this->assertEquals($request->result(), 'OK');
+    }
 }

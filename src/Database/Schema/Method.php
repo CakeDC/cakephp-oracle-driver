@@ -56,17 +56,30 @@ class Method
     protected $_typeMap = [];
 
     /**
-     * The valid keys that can be used in a column
+     * The valid keys that can be used in a IN column
      * definition.
      *
      * @var array
      */
-    protected static $_columnParameters = [
+    protected static $_columnInParameters = [
         'type' => null,
         'in' => null,
         'out' => null,
     ];
 
+    /**
+     * The valid keys that can be used in a OUT column
+     * definition.
+     *
+     * @var array
+     */
+    protected static $_columnOutParameters = [
+        'type' => null,
+        'in' => null,
+        'out' => null,
+        'length' => null,
+    ];
+    
     /**
      * Additional type specific properties.
      *
@@ -121,7 +134,11 @@ class Method
         if (is_string($attrs)) {
             $attrs = ['type' => $attrs];
         }
-        $valid = static::$_columnParameters;
+        if ($attrs['out']) {
+            $valid = static::$_columnOutParameters;
+        } else {
+            $valid = static::$_columnInParameters;
+        }
         if (isset(static::$_columnExtras[$attrs['type']])) {
             $valid += static::$_columnExtras[$attrs['type']];
         }

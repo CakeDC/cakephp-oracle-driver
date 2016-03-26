@@ -121,11 +121,15 @@ class MethodLoggingStatement extends MethodStatementDecorator
      * @param string|int $column Name or param position to be bound
      * @param mixed $value The value to bind to variable in query
      * @param string|int|null $type PDO type or name of configured Type class
+     * @param int $length [optional]
+     * Length of the data type. To indicate that a parameter is an OUT
+     * parameter from a stored procedure, you must explicitly set the
+     * length.
      * @return void
      */
-    public function bindParam($column, &$value, $type = 'string')
+    public function bindParam($column, &$value, $type = 'string', $length = null)
     {
-        parent::bindParam($column, $value, $type);
+        parent::bindParam($column, $value, $type, $length);
         if ($type === null) {
             $type = 'string';
         }

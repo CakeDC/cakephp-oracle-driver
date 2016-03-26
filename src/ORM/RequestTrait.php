@@ -413,7 +413,7 @@ trait RequestTrait
                     }
                 }
                 if ($parameter['out']) {
-                    $statement->bindParam($paramName, $this->_properties[$name], $type);
+                    $statement->bindParam($paramName, $this->_properties[$name], $type, $parameter['length']);
                 } else {
                     $statement->bindParam($paramName, $this->_castedProperties[$name], $type);
                 }
