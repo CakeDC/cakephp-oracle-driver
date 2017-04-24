@@ -25,7 +25,9 @@ use Cake\Database\SqlDialectTrait;
 trait OracleDialectTrait
 {
 
-    use SqlDialectTrait;
+    use SqlDialectTrait {
+        quoteIdentifier as origQuoteIdentifier;
+    }
 
     /**
      *  String used to start a database identifier quoting to make it safe
@@ -40,6 +42,13 @@ trait OracleDialectTrait
      * @var string
      */
     protected $_endQuote = '"';
+
+    /*
+     * Shortened identifiers to avoid "ORA-00972: identifier is too long"
+     *
+     * @var array
+     */
+    public $autoShortenedIdentifiers = [];
 
     /**
      * The schema dialect class for this driver
@@ -329,4 +338,22 @@ trait OracleDialectTrait
         return $query;
     }
 
+    /**
+     * To avoid "ORA-00972: identifier is too long", auto-short idetifier
+     * to 'XXAUTO_SHORTENED_ID[n]' where [n] is a simple incrementing integer.
+     *
+     * {@inheritDoc}
+     */
+    public function quoteIdentifier($identifier)
+    {
+        if (preg_match('/^[\w-]+$/', $identifier) && strlen($identifier) > 30) {
+            $key = array_search($identifier, $this->autoShortenedIdentifiers);
+            if ($key === false) {
+                $key = 'XXAUTO_SHORTENED_ID' . (count($this->autoShortenedIdentifiers) + 1);
+                $this->autoShortenedIdentifiers[$key] = $identifier;
+            }
+            $identifier = $key;
+        }
+        return $this->origQuoteIdentifier($identifier);
+    }
 }
