@@ -114,7 +114,7 @@ abstract class OracleBase extends Driver
                 $pooled = '(SERVER=POOLED)';
             }
 
-            return '(DESCRIPTION=' . '(ADDRESS=(PROTOCOL=TCP)(HOST=' . $config['host'] . ')(PORT=' . $config['port'] . '))' . '(CONNECT_DATA=(' . $service . ')' . $instance . $pooled . '))';
+            return '(DESCRIPTION=' . '(ADDRESS=(PROTOCOL=TCP)(HOST=' . $config['host'] . ')(PORT=' . $config['port'] . '))' . '(CONNECT_DATA=(' . $service . ')' . $instance . $pooled . '));charset='.$config['encoding'];
 
         }
 
