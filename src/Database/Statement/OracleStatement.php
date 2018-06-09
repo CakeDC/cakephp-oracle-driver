@@ -97,6 +97,23 @@ class OracleStatement extends StatementDecorator
     {
         $result = $this->_statement->fetch($type);
         if (is_array($result)) {
+
+            //Revert shortened identifiers to original name
+            if ($type == 'assoc' && !empty($this->_driver->autoShortenedIdentifiers)) {
+                //Need to preserve order of row results
+                $translatedRow = [];
+
+                foreach ($result as $key => $value) {
+                    if (array_key_exists($key, $this->_driver->autoShortenedIdentifiers)) {
+                        $translatedRow[$this->_driver->autoShortenedIdentifiers[$key]] = $value;
+                    } else {
+                        $translatedRow[$key] = $value;
+                    }
+                }
+
+                $result = $translatedRow;
+            }
+
             foreach ($result as $key => &$value) {
                 if (is_resource($value)) {
                     $value = stream_get_contents($value);
