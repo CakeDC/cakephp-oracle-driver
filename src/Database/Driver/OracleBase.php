@@ -28,7 +28,7 @@ abstract class OracleBase extends Driver
     use OracleDialectTrait;
 
     /**
-     * Base configuration settings for MySQL driver
+     * Base configuration settings for Oracle driver
      *
      * @var array
      */
@@ -139,7 +139,6 @@ abstract class OracleBase extends Driver
         $this->connect();
         $isObject = ($query instanceof \Cake\ORM\Query) || ($query instanceof \Cake\Database\Query);
         $queryStringRaw = $isObject ? $query->sql() : $query;
-        Log::write('debug', $queryStringRaw);
         // debug($queryStringRaw);
         $queryString = $this->_fromDualIfy($queryStringRaw);
         list($queryString, $paramMap) = self::convertPositionalToNamedPlaceholders($queryString);

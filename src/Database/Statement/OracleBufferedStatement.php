@@ -24,23 +24,29 @@ class OracleBufferedStatement extends BufferedStatement
     /**
      * {@inheritDoc}
      */
-    public function fetch($type = 'num')
+    public function fetch($type = self::FETCH_TYPE_NUM)
     {
         if ($this->_allFetched) {
-            $row = ($this->_counter < $this->_count) ? $this->_records[$this->_counter++] : false;
-            $row = ($row && $type === 'num') ? array_values($row) : $row;
+            $row = false;
+            if (isset($this->buffer[$this->index])) {
+                $row = $this->buffer[$this->index];
+            }
+            $this->index += 1;
+
+            if ($row && $type === static::FETCH_TYPE_NUM) {
+                return array_values($row);
+            }
+
             return $row;
         }
 
-        $this->_fetchType = $type;
-        $record = $this->_statement->fetch($type);
-
+        $record = $this->statement->fetch($type);
         if ($record === false) {
             $this->_allFetched = true;
-            $this->_counter = $this->_count + 1;
-            $this->_statement->closeCursor();
+            $this->statement->closeCursor();
             return false;
         }
+
 
         if (is_array($record)) {
             foreach ($record as $key => &$value) {
@@ -49,9 +55,10 @@ class OracleBufferedStatement extends BufferedStatement
                 }
             }
         }
+        $this->buffer[] = $record;
 
-        $this->_count++;
-        return $this->_records[] = $record;
+        return $record;
+
     }
 
 }
