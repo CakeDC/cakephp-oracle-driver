@@ -295,7 +295,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                 return $rs;
 
             case PDO::FETCH_ASSOC:
-                $rs = oci_fetch_assoc($this->_sth);
+                $rs = @oci_fetch_assoc($this->_sth);
                 if ($rs === false) {
                     return false;
                 }

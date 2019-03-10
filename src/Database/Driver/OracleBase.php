@@ -26,7 +26,6 @@ abstract class OracleBase extends Driver
 {
     use ConfigTrait;
     use OracleDialectTrait;
-    use PDODriverTrait;
 
     /**
      * Base configuration settings for MySQL driver
@@ -156,8 +155,8 @@ abstract class OracleBase extends Driver
             $disableBuffer = true;
         }
 
-        if ($isObject && $query->isBufferedResultsEnabled() === false || $disableBuffer) {
-            $statement->enableBufferedResults(false);
+        if ($isObject && ($query->isBufferedResultsEnabled() === false || $disableBuffer)) {
+            $query->enableBufferedResults(false);
         }
         return $statement;
     }
