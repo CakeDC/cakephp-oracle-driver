@@ -14,6 +14,7 @@ namespace CakeDC\OracleDriver\Database\Driver;
 
 use Cake\Database\Driver;
 use Cake\Database\Query;
+use Cake\Database\QueryCompiler;
 use Cake\Database\Statement\PDOStatement;
 use Cake\Database\StatementInterface;
 use Cake\Database\ValueBinder;
@@ -399,5 +400,19 @@ abstract class OracleBase extends Driver
         $result = $statement->fetch(PDO::FETCH_NUM);
 
         return $result[0];
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return \Cake\Database\QueryCompiler
+     */
+    public function newCompiler(): QueryCompiler
+    {
+        if ($this->_serverVersion !== null && $this->_serverVersion >= 12) {
+            return new Oracle12Compiler();
+        } else {
+            return new OracleCompiler();
+        }
     }
 }

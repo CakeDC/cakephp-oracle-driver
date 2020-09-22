@@ -56,6 +56,15 @@ class Oracle12Compiler extends QueryCompiler
     ];
 
     /**
+     * Always quote aliases in SELECT clause.
+     *
+     * Oracle auto converts unquoted identifiers to upper case.
+     *
+     * @var bool
+     */
+    protected $_quotedSelectAliases = true;
+
+    /**
      * Builds the SQL fragment for INSERT INTO.
      *
      * @param array $parts The insert parts.
