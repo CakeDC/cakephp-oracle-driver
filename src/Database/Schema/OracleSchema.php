@@ -509,7 +509,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
 
         $keyName = $this->_transformValueCase($tableIndex['name']);
         $name = $this->_transformValueCase($tableIndex['column_name']);
-        if (strtolower($tableIndex['is_primary']) === 'p') {
+        if ( !empty($tableIndex['is_primary']) && strtolower($tableIndex['is_primary']) === 'p') {
             $keyName = $type = TableSchema::CONSTRAINT_PRIMARY;
         } elseif ($tableIndex['is_unique'] !== []) {
             $type = TableSchema::CONSTRAINT_UNIQUE;
