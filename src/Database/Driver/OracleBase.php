@@ -180,7 +180,6 @@ abstract class OracleBase extends Driver
         $this->connect();
         $isObject = ($query instanceof \Cake\ORM\Query) || ($query instanceof \Cake\Database\Query);
         $queryStringRaw = $isObject ? $query->sql() : $query;
-        Log::write('debug', $queryStringRaw);
         // debug($queryStringRaw);
         $queryString = $this->_fromDualIfy($queryStringRaw);
         [$queryString, $paramMap] = self::convertPositionalToNamedPlaceholders($queryString);
