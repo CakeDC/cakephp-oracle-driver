@@ -80,18 +80,19 @@ return [
             'encoding' => '',               // Database charset (default same as database charset)
             'init' => [],                   // Array of queries executed at connection
             'cacheMetadata' => true,        // Enable cakephp schema caching
-            'server_version' => 12,        // Oracle server numeric version ex.: 11,12,19
+            'server_version' => 12,         // Int for Oracle server numeric version ex.: 11,12,12.1,12.2,19
             'autoincrement' => true,        // Enable autoincrement insteadof custom triggers in case of oracle 12+
         ]
     ]
 ];
 ```
 
-For oracle 12g should be used config settings server_version with value 12.
+For Oracle 12g should be used config settings server_version with value 12.
 If version is greater or equals to 12 the plugin uses new oracle pagination features.
 
 Additional if autoincrement is set to true, then for primary keys in fixtures used
 new orale autoincreament feature.
+If Oracle 12g with server_version >= 12.2 the select aliases max length is set to 128 Chars. (30 Chars otherwise)
 
 As you can see, the `className` and `driver` need switched to Oracle-specific
 classes. The driver will depend on whether you want to use `PDO` or not. The

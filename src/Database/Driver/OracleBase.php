@@ -32,6 +32,18 @@ abstract class OracleBase extends Driver
     use OracleDialectTrait;
 
     /**
+     * @var int Maximum alias length for Oracle version < 12.2
+     */
+
+    protected const MAX_ALIAS_LENGTH = 30;
+
+    /**
+     * @var int Maximum alias length for Oracle version >= 12.2
+     */
+    protected const MAX_ALIAS_LENGTH12 = 128;
+
+
+    /**
      * @var bool|mixed
      */
     public $connected;
@@ -399,5 +411,17 @@ abstract class OracleBase extends Driver
         $result = $statement->fetch(PDO::FETCH_NUM);
 
         return $result[0];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getMaxAliasLength(): ?int
+    {
+        if ($this->_serverVersion !== null && $this->_serverVersion >= 12.2) {
+            return static::MAX_ALIAS_LENGTH12;
+        } else {
+            return static::MAX_ALIAS_LENGTH;
+        }
     }
 }
