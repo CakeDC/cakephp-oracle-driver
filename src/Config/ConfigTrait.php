@@ -16,7 +16,7 @@ use Cake\Utility\Hash;
 /**
  * A trait for reading and writing instance config
  *
- * Implementing objects are expected to declare a `$_defaultConfig` property.
+ * Implementing objects are expected to declare a `$_baseConfig` property.
  */
 trait ConfigTrait
 {
@@ -75,7 +75,7 @@ trait ConfigTrait
     public function config($key = null, $value = null, $merge = true)
     {
         if (!$this->_configInitialized) {
-            $this->_config = $this->_defaultConfig;
+            $this->_config += $this->_baseConfig;
             $this->_configInitialized = true;
         }
 
@@ -245,7 +245,7 @@ trait ConfigTrait
     public function configShallow($key, $value = null)
     {
         if (!$this->_configInitialized) {
-            $this->_config = $this->_defaultConfig;
+            $this->_config += $this->_baseConfig;
             $this->_configInitialized = true;
         }
 

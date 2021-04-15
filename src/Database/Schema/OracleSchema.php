@@ -611,17 +611,22 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     public function convertForeignKeyDescription(TableSchema $schema, array $row): void
     {
         $row = array_change_key_case($row);
+        // Fix: fk data case must be transformed
+        $column_name = $this->_transformValueCase($row['column_name']);
+        $constraint_name = $this->_transformValueCase($row['constraint_name']);
+        $referenced_table_name = $this->_transformValueCase($row['referenced_table_name']);
+        $referenced_column_name = $this->_transformValueCase($row['referenced_column_name']);
         $data = [
             'type' => TableSchema::CONSTRAINT_FOREIGN,
-            'columns' => strtoupper($row['column_name']),
+            'columns' => $column_name,
             'references' => [
-                $row['referenced_owner'] . '.' . $row['referenced_table_name'],
-                strtoupper($row['referenced_column_name']),
+                $row['referenced_owner'] . '.' . $referenced_table_name,
+                $referenced_column_name,
             ],
             'update' => TableSchema::ACTION_SET_NULL,
             'delete' => $this->_convertOnClause($row['delete_rule']),
         ];
-        $schema->addConstraint($row['constraint_name'], $data);
+        $schema->addConstraint($constraint_name, $data);
     }
 
     /**

@@ -57,8 +57,6 @@ abstract class OracleBase extends Driver
         'autoincrement' => false,
     ];
 
-    protected $_defaultConfig = [];
-
     protected $_serverVersion = null;
 
     /**
