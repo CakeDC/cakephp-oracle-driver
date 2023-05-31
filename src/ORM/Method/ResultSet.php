@@ -361,7 +361,7 @@ class ResultSet implements ResultSetInterface
     {
         $types = [];
         $schema = $this->_schema;
-        $map = array_keys(\Cake\Database\TypeFactory::map() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
+        $map = array_keys(\Cake\Database\TypeFactory::getMap() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
         $typeMap = array_combine(
             $map,
             array_map(['Cake\Database\Type', 'build'], $map)
