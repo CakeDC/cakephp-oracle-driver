@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 use Cake\Database\Connection;
 use Cake\Database\StatementInterface;
 use CakeDC\OracleDriver\Database\Log\MethodLogger;
@@ -91,7 +91,7 @@ class OracleConnection extends Connection
     public function prepareMethod($sql, $options = [])
     {
         if (!method_exists($this->_driver, 'isOci') || !$this->_driver->isOci()) {
-            throw new Exception('Method calls using PDO layer not supported');
+            throw new CakeException('Method calls using PDO layer not supported');
         }
         $options += ['bufferResult' => false];
         $statement = $this->_driver->prepareMethod($sql, $options);

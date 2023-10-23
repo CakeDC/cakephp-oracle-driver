@@ -12,9 +12,9 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Exception;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
-class UnallowedDataTypeException extends Exception
+class UnallowedDataTypeException extends CakeException
 {
     /**
      * {@inheritDoc}

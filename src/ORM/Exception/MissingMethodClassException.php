@@ -12,13 +12,13 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\ORM\Exception;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
 /**
  * Exception raised when a Table could not be found.
  *
  */
-class MissingMethodClassException extends Exception
+class MissingMethodClassException extends CakeException
 {
     protected $_messageTemplate = 'Method class %s could not be found.';
 }

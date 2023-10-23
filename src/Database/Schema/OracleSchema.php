@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Schema;
 
-use Cake\Database\Schema\BaseSchema;
+use Cake\Database\Schema\SchemaDialect;
 use Cake\Database\Schema\TableSchema;
 use Cake\Utility\Hash;
 use CakeDC\OracleDriver\Database\Exception\UnallowedDataTypeException;
@@ -20,7 +20,7 @@ use CakeDC\OracleDriver\Database\Exception\UnallowedDataTypeException;
 /**
  * Schema management/reflection features for Oracle.
  */
-class OracleSchema extends BaseSchema
+class OracleSchema extends SchemaDialect
 {
     protected $_constraints = [];
 
@@ -233,6 +233,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 break;
             case 'NCLOB':
             case 'CLOB':
+            case 'XMLTYPE':
                 $field = [
                     'type' => TableSchema::TYPE_TEXT,
                     'length' => $row['char_length'],
@@ -481,6 +482,10 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         $tableIndex = array_change_key_case($row);
         $type = null;
         $columns = $length = [];
+
+        if (preg_match('~FUNCTION-BASED~i', ($tableIndex['type'] ?? ''))) {
+            return;
+        }
 
         $keyName = $this->_transformValueCase($tableIndex['name']);
         $name = $this->_transformValueCase($tableIndex['column_name']);
