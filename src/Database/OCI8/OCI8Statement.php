@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\OCI8;
 
+use Iterator;
 use PDO;
 
 /**
@@ -149,7 +150,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function bindValue($param, $value, $type = null)
+    public function bindValue($param, $value, $type = null): bool
     {
         $this->_values[$param] = $value;
 
@@ -159,7 +160,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function bindParam($column, &$variable, $type = null, $length = null, $driverData = null)
+    public function bindParam($column, &$variable, $type = null, $length = null, $driverData = null): bool
     {
         $column = $this->_paramMap[$column] ?? $column;
 
@@ -186,7 +187,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function closeCursor()
+    public function closeCursor(): bool
     {
         return true;
     }
@@ -204,7 +205,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function columnCount()
+    public function columnCount(): int
     {
         return oci_num_fields($this->_sth);
     }
@@ -212,7 +213,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function errorCode()
+    public function errorCode(): ?string
     {
         $error = oci_error($this->_sth);
         if ($error !== false) {
@@ -227,7 +228,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function errorInfo()
+    public function errorInfo(): array
     {
         return oci_error($this->_sth);
     }
@@ -235,7 +236,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function execute($params = null)
+    public function execute($params = null): bool
     {
         if ($params) {
             $hasZeroIndex = array_key_exists(0, $params);
@@ -259,7 +260,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function getIterator()
+    public function getIterator(): Iterator
     {
         $data = $this->fetchAll();
 
@@ -269,7 +270,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function fetch($fetchMode = null, $orientation = null, $offset = null)
+    public function fetch($fetchMode = null, $orientation = null, $offset = null): mixed
     {
         $toLowercase = ($this->getAttribute(PDO::ATTR_CASE) == PDO::CASE_LOWER);
         $nullToString = ($this->getAttribute(PDO::ATTR_ORACLE_NULLS) == PDO::NULL_TO_STRING);
@@ -400,17 +401,18 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function fetchAll($fetchMode = null, $className = null, $arguments = null)
+    //public function fetchAll(int $fetchMode = PDO::FETCH_DEFAULT, $className = null, $arguments = null): array
+    #[\ReturnTypeWillChange]
+    public function fetchAll(int $fetchMode = PDO::FETCH_DEFAULT, mixed ...$arguments): array
     {
-        $fetchArgument = $className;
-        $this->setFetchMode($fetchMode, $fetchArgument, $arguments);
+        $this->setFetchMode($fetchMode, ...$arguments);
 
         $this->_results = [];
         while ($row = $this->fetch()) {
             if (is_resource(reset($row))) {
                 $stmt = new OCI8Statement($this->_dbh, reset($row), $this->_conn);
                 $stmt->execute();
-                $stmt->setFetchMode($fetchMode, $fetchArgument, $arguments);
+                $stmt->setFetchMode($fetchMode, ...$arguments);
                 while ($rs = $stmt->fetch()) {
                     $this->_results[] = $rs;
                 }
@@ -425,7 +427,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function fetchColumn($columnIndex = 0)
+    public function fetchColumn($columnIndex = 0): mixed
     {
         $row = oci_fetch_array($this->_sth, OCI_NUM | OCI_RETURN_NULLS | OCI_RETURN_LOBS);
 
@@ -439,7 +441,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     /**
      * {@inheritdoc}
      */
-    public function rowCount()
+    public function rowCount(): int
     {
         if (is_resource($this->_sth)) {
             return oci_num_rows($this->_sth);
@@ -454,7 +456,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      * @param string $attribute Attribute id.
      * @return mixed The attribute value.
      */
-    public function getAttribute($attribute)
+    public function getAttribute($attribute): mixed
     {
         return $this->_conn->getConfig((string)$attribute);
     }
@@ -468,9 +470,12 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      * @throws \CakeDC\OracleDriver\Database\OCI8\Oci8Exception
      * @return bool TRUE on success or FALSE on failure.
      */
-    public function setFetchMode($fetchMode, $param = null, $arguments = [])
+    //public function setFetchMode($fetchMode, $param = null, $arguments = [])
+    //#[\ReturnTypeWillChange]
+    public function setFetchMode(int $fetchMode, mixed ...$arguments)
     {
         $this->_defaultFetchMode = $fetchMode;
+        $param = array_shift($arguments);
 
         switch ($fetchMode) {
             case PDO::FETCH_ASSOC:

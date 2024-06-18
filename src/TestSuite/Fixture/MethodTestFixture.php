@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\TestSuite\Fixture;
 
-use Cake\Core\Exception\Exception as CakeException;
+use Cake\Core\Exception\CakeException;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Log\Log;
 use Cake\Utility\Inflector;

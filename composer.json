@@ -29,14 +29,14 @@
         "preferred-install": "src"
     },
     "require": {
-        "php": ">=7.3",
+        "php": ">=8.0",
         "cakephp/chronos": "*",
         "ext-pdo": "*"
     },
     "require-dev": {
         "cakephp/cakephp-codesniffer": "^4.0",
         "phpunit/phpunit": "^8.5",
-        "cakephp/cakephp": "4.2.*"
+        "cakephp/cakephp": "4.5.*"
     },
     "repositories": [],
     "autoload": {

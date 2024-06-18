@@ -12,13 +12,13 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\ORM\Exception;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
 /**
  * Exception raised when an Request could not be found.
  *
  */
-class MissingRequestException extends Exception
+class MissingRequestException extends CakeException
 {
     protected $_messageTemplate = 'Request class %s could not be found.';
 }
