@@ -22,7 +22,12 @@ use CakeDC\OracleDriver\TestSuite\TestCase;
  */
 class MethodTest extends TestCase
 {
-    public $codeFixtures = [
+    protected bool $autoFixtures = true;
+
+    /**
+     * @var array<string>
+     */
+    public array $codeFixtures = [
         'plugin.CakeDC/OracleDriver.Calc',
     ];
 

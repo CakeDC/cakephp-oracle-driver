@@ -21,7 +21,7 @@ use Cake\Test\TestCase\ORM\MarshallerTest as CakeMarshallerTest;
  */
 class MarshallerTest extends CakeMarshallerTest
 {
-    protected $fixtures = [
+    protected array $fixtures = [
         'core.Articles',
 //        'core.ArticlesTags',
         'plugin.CakeDC/OracleDriver.ArticlesTags',

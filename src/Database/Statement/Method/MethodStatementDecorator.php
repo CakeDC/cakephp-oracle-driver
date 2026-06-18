@@ -12,7 +12,6 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Statement\Method;
 
-use Cake\Database\Statement\StatementDecorator;
 use Cake\Database\StatementInterface;
 use Countable;
 use IteratorAggregate;
@@ -29,35 +28,14 @@ use IteratorAggregate;
 class MethodStatementDecorator extends StatementDecorator implements StatementInterface, Countable, IteratorAggregate
 {
     /**
-     * Assign a value to a positional or named variable in prepared query. If using
-     * positional variables you need to start with index one, if using named params then
-     * just use the name in any order.
+     * Binds a value by reference for OCI-compatible parameter binding.
      *
-     * Parameters values are always passed by reference.
-     *
-     * You can pass OCI compatible constants for binding values with a type or optionally
-     * any type name registered in the Type class. Any value will be converted to the valid type
-     * representation if needed.
-     *
-     * It is not allowed to combine positional and named variables in the same statement
-     *
-     * ### Examples:
-     *
-     * ```
-     * $val = 'a title';
-     * $statement->bindParam(1, $val);
-     * $boolVal = true;
-     * $statement->bindParam('active', $boolVal, 'boolean');
-     * $date = new \DateTime();
-     * $statement->bindParam(5, $date, 'date');
-     * ```
-     *
-     * @param string|int $column name or param position to be bound
-     * @param mixed $value The value to bind to variable in query
-     * @param string|int $type OCI type or name of configured Type class
+     * @param string|int $column Name or positional index of the parameter.
+     * @param mixed $value The value to bind by reference.
+     * @param string|int $type OCI type or configured Type class name.
      * @return void
      */
-    public function bindParam($column, &$value, $type = 'string')
+    public function bindParam(string|int $column, mixed &$value, string|int $type = 'string'): void
     {
         $this->_statement->bindParam($column, $value, $type);
     }

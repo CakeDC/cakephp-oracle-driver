@@ -17,28 +17,20 @@ use PDO;
 class OraclePDO extends OracleBase
 {
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
-    protected function _connect(string $database, array $config): bool
+    protected function createConnection(string $dsn, array $config): PDO
     {
-        $config['flags'] += [
-            PDO::NULL_EMPTY_STRING => true,
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_PERSISTENT => empty($config['persistent']) ? false : $config['persistent'],
-            PDO::ATTR_ORACLE_NULLS => true,
-        ];
-        $database = 'oci:dbname=' . $database;
-
-        return parent::_connect($database, $config);
+        return $this->createPdo('oci:dbname=' . $dsn, $config);
     }
 
     /**
-     * Returns whether php is able to use this driver for connecting to database
+     * Returns whether php is able to use this driver for connecting to database.
      *
      * @return bool true if it is valid to use this driver
      */
     public function enabled(): bool
     {
-          return class_exists('PDO') && in_array('oci', \PDO::getAvailableDrivers(), true);
+        return class_exists('PDO') && in_array('oci', PDO::getAvailableDrivers(), true);
     }
 }

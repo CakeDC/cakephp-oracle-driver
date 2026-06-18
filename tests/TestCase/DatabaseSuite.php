@@ -10,75 +10,71 @@ declare(strict_types=1);
  * @copyright Copyright 2015 - 2020, Cake Development Corporation (http://cakedc.com)
  * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
-
-/**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- *
- * Licensed under The MIT License
- * For full copyright and license information, please see the LICENSE.txt
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
- */
-namespace Cake\Test\TestCase;
+namespace CakeDC\OracleDriver\Test\TestCase;
 
 use Cake\Datasource\ConnectionManager;
-use Cake\TestSuite\TestSuite;
-use PHPUnit\Framework\TestResult;
+use PHPUnit\Event\TestSuite\Started;
+use PHPUnit\Event\TestSuite\StartedSubscriber;
+use PHPUnit\Runner\Extension\Extension;
+use PHPUnit\Runner\Extension\Facade;
+use PHPUnit\Runner\Extension\ParameterCollection;
+use PHPUnit\TextUI\Configuration\Configuration;
 
 /**
- * All tests related to database
- *
+ * Applies identifier quoting when a database test suite starts.
  */
-class DatabaseSuite extends TestSuite
+final class DatabaseQuotingSubscriber implements StartedSubscriber
 {
     /**
-     * Returns a suite containing all tests requiring a database connection,
-     * tests are decorated so that they are run once with automatic
-     *
-     * @return void
+     * @inheritDoc
      */
-    public static function suite()
+    public function notify(Started $event): void
     {
-        $suite = new self('Database related tests');
-        // $suite->addTestFile(__DIR__ . DS . 'Database' . DS . 'ConnectionTest.php');
-        $suite->addTestDirectoryRecursive(__DIR__ . DS . 'Database');
-        $suite->addTestDirectoryRecursive(__DIR__ . DS . 'ORM');
-
-        return $suite;
-    }
-
-//     public function count(bool $preferCache = false): int
-//     {
-//        return parent::count() * 2;
-//     }
-
-    /**
-     * Runs the tests and collects their result in a TestResult.
-     *
-     * @param \PHPUnit\Framework\TestResult $result
-     * @return \PHPUnit\Framework\TestResult
-     */
-    public function run(?TestResult $result = null): TestResult
-    {
-        $permutations = [
-            'Identifier Quoting' => function () {
-                ConnectionManager::get('test')->getDriver()->enableAutoQuoting(true);
-            },
-//             'No identifier quoting' => function () {
-//                 ConnectionManager::get('test')->getDriver()->enableAutoQuoting(false);
-//             }
-        ];
-
-        foreach ($permutations as $permutation) {
-            $permutation();
-            $result = parent::run($result);
+        $suiteName = $event->testSuite()->name();
+        if ($suiteName !== 'Database' && $suiteName !== 'ORM' && $suiteName !== 'default') {
+            return;
         }
 
-        return $result;
+        $quoting = getenv('ORACLE_IDENTIFIER_QUOTING');
+        $enabled = $quoting === false || $quoting === '1';
+        DatabaseSuite::applyIdentifierQuoting($enabled);
+    }
+}
+
+/**
+ * Applies Oracle identifier-quoting permutations for database tests.
+ */
+class DatabaseSuite implements Extension
+{
+    /**
+     * Identifier-quoting permutations executed by the test runner.
+     *
+     * @var array<string, bool>
+     */
+    public const PERMUTATIONS = [
+        'Identifier Quoting' => true,
+        'No identifier quoting' => false,
+    ];
+
+    /**
+     * Configures identifier quoting on the test connection.
+     *
+     * @param bool $enabled Whether auto-quoting should be enabled.
+     * @return void
+     */
+    public static function applyIdentifierQuoting(bool $enabled): void
+    {
+        ConnectionManager::get('test')->getDriver()->enableAutoQuoting($enabled);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function bootstrap(
+        Configuration $configuration,
+        Facade $facade,
+        ParameterCollection $parameters,
+    ): void {
+        $facade->registerSubscriber(new DatabaseQuotingSubscriber());
     }
 }

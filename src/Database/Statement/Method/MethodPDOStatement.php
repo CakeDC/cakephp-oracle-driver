@@ -22,6 +22,11 @@ use PDOStatement as Statement;
 class MethodPDOStatement extends MethodStatementDecorator
 {
     /**
+     * @var string
+     */
+    public string $queryString = '';
+
+    /**
      * Constructor
      *
      * @param \PDOStatement|null $statement Original statement to be decorated.
@@ -62,11 +67,8 @@ class MethodPDOStatement extends MethodStatementDecorator
      * @param string|int $type OCI type or name of configured Type class
      * @return void
      */
-    public function bindParam($column, &$value, $type = 'string')
+    public function bindParam(string|int $column, mixed &$value, string|int $type = 'string'): void
     {
-        if ($type === null) {
-            $type = 'string';
-        }
         if (!ctype_digit((string)$type)) {
             [$value, $type] = $this->cast($value, $type);
         }
@@ -76,12 +78,12 @@ class MethodPDOStatement extends MethodStatementDecorator
     /**
      * {@inheritDoc}
      */
-    public function bindValue($column, $value, $type = 'string'): void
+    public function bindValue(string|int $column, mixed $value, string|int|null $type = 'string'): void
     {
         if ($type === null) {
             $type = 'string';
         }
-        if (!ctype_digit($type)) {
+        if (!ctype_digit((string)$type)) {
             [$value, $type] = $this->cast($value, $type);
         }
         $this->_statement->bindValue($column, $value, $type);
@@ -90,30 +92,30 @@ class MethodPDOStatement extends MethodStatementDecorator
     /**
      * {@inheritDoc}
      */
-    public function fetch($type = 'num')
+    public function fetch(string|int $mode = PDO::FETCH_NUM): mixed
     {
-        if ($type === 'num') {
+        if ($mode === 'num' || $mode === PDO::FETCH_NUM) {
             return $this->_statement->fetch(PDO::FETCH_NUM);
         }
-        if ($type === 'assoc') {
+        if ($mode === 'assoc' || $mode === PDO::FETCH_ASSOC) {
             return $this->_statement->fetch(PDO::FETCH_ASSOC);
         }
 
-        return $this->_statement->fetch($type);
+        return $this->_statement->fetch($mode);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function fetchAll($type = 'num')
+    public function fetchAll(string|int $mode = PDO::FETCH_NUM): array
     {
-        if ($type === 'num') {
+        if ($mode === 'num' || $mode === PDO::FETCH_NUM) {
             return $this->_statement->fetchAll(PDO::FETCH_NUM);
         }
-        if ($type === 'assoc') {
+        if ($mode === 'assoc' || $mode === PDO::FETCH_ASSOC) {
             return $this->_statement->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        return $this->_statement->fetchAll($type);
+        return $this->_statement->fetchAll($mode);
     }
 }

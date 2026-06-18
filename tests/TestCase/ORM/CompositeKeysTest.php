@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 
-use Cake\Test\TestCase\ORM\CompositeKeysTest as CakeCompositeKeysTest;
+use Cake\Test\TestCase\ORM\Query\CompositeKeysTest as CakeCompositeKeysTest;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Integration tests for table operations involving composite keys
@@ -14,11 +17,9 @@ class CompositeKeysTest extends CakeCompositeKeysTest
      * Test that saving into composite primary keys where one column is missing & autoIncrement works.
      *
      * SQLite is skipped because it doesn't support autoincrement composite keys.
-     *
-     * @group save
-     * @return void
      */
-    public function testSaveNewCompositeKeyIncrement()
+    #[Group('save')]
+    public function testSaveNewCompositeKeyIncrement(): void
     {
         $this->markTestSkipped();
     }
@@ -26,11 +27,9 @@ class CompositeKeysTest extends CakeCompositeKeysTest
     /**
      * Tests that HasMany associations are correctly eager loaded and results
      * correctly nested when multiple foreignKeys are used
-     *
-     * @dataProvider strategiesProviderHasMany
-     * @return void
      */
-    public function testHasManyEager($strategy)
+    #[DataProvider('strategiesProviderHasMany')]
+    public function testHasManyEager(string $strategy): void
     {
         $this->markTestSkipped();
     }
@@ -38,21 +37,19 @@ class CompositeKeysTest extends CakeCompositeKeysTest
     /**
      * Tests that BelongsToMany associations are correctly eager loaded when multiple
      * foreignKeys are used
-     *
-     * @dataProvider strategiesProviderBelongsToMany
-     * @return void
      */
-    public function testBelongsToManyEager($strategy)
+    #[DataProvider('strategiesProviderBelongsToMany')]
+    public function testBelongsToManyEager(string $strategy): void
     {
         $this->markTestSkipped();
     }
 
     /**
-     * Helper method to skip tests when connection is SQLite.
+     * Helper method to skip tests when connection is Oracle.
      *
      * @return void
      */
-    public function skipIfOracle()
+    public function skipIfOracle(): void
     {
         $this->skipIf(
             $this->connection->getDriver() instanceof OracleBase,

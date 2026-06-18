@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM\Method;
 
 use Cake\Collection\CollectionTrait;
-use Cake\Database\Exception;
+use Cake\Database\Exception\DatabaseException;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\ResultSetInterface;
 use SplFixedArray;
@@ -189,7 +189,7 @@ class ResultSet implements ResultSetInterface
 
         if (!$this->_useBuffering) {
             $msg = 'You cannot rewind an un-buffered ResultSet';
-            throw new Exception($msg);
+            throw new DatabaseException($msg);
         }
 
         $this->_index = 0;

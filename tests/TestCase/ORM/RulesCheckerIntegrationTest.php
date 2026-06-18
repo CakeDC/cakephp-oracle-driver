@@ -28,9 +28,8 @@ class RulesCheckerIntegrationTest extends CakeRulesCheckerIntegrationTest
      *
      * @var array
      */
-    protected $fixtures = [
+    protected array $fixtures = [
         'core.Articles',
-//        'core.ArticlesTags',
         'plugin.CakeDC/OracleDriver.ArticlesTags',
         'core.Authors',
         'core.Comments',
@@ -39,17 +38,16 @@ class RulesCheckerIntegrationTest extends CakeRulesCheckerIntegrationTest
         'core.Categories',
         'core.SiteArticles',
         'core.SiteAuthors',
-        'core.Comments',
         'core.UniqueAuthors',
     ];
 
-    public function testIsUniqueAllowMultipleNulls()
+    public function testIsUniqueAllowMultipleNulls(): void
     {
         $this->skipIf(ConnectionManager::get('test')->getDriver() instanceof OracleBase);
         parent::testIsUniqueAllowMultipleNulls();
     }
 
-    public function testIsUniqueNonUniqueNulls()
+    public function testIsUniqueNonUniqueNulls(): void
     {
         $this->skipIf(ConnectionManager::get('test')->getDriver()->getMaxAliasLength() < 31);
         parent::testIsUniqueNonUniqueNulls();

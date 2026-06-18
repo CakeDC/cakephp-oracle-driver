@@ -119,32 +119,35 @@ class OCI8Connection extends PDO
     /**
      * {@inheritdoc}
      */
-    public function prepare($statement, $options = null)
+    public function prepare(string $query, array $options = []): OCI8Statement|false
     {
-        return new OCI8Statement($this->dbh, $statement, $this);
+        return new OCI8Statement($this->dbh, $query, $this);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, $arg3 = null, array $ctorargs = [])
+    public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): OCI8Statement|false
     {
-        $args = func_get_args();
-        $sql = $args[0];
-        $stmt = $this->prepare($sql);
-        $stmt->execute();
-
-        return $stmt;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function quote($string, $type = \PDO::PARAM_STR)
-    {
-        if (is_int($string) || is_float($string)) {
-            return $string;
+        $statement = $this->prepare($query);
+        if ($statement === false) {
+            return false;
         }
+
+        $statement->execute();
+
+        if ($fetchMode !== null) {
+            $statement->setFetchMode($fetchMode, ...$fetchModeArgs);
+        }
+
+        return $statement;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function quote(string $string, int $type = PDO::PARAM_STR): string|false
+    {
         $string = str_replace("'", "''", $string);
 
         return "'" . addcslashes($string, "\000\n\r\\\032") . "'";
@@ -153,9 +156,12 @@ class OCI8Connection extends PDO
     /**
      * {@inheritdoc}
      */
-    public function exec($statement)
+    public function exec(string $statement): int|false
     {
         $stmt = $this->prepare($statement);
+        if ($stmt === false) {
+            return false;
+        }
         $stmt->execute();
 
         return $stmt->rowCount();
@@ -185,7 +191,7 @@ class OCI8Connection extends PDO
     /**
      * {@inheritdoc}
      */
-    public function inTransaction()
+    public function inTransaction(): bool
     {
         return $this->executeMode === OCI_NO_AUTO_COMMIT;
     }
@@ -193,7 +199,7 @@ class OCI8Connection extends PDO
     /**
      * {@inheritdoc}
      */
-    public function beginTransaction()
+    public function beginTransaction(): bool
     {
         $this->executeMode = OCI_NO_AUTO_COMMIT;
 
@@ -203,10 +209,11 @@ class OCI8Connection extends PDO
     /**
      * {@inheritdoc}
      */
-    public function commit()
+    public function commit(): bool
     {
         if (!oci_commit($this->dbh)) {
-            throw OCI8Exception::fromErrorInfo($this->errorInfo());
+            $error = oci_error($this->dbh) ?: ['message' => 'Commit failed', 'code' => 0];
+            throw OCI8Exception::fromErrorInfo($error);
         }
         $this->executeMode = OCI_COMMIT_ON_SUCCESS;
 
@@ -216,10 +223,11 @@ class OCI8Connection extends PDO
     /**
      * {@inheritdoc}
      */
-    public function rollBack()
+    public function rollBack(): bool
     {
         if (!oci_rollback($this->dbh)) {
-            throw OCI8Exception::fromErrorInfo($this->errorInfo());
+            $error = oci_error($this->dbh) ?: ['message' => 'Rollback failed', 'code' => 0];
+            throw OCI8Exception::fromErrorInfo($error);
         }
         $this->executeMode = OCI_COMMIT_ON_SUCCESS;
 
@@ -229,7 +237,7 @@ class OCI8Connection extends PDO
     /**
      * {@inheritdoc}
      */
-    public function errorCode()
+    public function errorCode(): ?string
     {
         $error = oci_error($this->dbh);
         if ($error !== false) {
@@ -238,14 +246,23 @@ class OCI8Connection extends PDO
             return '00000';
         }
 
-        return $error;
+        return (string)$error;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function errorInfo()
+    public function errorInfo(): array
     {
-        return oci_error($this->dbh);
+        $error = oci_error($this->dbh);
+        if ($error === false) {
+            return ['00000', null, null];
+        }
+
+        return [
+            (string)($error['code'] ?? '00000'),
+            $error['code'] ?? null,
+            $error['message'] ?? null,
+        ];
     }
 }

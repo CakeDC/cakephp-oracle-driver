@@ -26,7 +26,7 @@ class AssociationTest extends CakeAssociationTest
      *
      * @return void
      */
-    public function testPropertyNameClash()
+    public function testPropertyNameClash(): void
     {
         $this->markTestSkipped();
     }

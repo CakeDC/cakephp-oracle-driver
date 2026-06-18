@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Copyright 2015 - 2020, Cake Development Corporation (http://cakedc.com)
  *
@@ -11,33 +13,28 @@
 
 namespace CakeDC\OracleDriver\Test\Fixture;
 
-use Cake\TestSuite\Fixture\TestFixture;
-
 /**
- * Class TagFixture
- *
+ * Tags fixture for Oracle driver tests.
  */
-class TagsFixture extends TestFixture
+class TagsFixture extends SchemaAwareTestFixture
 {
-    /**
-     * fields property
-     *
-     * @var array
-     */
-    public $fields = [
-        'id' => ['type' => 'integer', 'null' => false],
-        'name' => ['type' => 'string', 'null' => false],
-        '_constraints' => ['primary' => ['type' => 'primary', 'columns' => ['id']]],
-    ];
+    public string $table = 'tags';
 
-    /**
-     * records property
-     *
-     * @var array
-     */
-    public $records = [
+    public array $records = [
         ['name' => 'tag1'],
         ['name' => 'tag2'],
         ['name' => 'tag3'],
     ];
+
+    /**
+     * @inheritDoc
+     */
+    protected function getFieldDefinitions(): array
+    {
+        return [
+            'id' => ['type' => 'integer', 'null' => false],
+            'name' => ['type' => 'string', 'null' => false],
+            '_constraints' => ['primary' => ['type' => 'primary', 'columns' => ['id']]],
+        ];
+    }
 }

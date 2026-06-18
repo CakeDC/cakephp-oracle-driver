@@ -13,10 +13,15 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\TestSuite\Fixture;
 
 use Cake\Core\Configure;
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
+use Cake\Database\Connection;
+use Cake\Database\Driver;
+use Cake\Datasource\ConnectionInterface;
 use Cake\Datasource\ConnectionManager;
+use Cake\TestSuite\TestCase;
 use Cake\Utility\Inflector;
 use PDOException;
+use ReflectionProperty;
 use UnexpectedValueException;
 
 /**
@@ -255,7 +260,7 @@ class OracleFixtureManager
         }
 
         $fixtures = $test->codeFixtures;
-        if (empty($fixtures) || !$test->autoFixtures) {
+        if (empty($fixtures) || !$this->_autoFixturesEnabled($test)) {
             return;
         }
 
@@ -267,16 +272,25 @@ class OracleFixtureManager
                     $this->_insertionMap[$configName] = [];
                 }
 
-                foreach ($fixtures as $fixture) {
-                    if (!in_array($fixture, $this->_insertionMap[$configName])) {
-                        $this->_setupMethod($fixture, $db, $methods, $test->dropTables);
+                foreach ($test->codeFixtures as $fixtureKey) {
+                    if (empty($this->_loaded[$fixtureKey])) {
+                        continue;
+                    }
+                    $fixture = $this->_loaded[$fixtureKey];
+                    if (!$this->isFixtureSetup($configName, $fixture)) {
+                        $this->_setupMethod(
+                            $fixture,
+                            $db,
+                            $methods,
+                            $this->_dropTablesEnabled($test)
+                        );
                     }
                 }
             };
             $this->_runOperation($fixtures, $createMethods);
         } catch (PDOException $e) {
             $msg = sprintf('Unable to insert fixtures for "%s" test case. %s', get_class($test), $e->getMessage());
-            throw new Exception($msg, $e->getCode(), $e);
+            throw new CakeException($msg, $e->getCode(), $e);
         }
     }
 
@@ -292,19 +306,61 @@ class OracleFixtureManager
         $dbs = $this->_fixtureConnections($fixtures);
         foreach ($dbs as $connection => $fixtures) {
             $db = ConnectionManager::get($connection, false);
-            $logQueries = $db->isQueryLoggingEnabled();
+            assert($db instanceof Connection);
+            $driver = $db->getDriver();
+            $logQueries = $this->_isQueryLoggingEnabled($driver);
+
             if ($logQueries && !$this->_debug) {
-                $db->enableQueryLogging(false);
+                $driver->disableQueryLogging();
             }
-            $db->transactional(function ($db) use ($fixtures, $operation) {
-                $db->disableConstraints(function ($db) use ($fixtures, $operation) {
+            $db->transactional(function (Connection $db) use ($fixtures, $operation) {
+                $db->disableConstraints(function (Connection $db) use ($fixtures, $operation) {
                     $operation($db, $fixtures);
                 });
             });
             if ($logQueries) {
-                $db->enableQueryLogging(true);
+                $driver->enableQueryLogging();
             }
         }
+    }
+
+    /**
+     * @param \Cake\Database\Driver $driver Database driver.
+     * @return bool
+     */
+    protected function _isQueryLoggingEnabled(Driver $driver): bool
+    {
+        $property = new ReflectionProperty($driver, 'logQueries');
+
+        return (bool)$property->getValue($driver);
+    }
+
+    /**
+     * @param \Cake\TestSuite\TestCase $test Test case instance.
+     * @return bool
+     */
+    protected function _autoFixturesEnabled(TestCase $test): bool
+    {
+        if (!property_exists($test, 'autoFixtures')) {
+            return true;
+        }
+        $property = new ReflectionProperty($test, 'autoFixtures');
+
+        return (bool)$property->getValue($test);
+    }
+
+    /**
+     * @param \Cake\TestSuite\TestCase $test Test case instance.
+     * @return bool
+     */
+    protected function _dropTablesEnabled(TestCase $test): bool
+    {
+        if (!property_exists($test, 'dropTables')) {
+            return true;
+        }
+        $property = new ReflectionProperty($test, 'dropTables');
+
+        return (bool)$property->getValue($test);
     }
 
     /**

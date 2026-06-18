@@ -22,6 +22,8 @@ use CakeDC\OracleDriver\ORM\MethodRegistry;
  */
 class LocatorAwareTraitTest extends TestCase
 {
+    protected mixed $subject = null;
+
     /**
      * setup
      *
@@ -31,7 +33,9 @@ class LocatorAwareTraitTest extends TestCase
     {
         parent::setUp();
 
-        $this->subject = $this->getObjectForTrait('CakeDC\OracleDriver\ORM\Locator\LocatorAwareTrait');
+        $this->subject = new class {
+            use \CakeDC\OracleDriver\ORM\Locator\LocatorAwareTrait;
+        };
     }
 
     /**

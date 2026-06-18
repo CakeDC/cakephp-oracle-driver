@@ -17,12 +17,12 @@ use Cake\Core\BasePlugin;
 /**
  * OracleDriver plugin
  */
-class Plugin extends BasePlugin
+class OracleDriverPlugin extends BasePlugin
 {
     /**
      * Plugin name.
      *
      * @var string
      */
-    protected $name = 'OracleDriver';
+    protected ?string $name = 'OracleDriver';
 }

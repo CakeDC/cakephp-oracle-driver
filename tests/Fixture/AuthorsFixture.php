@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Copyright 2015 - 2020, Cake Development Corporation (http://cakedc.com)
  *
@@ -11,33 +13,28 @@
 
 namespace CakeDC\OracleDriver\Test\Fixture;
 
-use Cake\TestSuite\Fixture\TestFixture;
-
 /**
- * Short description for class.
- *
+ * Authors fixture for Oracle driver tests.
  */
-class AuthorsFixture extends TestFixture
+class AuthorsFixture extends SchemaAwareTestFixture
 {
-    /**
-     * fields property
-     *
-     * @var array
-     */
-    public $fields = [
-        'id' => ['type' => 'integer'],
-        'name' => ['type' => 'string', 'default' => null],
-        '_constraints' => ['primary' => ['type' => 'primary', 'columns' => ['id']]],
-    ];
+    public string $table = 'authors';
 
-    /**
-     * records property
-     *
-     * @var array
-     */
-    public $records = [
+    public array $records = [
         ['name' => 'evgeny'],
         ['name' => 'mark'],
         ['name' => 'larry'],
     ];
+
+    /**
+     * @inheritDoc
+     */
+    protected function getFieldDefinitions(): array
+    {
+        return [
+            'id' => ['type' => 'integer'],
+            'name' => ['type' => 'string', 'default' => null],
+            '_constraints' => ['primary' => ['type' => 'primary', 'columns' => ['id']]],
+        ];
+    }
 }

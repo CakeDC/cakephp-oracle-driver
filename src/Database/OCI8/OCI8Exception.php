@@ -12,9 +12,9 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\OCI8;
 
-use Cake\Core\Exception\Exception;
+use Cake\Core\Exception\CakeException;
 
-class OCI8Exception extends Exception
+class OCI8Exception extends CakeException
 {
     /**
      * OCI Error builder.
@@ -24,7 +24,6 @@ class OCI8Exception extends Exception
      */
     public static function fromErrorInfo($error)
     {
-        stackTrace();
         return new self($error['message'], $error['code']);
     }
 }

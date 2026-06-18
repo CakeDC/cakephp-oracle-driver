@@ -19,6 +19,8 @@ use CakeDC\OracleDriver\Database\OracleConnection;
 use CakeDC\OracleDriver\ORM\Method;
 use RuntimeException;
 
+use function Cake\Core\pluginSplit;
+
 /**
  * Provides a default registry/factory for Method objects.
  */

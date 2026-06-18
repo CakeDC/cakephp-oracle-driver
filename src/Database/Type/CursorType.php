@@ -12,24 +12,23 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Type;
 
-use Cake\Database\DriverInterface;
+use Cake\Database\Driver;
 use Cake\Database\Type\BaseType;
-use Cake\Database\TypeInterface;
 use PDO;
 
 /**
  * Provides behavior for the cursors type
  */
-class CursorType extends BaseType implements TypeInterface
+class CursorType extends BaseType
 {
     /**
      * Casts given value from a PHP type to one acceptable by database
      *
      * @param mixed $value value to be converted to database equivalent
-     * @param \Cake\Database\DriverInterface $driver object from which database preferences and configuration will be extracted
+     * @param \Cake\Database\Driver $driver object from which database preferences and configuration will be extracted
      * @return mixed
      */
-    public function toDatabase($value, DriverInterface $driver)
+    public function toDatabase(mixed $value, Driver $driver): mixed
     {
         if ($value === null || $value === '') {
             return null;
@@ -44,7 +43,7 @@ class CursorType extends BaseType implements TypeInterface
      * @param mixed $value The value to convert.
      * @return string|null Converted value.
      */
-    public function marshal($value)
+    public function marshal(mixed $value): ?string
     {
         return null;
     }
@@ -52,7 +51,7 @@ class CursorType extends BaseType implements TypeInterface
     /**
      * @inheritDoc
      */
-    public function toStatement($value, DriverInterface $driver)
+    public function toStatement(mixed $value, Driver $driver): int
     {
         return PDO::PARAM_STMT;
     }
@@ -60,7 +59,7 @@ class CursorType extends BaseType implements TypeInterface
     /**
      * @inheritDoc
      */
-    public function toPHP($value, DriverInterface $driver)
+    public function toPHP(mixed $value, Driver $driver): mixed
     {
         return $value;
     }

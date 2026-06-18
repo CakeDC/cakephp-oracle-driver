@@ -10,28 +10,23 @@ declare(strict_types=1);
  * @copyright Copyright 2015 - 2020, Cake Development Corporation (http://cakedc.com)
  * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
-
 namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 
-use Cake\Datasource\ConnectionManager;
+use Cake\I18n\DateTime;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\Expression\QueryExpression;
-use Cake\I18n\Time;
-use Cake\ORM\Query;
-use Cake\Test\TestCase\ORM\QueryRegressionTest as CakeQueryRegressionTest;
+use Cake\Datasource\ConnectionManager;
+use Cake\ORM\Query\SelectQuery;
+use Cake\Test\TestCase\ORM\Query\QueryRegressionTest as CakeQueryRegressionTest;
+use TestApp\Model\Table\ArticlesTable;
+use TestApp\Model\Table\TagsTable;
 
 /**
  * Tests QueryRegression class
- *
  */
 class QueryRegressionTest extends CakeQueryRegressionTest
 {
-    /**
-     * Fixture to be used
-     *
-     * @var array
-     */
-    protected $fixtures = [
+    protected array $fixtures = [
         'core.Articles',
         'core.Tags',
         'plugin.CakeDC/OracleDriver.ArticlesTags',
@@ -47,76 +42,65 @@ class QueryRegressionTest extends CakeQueryRegressionTest
 
     /**
      * Test expression based ordering with unions.
-     *
-     * @return void
      */
-    public function testComplexOrderWithUnion()
+    public function testComplexOrderWithUnion(): void
     {
-        $this->loadFixtures('Comments');
         $table = $this->getTableLocator()->get('Comments');
-            $query = $table->find();
+        $query = $table->find();
         $inner = $table->find()
-           ->select(['content' => 'to_char(comment)'])
-           ->where(['id >' => 3]);
+            ->select(['content' => 'to_char(comment)'])
+            ->where(['id >' => 3]);
         $inner2 = $table->find()
             ->select(['content' => 'to_char(comment)'])
             ->where(['id <' => 3]);
 
         $order = $query->func()
-               ->concat(['content' => 'identifier', 'test']);
+            ->concat(['content' => 'identifier', 'test']);
 
         $query->select(['inside.content'])
-              ->from(['inside' => $inner->unionAll($inner2)])
-              ->orderAsc($order);
+            ->from(['inside' => $inner->unionAll($inner2)])
+            ->orderByAsc($order);
 
         $results = $query->toArray();
         $this->assertCount(5, $results);
     }
 
     /**
-     * Test that save() works with entities containing expressions
-     * as properties.
-     *
-     * @return void
+     * Test that save() works with entities containing expressions as properties.
      */
-    public function testSaveWithExpressionProperty()
+    public function testSaveWithExpressionProperty(): void
     {
         $articles = $this->getTableLocator()->get('Articles');
         $article = $articles->newEntity([]);
-        $article->title = new \Cake\Database\Expression\QueryExpression("SELECT 'jose' from DUAL");
+        $article->title = new QueryExpression("SELECT 'jose' from DUAL");
         $this->assertSame($article, $articles->save($article));
     }
 
     /**
-     * such syntax is not supported and leads to ORA-00937
+     * Such syntax is not supported and leads to ORA-00937.
      */
-    public function testSubqueryInSelectExpression()
+    public function testSubqueryInSelectExpression(): void
     {
         $this->markTestSkipped();
     }
 
     /**
      * Tests that subqueries can be used with function expressions.
-     *
-     * @return void
      */
-    public function testFunctionExpressionWithSubquery()
+    public function testFunctionExpressionWithSubquery(): void
     {
-        $this->loadFixtures('Articles');
         $table = $this->getTableLocator()->get('Articles');
 
         $query = $table
             ->find()
-            ->select(function (Query $q) use ($table) {
+            ->select(function (SelectQuery $q) use ($table) {
                 return [
                     'value' => $q
                         ->func()
                         ->ABS([
                             $table
                                 ->getConnection()
-                                ->newQuery()
-                                ->select(-1)
-                                ->from('DUAL'),
+                                ->selectQuery(-1),
                         ])
                         ->setReturnType('integer'),
                 ];
@@ -128,17 +112,14 @@ class QueryRegressionTest extends CakeQueryRegressionTest
 
     /**
      * Tests that subqueries can be used with multi argument function expressions.
-     *
-     * @return void
      */
-    public function testMultiArgumentFunctionExpressionWithSubquery()
+    public function testMultiArgumentFunctionExpressionWithSubquery(): void
     {
-        $this->loadFixtures('Articles', 'Authors');
         $table = $this->getTableLocator()->get('Articles');
 
         $query = $table
             ->find()
-            ->select(function (Query $q) use ($table) {
+            ->select(function (SelectQuery $q) use ($table) {
                 return [
                     'value' => $q
                         ->func()
@@ -146,9 +127,7 @@ class QueryRegressionTest extends CakeQueryRegressionTest
                             [
                                 $table
                                     ->getConnection()
-                                    ->newQuery()
-                                    ->select(1.23456)
-                                    ->from('DUAL'),
+                                    ->selectQuery(1.23456),
                                 2,
                             ],
                             [null, 'integer']
@@ -162,19 +141,17 @@ class QueryRegressionTest extends CakeQueryRegressionTest
     }
 
     /**
-     * We can use only union all with queries with clob fields
+     * We can use only union all with queries with clob fields.
      *
      * @see https://asktom.oracle.com/pls/apex/f?p=100:11:0::::P11_QUESTION_ID:498299691850
-     * @return void
      */
-    public function testCountWithUnionQuery()
+    public function testCountWithUnionQuery(): void
     {
-        $this->loadFixtures('Articles');
         $table = $this->getTableLocator()->get('Articles');
         $query = $table->find()
-                       ->where(['id' => 1]);
+            ->where(['id' => 1]);
         $query2 = $table->find()
-                        ->where(['id' => 2]);
+            ->where(['id' => 2]);
         $query->unionAll($query2);
         $this->assertEquals(2, $query->count());
 
@@ -186,24 +163,21 @@ class QueryRegressionTest extends CakeQueryRegressionTest
             'published',
         ];
         $query = $table->find()
-                       ->select($fields)
-                       ->where(['id' => 1]);
+            ->select($fields)
+            ->where(['id' => 1]);
         $query2 = $table->find()
-                        ->select($fields)
-                        ->where(['id' => 2]);
+            ->select($fields)
+            ->where(['id' => 2]);
         $query->union($query2);
         $this->assertEquals(2, $query->count());
     }
 
     /**
      * Tests that EagerLoader does not try to create queries for associations having no
-     * keys to compare against
-     *
-     * @return void
+     * keys to compare against.
      */
-    public function testEagerLoadingFromEmptyResults()
+    public function testEagerLoadingFromEmptyResults(): void
     {
-        $this->loadFixtures('Articles', 'Tags', 'ArticlesTags');
         $table = $this->getTableLocator()->get('Articles');
         $table->belongsToMany('ArticlesTags');
         $results = $table->find()->where(['id >' => 100])->contain('ArticlesTags')->toArray();
@@ -211,37 +185,32 @@ class QueryRegressionTest extends CakeQueryRegressionTest
     }
 
     /**
-     * Tests that getting the count of a query with bind is correct
+     * Tests that getting the count of a query with bind is correct.
      *
      * @see https://github.com/cakephp/cakephp/issues/8466
-     * @return void
      */
-    public function testCountWithBind()
+    public function testCountWithBind(): void
     {
-        $this->loadFixtures('Articles');
         $table = $this->getTableLocator()->get('Articles');
-        $query = $table->find();
-        $query->select(['title', 'id'])
-            ->where($query->newExpr()->like(new IdentifierExpression('title'), ':val'))
-            ->group(['id', 'title'])
-            ->bind(':c0', '%Second%');
+        $query = $table->find()
+            ->select(['title', 'id'])
+            ->where('"title" LIKE :val')
+            ->groupBy(['id', 'title'])
+            ->bind(':val', '%Second%');
         $count = $query->count();
         $this->assertEquals(1, $count);
     }
 
     /**
      * Tests that bind in subqueries works.
-     *
-     * @return void
      */
-    public function testSubqueryBind()
+    public function testSubqueryBind(): void
     {
-        $this->loadFixtures('Articles');
         $table = $this->getTableLocator()->get('Articles');
-        $sub = $table->find();
-        $sub->select(['id'])
-            ->where($sub->newExpr()->like(new IdentifierExpression('title'), ':val'))
-            ->bind(':c0', 'Second %');
+        $sub = $table->find()
+            ->select(['id'])
+            ->where('"title" LIKE :val')
+            ->bind(':val', 'Second %');
 
         $query = $table
             ->find()
@@ -258,11 +227,9 @@ class QueryRegressionTest extends CakeQueryRegressionTest
      * does not emit notice errors.
      *
      * @see https://github.com/cakephp/cakephp/issues/12766
-     * @return void
      */
-    public function testAliasedAggregateFieldTypeConversionSafe()
+    public function testAliasedAggregateFieldTypeConversionSafe(): void
     {
-        $this->loadFixtures('Articles');
         $articles = $this->getTableLocator()->get('Articles');
 
         $driver = $articles->getConnection()->getDriver();
@@ -280,37 +247,30 @@ class QueryRegressionTest extends CakeQueryRegressionTest
     }
 
     /**
-     * Test that the typemaps used in function expressions
-     * create the correct results.
-     *
-     * @return void
+     * Test that the typemaps used in function expressions create the correct results.
      */
-    public function testTypemapInFunctions2()
+    public function testTypemapInFunctions2(): void
     {
-        $this->loadFixtures('Comments');
         $table = $this->getTableLocator()->get('Comments');
         $query = $table->find();
         $query->select([
             'max' => $query->func()->max(new IdentifierExpression('created'), ['datetime']),
         ]);
         $result = $query->all()->first();
-        $this->assertEquals(new Time('2007-03-18 10:55:23'), $result['max']);
+        $this->assertEquals(new DateTime('2007-03-18 10:55:23'), $result['max']);
     }
 
     /**
      * Tests that correlated subqueries can be used with function expressions.
-     *
-     * @return void
      */
-    public function testFunctionExpressionWithCorrelatedSubquery()
+    public function testFunctionExpressionWithCorrelatedSubquery(): void
     {
-        $this->loadFixtures('Articles', 'Authors');
         $table = $this->getTableLocator()->get('Articles');
         $table->belongsTo('Authors');
 
         $query = $table
             ->find()
-            ->select(function (Query $q) use ($table) {
+            ->select(function (SelectQuery $q) use ($table) {
                 return [
                     'value' => $q->func()->UPPER([
                         $table
@@ -328,7 +288,57 @@ class QueryRegressionTest extends CakeQueryRegressionTest
         $this->assertEquals('MARIANO', $result);
     }
 
-    public function testAssociationSubQueryNoOffset()
+    public function testBelongsToManyDeepSave2(): void
+    {
+        $articles = $this->getTableLocator()->get('Articles');
+        $articles->belongsToMany('Highlights', [
+            'className' => TagsTable::class,
+            'targetForeignKey' => 'tag_id',
+            'through' => 'SpecialTags',
+        ]);
+        $articles->Highlights->hasMany('TopArticles', [
+            'className' => ArticlesTable::class,
+            'foreignKey' => 'author_id',
+            'sort' => ['TopArticles.id' => 'ASC'],
+        ]);
+        $entity = $articles->get(2, ...['contain' => ['Highlights']]);
+
+        $data = [
+            'highlights' => [
+                [
+                    'name' => 'New Special Tag',
+                    '_joinData' => [
+                        'highlighted' => true,
+                        'highlighted_time' => '2014-06-01 10:10:00',
+                    ],
+                    'top_articles' => [
+                        ['title' => 'First top article'],
+                        ['title' => 'Second top article'],
+                    ],
+                ],
+            ],
+        ];
+        $options = ['associated' => ['Highlights._joinData', 'Highlights.TopArticles']];
+        $entity = $articles->patchEntity($entity, $data, $options);
+        $articles->save($entity, $options);
+        $entity = $articles->get(2, ...[
+            'contain' => ['Highlights.TopArticles' => ['sort' => ['TopArticles.id' => 'ASC']]],
+        ]);
+        $highlights = $entity->highlights[0];
+        $this->assertSame('First top article', $highlights->top_articles[0]->title);
+        $this->assertSame('Second top article', $highlights->top_articles[1]->title);
+        $this->assertEquals(
+            new DateTime('2014-06-01 10:10:00'),
+            $highlights->_joinData->highlighted_time,
+        );
+    }
+
+    public function testTypemapInFunctions3(): void
+    {
+        $this->markTestSkipped('Oracle requires quoted identifiers; unquoted "ID" causes ORA-00904.');
+    }
+
+    public function testAssociationSubQueryNoOffset(): void
     {
         $this->skipIf(ConnectionManager::get('test')->getDriver()->getMaxAliasLength() < 31);
         parent::testAssociationSubQueryNoOffset();

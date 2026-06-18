@@ -13,29 +13,28 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Database\Driver;
 
 use Cake\Database\Driver;
+use Cake\Database\DriverFeatureEnum;
+use Cake\Database\Exception\QueryException;
 use Cake\Database\Query;
 use Cake\Database\QueryCompiler;
-use Cake\Database\Statement\PDOStatement;
 use Cake\Database\StatementInterface;
-use Cake\Database\ValueBinder;
 use Cake\Http\Exception\NotImplementedException;
-use Cake\Log\Log;
-use CakeDC\OracleDriver\Config\ConfigTrait;
 use CakeDC\OracleDriver\Database\Dialect\OracleDialectTrait;
 use CakeDC\OracleDriver\Database\Oracle12Compiler;
 use CakeDC\OracleDriver\Database\OracleCompiler;
+use CakeDC\OracleDriver\Database\OCI8\OCI8Exception;
 use CakeDC\OracleDriver\Database\Statement\OracleStatement;
 use PDO;
+use PDOException;
+use Throwable;
 
 abstract class OracleBase extends Driver
 {
-    use ConfigTrait;
     use OracleDialectTrait;
 
     /**
      * @var int Maximum alias length for Oracle version < 12.2
      */
-
     protected const MAX_ALIAS_LENGTH = 30;
 
     /**
@@ -43,18 +42,15 @@ abstract class OracleBase extends Driver
      */
     protected const MAX_ALIAS_LENGTH12 = 128;
 
+    /**
+     * @var class-string<\CakeDC\OracleDriver\Database\Statement\OracleStatement>
+     */
+    protected const STATEMENT_CLASS = OracleStatement::class;
 
     /**
-     * @var bool|mixed
+     * @var array<string, mixed>
      */
-    public $connected;
-
-    /**
-     * Base configuration settings for MySQL driver
-     *
-     * @var array
-     */
-    protected $_baseConfig = [
+    protected array $_baseConfig = [
         'persistent' => true,
         'host' => 'localhost',
         'username' => 'root',
@@ -70,12 +66,27 @@ abstract class OracleBase extends Driver
         'autoincrement' => false,
     ];
 
-    protected $_serverVersion = null;
+    protected int|float|string|null $_serverVersion = null;
+
+    protected bool $_autoincrement = false;
+
+    protected string $_startQuote = '"';
+
+    protected string $_endQuote = '"';
 
     /**
-     * @var bool
+     * @param array<string, mixed> $config Configuration settings.
      */
-    protected $_autoincrement;
+    public function __construct(array $config = [])
+    {
+        if (array_key_exists('server_version', $config)) {
+            $this->_serverVersion = is_numeric($config['server_version'])
+                ? $config['server_version'] + 0
+                : $config['server_version'];
+        }
+        parent::__construct($config);
+        $this->_autoincrement = !empty($config['autoincrement']);
+    }
 
     /**
      * @return bool
@@ -86,35 +97,20 @@ abstract class OracleBase extends Driver
     }
 
     /**
-     * OracleBase constructor.
+     * Establishes a connection to the database server.
      *
-     * @param array $config Configuration settings.
+     * @return void
      */
-    public function __construct(array $config = [])
+    public function connect(): void
     {
-        parent::__construct($config);
-        if (array_key_exists('server_version', $config)) {
-            $this->_serverVersion = $config['server_version'];
-        }
-        $this->_autoincrement = !empty($config['autoincrement']);
-    }
-
-    /**
-     * Establishes a connection to the database server
-     *
-     * @return bool true on success
-     */
-    public function connect(): bool
-    {
-        if ($this->_connection) {
-            return true;
+        if ($this->pdo !== null) {
+            return;
         }
         $config = $this->_config;
 
         $config['init'][] = "ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS' NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS' NLS_TIMESTAMP_TZ_FORMAT='YYYY-MM-DD HH24:MI:SS'";
 
         $config['flags'] += [
-            // PDO::ATTR_CASE => PDO::CASE_LOWER, // @todo move to config setting
             PDO::NULL_EMPTY_STRING => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_PERSISTENT => empty($config['persistent']) ? false : $config['persistent'],
@@ -122,24 +118,30 @@ abstract class OracleBase extends Driver
         ];
 
         $dsn = $this->getDSN();
-        $this->_connect($dsn, $config);
+        $this->pdo = $this->createConnection($dsn, $config);
 
         if (!empty($config['init'])) {
             foreach ((array)$config['init'] as $command) {
-                $this->getConnection()
-                     ->exec($command);
+                $this->pdo->exec($command);
             }
         }
-
-        return true;
     }
+
+    /**
+     * Create the PDO (or PDO-compatible) connection.
+     *
+     * @param string $dsn Connection DSN.
+     * @param array<string, mixed> $config Connection configuration.
+     * @return \PDO
+     */
+    abstract protected function createConnection(string $dsn, array $config): PDO;
 
     /**
      * Build DSN string in oracle connection format.
      *
      * @return string
      */
-    public function getDSN()
+    public function getDSN(): string
     {
         $config = $this->_config;
         if (!empty($config['host'])) {
@@ -172,84 +174,47 @@ abstract class OracleBase extends Driver
     }
 
     /**
-     * @inheritDoc
-     */
-    public function supportsDynamicConstraints(): bool
-    {
-        return true;
-        // TODO: Implement supportsDynamicConstraints() method.
-    }
-
-    /**
-     * Prepares a sql statement to be executed
+     * Prepares a sql statement to be executed.
      *
-     * @param string|\Cake\Database\Query $query The query to convert into a statement.
+     * @param \Cake\Database\Query|string $query The query to convert into a statement.
      * @return \Cake\Database\StatementInterface
      */
-    public function prepare($query): StatementInterface
+    public function prepare(Query|string $query): StatementInterface
     {
         $this->connect();
-        $isObject = ($query instanceof \Cake\ORM\Query) || ($query instanceof \Cake\Database\Query);
-        $queryStringRaw = $isObject ? $query->sql() : $query;
+        $queryStringRaw = $query instanceof Query ? $query->sql() : $query;
         $queryString = $this->_fromDualIfy($queryStringRaw);
         [$queryString, $paramMap] = self::convertPositionalToNamedPlaceholders($queryString);
-        $innerStatement = $this->_connection->prepare($queryString);
 
-        $statement = $this->_wrapStatement($innerStatement);
-        $statement->queryString = $queryStringRaw;
-        $statement->paramMap = $paramMap;
-
-        $disableBuffer = false;
-        $normalizedQuery = substr(strtolower(trim($queryString, " \t\n\r\0\x0B(")), 0, 6);
-        if ($normalizedQuery !== 'select') {
-            $disableBuffer = true;
-        }
-        if ($normalizedQuery == 'alter ') {
-            $alt = true;
-        }
-        if ($normalizedQuery == 'create') {
-            $cr = true;
+        try {
+            $innerStatement = $this->getPdo()->prepare($queryString);
+        } catch (PDOException $e) {
+            throw new QueryException($queryString, $e);
         }
 
-        if (
-            $isObject
-            && !$query->isBufferedResultsEnabled()
-            || $disableBuffer
-        ) {
-                $statement->bufferResults(false);
-        }
+        /** @var \CakeDC\OracleDriver\Database\Statement\OracleStatement $statement */
+        $statement = new OracleStatement(
+            $innerStatement,
+            $this,
+            $this->getResultSetDecorators($query),
+        );
+        $statement->setRawQueryString($queryStringRaw);
+        $statement->setParamMap($paramMap);
 
         return $statement;
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function compileQuery(Query $query, ValueBinder $generator): array
-    {
-        if ($this->_serverVersion !== null && $this->_serverVersion >= 12) {
-            $processor = new Oracle12Compiler();
-        } else {
-            $processor = new OracleCompiler();
-        }
-
-        $translator = $this->queryTranslator($query->type());
-        $query = $translator($query);
-
-        return [$query, $processor->compile($query, $generator)];
-    }
-
-    /**
      * Add "FROM DUAL" to SQL statements that are SELECT statements
-     * with no FROM clause specified
+     * with no FROM clause specified.
      *
      * @param string $queryString query
      * @return string
      */
-    protected function _fromDualIfy($queryString)
+    protected function _fromDualIfy(string $queryString): string
     {
         $statement = strtolower(trim($queryString));
-        if (strpos($statement, 'select') !== 0 || preg_match('/\sfrom\s/', $statement)) {
+        if (!str_starts_with($statement, 'select') || preg_match('/\sfrom\s/', $statement)) {
             return $queryString;
         }
 
@@ -259,20 +224,10 @@ abstract class OracleBase extends Driver
     /**
      * Converts positional (?) into named placeholders (:param<num>).
      *
-     * Oracle does not support positional parameters, hence this method converts all
-     * positional parameters into artificially named parameters. Note that this conversion
-     * is not perfect. All question marks (?) in the original statement are treated as
-     * placeholders and converted to a named parameter.
-     *
-     * The algorithm uses a state machine with two possible states: InLiteral and NotInLiteral.
-     * Question marks inside literal strings are therefore handled correctly by this method.
-     * This comes at a cost, the whole sql statement has to be looped over.
-     *
      * @param string $query The SQL statement to convert.
-     *
-     * @return string
+     * @return array{0: string, 1: array<int, string>}
      */
-    public function convertPositionalToNamedPlaceholders($query)
+    public function convertPositionalToNamedPlaceholders(string $query): array
     {
         $count = 0;
         $inLiteral = false;
@@ -297,21 +252,148 @@ abstract class OracleBase extends Driver
     /**
      * @inheritDoc
      */
-    public function lastInsertId(?string $table = null, ?string $column = null)
+    public function lastInsertId(?string $table = null, ?string $column = null): string
     {
         if ($this->useAutoincrement()) {
-            return $this->_autoincrementSequenceId($table, $column);
-        } else {
-            $sequenceName = 'seq_' . strtolower($table);
-            $this->connect();
-            $statement = $this->_connection->query("SELECT {$sequenceName}.CURRVAL FROM DUAL");
-            $result = $statement->fetch(PDO::FETCH_NUM);
-            if (count($result) === 0) {
-                return $this->_autoincrementSequenceId($table, $column);
-            }
-
-            return $result[0];
+            return (string)$this->_autoincrementSequenceId($table, $column);
         }
+
+        $tableName = $this->normalizeCatalogName($table);
+        $sequenceName = 'seq_' . $tableName;
+        $this->connect();
+        $currval = $this->fetchSequenceCurrval($sequenceName);
+        if ($currval !== null) {
+            return (string)$currval;
+        }
+
+        return (string)$this->_autoincrementSequenceId($table, $column);
+    }
+
+    /**
+     * Normalizes a table or column name for data-dictionary lookups.
+     *
+     * @param string|null $name Identifier name.
+     * @return string
+     */
+    protected function normalizeCatalogName(?string $name): string
+    {
+        $name = trim((string)$name, '"');
+        if (str_contains($name, '.')) {
+            $parts = explode('.', $name);
+            $name = (string)end($parts);
+            $name = trim($name, '"');
+        }
+
+        if ($this->isAutoQuotingEnabled()) {
+            return strtolower($name);
+        }
+
+        return strtoupper($name);
+    }
+
+    /**
+     * Reads CURRVAL for a sequence in the current session.
+     *
+     * @param string $sequenceName Sequence name.
+     * @return int|string|null
+     */
+    protected function fetchSequenceCurrval(string $sequenceName): int|string|null
+    {
+        try {
+            $statement = $this->getPdo()->query("SELECT {$sequenceName}.CURRVAL FROM DUAL");
+            $result = $statement->fetch(PDO::FETCH_NUM);
+            if ($result !== false && isset($result[0])) {
+                return $result[0];
+            }
+        } catch (PDOException|OCI8Exception|Throwable) {
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the highest primary-key value as a last-resort insert id.
+     *
+     * @param string|null $table Table name.
+     * @param string|null $column Column name.
+     * @return int|string|null
+     */
+    protected function fetchLastInsertIdFromMax(?string $table, ?string $column): int|string|null
+    {
+        if ($table === null || $table === '') {
+            return null;
+        }
+
+        $columnName = $column !== null && $column !== '' ? $column : 'id';
+        $quotedTable = $this->quoteIfAutoQuote(trim((string)$table, '"'));
+        $quotedColumn = $this->quoteIfAutoQuote($columnName);
+
+        try {
+            $statement = $this->getPdo()->query("SELECT MAX({$quotedColumn}) FROM {$quotedTable}");
+            $result = $statement->fetch(PDO::FETCH_NUM);
+            if ($result !== false && isset($result[0]) && $result[0] !== null) {
+                return $result[0];
+            }
+        } catch (PDOException|OCI8Exception|Throwable) {
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns last insert id by autoincrement sequence.
+     *
+     * @param string|null $table Table name.
+     * @param string|null $column Column name
+     * @return int|string
+     */
+    protected function _autoincrementSequenceId(?string $table, ?string $column): int|string
+    {
+        $tableName = $this->normalizeCatalogName($table);
+        $columnName = $column !== null && $column !== '' ? $this->normalizeCatalogName($column) : null;
+
+        $this->connect();
+
+        if ($this->useAutoincrement()) {
+            try {
+                $sql = 'SELECT sequence_name FROM user_tab_identity_cols WHERE table_name = :p_table';
+                $params = [':p_table' => $tableName];
+                if ($columnName !== null) {
+                    $sql .= ' AND column_name = :p_column';
+                    $params[':p_column'] = $columnName;
+                }
+                $seqStatement = $this->getPdo()->prepare($sql);
+                $seqStatement->execute($params);
+                $result = $seqStatement->fetch(PDO::FETCH_NUM);
+                if ($result !== false && !empty($result[0])) {
+                    $currval = $this->fetchSequenceCurrval((string)$result[0]);
+                    if ($currval !== null) {
+                        return $currval;
+                    }
+                }
+            } catch (PDOException|OCI8Exception|Throwable) {
+            }
+        }
+
+        $sequenceCandidates = [];
+        if ($this->isAutoQuotingEnabled()) {
+            $sequenceCandidates[] = 'seq_' . $tableName;
+        }
+        $sequenceCandidates[] = 'SEQ_' . strtoupper($tableName);
+
+        foreach ($sequenceCandidates as $sequenceName) {
+            $currval = $this->fetchSequenceCurrval($sequenceName);
+            if ($currval !== null) {
+                return $currval;
+            }
+        }
+
+        $maxId = $this->fetchLastInsertIdFromMax($table, $column);
+        if ($maxId !== null) {
+            return $maxId;
+        }
+
+        return 0;
     }
 
     /**
@@ -319,18 +401,15 @@ abstract class OracleBase extends Driver
      */
     public function isConnected(): bool
     {
-        if ($this->_connection === null) {
-            $connected = false;
-        } else {
-            try {
-                $connected = $this->_connection->query('SELECT 1 FROM DUAL');
-            } catch (\PDOException $e) {
-                $connected = false;
-            }
+        if ($this->pdo === null) {
+            return false;
         }
-        $this->connected = !empty($connected);
 
-        return $this->connected;
+        try {
+            return (bool)$this->pdo->query('SELECT 1 FROM DUAL');
+        } catch (PDOException) {
+            return false;
+        }
     }
 
     /**
@@ -339,7 +418,7 @@ abstract class OracleBase extends Driver
      * @param string $identifier The identifier to quote.
      * @return string
      */
-    public function quoteIfAutoQuote($identifier)
+    public function quoteIfAutoQuote(string $identifier): string
     {
         if ($this->isAutoQuotingEnabled()) {
             return $this->quoteIdentifier($identifier);
@@ -349,22 +428,11 @@ abstract class OracleBase extends Driver
     }
 
     /**
-     * Wrap statement into cakephp statements to provide additional functionality.
-     *
-     * @param \CakeDC\OracleDriver\Database\Driver\Statement $statement Original statement to wrap.
-     * @return \CakeDC\OracleDriver\Database\Statement\OracleStatement
-     */
-    protected function _wrapStatement($statement)
-    {
-        return new OracleStatement(new PDOStatement($statement, $this), $this);
-    }
-
-    /**
      * Show if driver supports oci layer calls.
      *
      * @return bool
      */
-    public function isOci()
+    public function isOci(): bool
     {
         return false;
     }
@@ -373,41 +441,12 @@ abstract class OracleBase extends Driver
      * Prepares a PL/SQL statement to be executed.
      *
      * @param string $queryString The PL/SQL to convert into a prepared statement.
-     * @param array $options Statement options.
+     * @param array<string, mixed> $options Statement options.
      * @return \Cake\Database\StatementInterface
      */
-    public function prepareMethod($queryString, $options = [])
+    public function prepareMethod(string $queryString, array $options = []): StatementInterface
     {
         throw new NotImplementedException(__('method not implemented for this driver'));
-    }
-
-    /**
-     * Returns last insert id by autoincrement sequence.
-     *
-     * @param string $table Table name.
-     * @param string $column Column name
-     * @return int
-     */
-    protected function _autoincrementSequenceId(?string $table, ?string $column)
-    {
-        if ($this->isAutoQuotingEnabled()) {
-            $tableName = $table;
-            $columnName = $column;
-        } else {
-            $tableName = strtoupper($table);
-            $columnName = strtoupper($column);
-        }
-        $query = "select sequence_name from user_tab_identity_cols where table_name='$tableName' and column_name='$columnName'";
-        $this->connect();
-        $seqStatement = $this->_connection->query($query);
-        $result = $seqStatement->fetch(PDO::FETCH_NUM);
-
-        $sequenceName = $result[0];
-
-        $statement = $this->_connection->query("SELECT {$sequenceName}.CURRVAL FROM DUAL");
-        $result = $statement->fetch(PDO::FETCH_NUM);
-
-        return $result[0];
     }
 
     /**
@@ -417,9 +456,9 @@ abstract class OracleBase extends Driver
     {
         if ($this->_serverVersion !== null && $this->_serverVersion >= 12.2) {
             return static::MAX_ALIAS_LENGTH12;
-        } else {
-            return static::MAX_ALIAS_LENGTH;
         }
+
+        return static::MAX_ALIAS_LENGTH;
     }
 
     /**
@@ -431,8 +470,39 @@ abstract class OracleBase extends Driver
     {
         if ($this->_serverVersion !== null && $this->_serverVersion >= 12) {
             return new Oracle12Compiler();
-        } else {
-            return new OracleCompiler();
         }
+
+        return new OracleCompiler();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function schema(): string
+    {
+        return (string)($this->_config['database'] ?? '');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function supports(DriverFeatureEnum $feature): bool
+    {
+        $version = $this->_serverVersion ?? 11;
+
+        return match ($feature) {
+            DriverFeatureEnum::DISABLE_CONSTRAINT_WITHOUT_TRANSACTION,
+            DriverFeatureEnum::SAVEPOINT,
+            DriverFeatureEnum::INTERSECT,
+            DriverFeatureEnum::INTERSECT_ALL,
+            DriverFeatureEnum::SET_OPERATIONS_ORDER_BY,
+            DriverFeatureEnum::OPTIMIZER_HINT_COMMENT => true,
+            DriverFeatureEnum::TRUNCATE_WITH_CONSTRAINTS => true,
+            DriverFeatureEnum::JSON => false,
+            DriverFeatureEnum::CTE,
+            DriverFeatureEnum::WINDOW,
+            DriverFeatureEnum::CHECK_CONSTRAINTS => $version >= 12,
+            default => false,
+        };
     }
 }

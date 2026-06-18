@@ -16,6 +16,8 @@ namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 use Cake\Datasource\ConnectionManager;
 use Cake\Database\Expression\FunctionExpression;
 use Cake\Database\Expression\IdentifierExpression;
+use Cake\Database\Expression\QueryExpression;
+use Cake\ORM\Entity;
 use Cake\ORM\Exception\PersistenceFailedException;
 use Cake\ORM\Table;
 use Cake\Test\TestCase\ORM\TableTest as CakeTableTest;
@@ -28,7 +30,7 @@ use TestApp\Model\Entity\ProtectedEntity;
  */
 class TableTest extends CakeTableTest
 {
-    public $fixtures = [
+    protected array $fixtures = [
         'core.Articles',
         'core.Tags',
         //'core.ArticlesTags',
@@ -49,7 +51,7 @@ class TableTest extends CakeTableTest
      *
      * @return void
      */
-    public function testFindListNoHydration()
+    public function testFindListNoHydration(): void
     {
         $table = new Table([
             'table' => 'users',
@@ -59,7 +61,7 @@ class TableTest extends CakeTableTest
         $query = $table
             ->find('list')
             ->enableHydration(false)
-            ->order('id');
+            ->orderBy('id');
         $expected = [
             1 => 'mariano',
             2 => 'nate',
@@ -68,9 +70,9 @@ class TableTest extends CakeTableTest
         ];
         $this->assertSame($expected, $query->toArray());
 
-        $query = $table->find('list', ['fields' => ['id', 'username']])
+        $query = $table->find('list', keyField: 'id', valueField: 'username')
                        ->enableHydration(false)
-                       ->order('id');
+                       ->orderBy('id');
         $expected = [
             1 => 'mariano',
             2 => 'nate',
@@ -79,14 +81,14 @@ class TableTest extends CakeTableTest
         ];
         $this->assertSame($expected, $query->toArray());
 
-        $query = $table->find('list', ['groupField' => 'odd'])
+        $query = $table->find('list', groupField: 'odd')
            ->select([
                'id',
                'username',
                'odd' => new FunctionExpression('MOD', [new IdentifierExpression('id'), 2]),
            ])
            ->enableHydration(false)
-           ->order('id');
+           ->orderBy('id');
         $expected = [
             1 => [
                 1 => 'mariano',
@@ -105,15 +107,15 @@ class TableTest extends CakeTableTest
      *
      * @return void
      */
-    public function testFindListHydrated()
+    public function testFindListHydrated(): void
     {
         $table = new Table([
             'table' => 'users',
             'connection' => $this->connection,
         ]);
         $table->setDisplayField('username');
-        $query = $table->find('list', ['fields' => ['id', 'username']])
-                       ->order('id');
+        $query = $table->find('list', keyField: 'id', valueField: 'username')
+                       ->orderBy('id');
         $expected = [
             1 => 'mariano',
             2 => 'nate',
@@ -122,14 +124,14 @@ class TableTest extends CakeTableTest
         ];
         $this->assertSame($expected, $query->toArray());
 
-        $query = $table->find('list', ['groupField' => 'odd'])
+        $query = $table->find('list', groupField: 'odd')
            ->select([
                'id',
                'username',
                'odd' => new FunctionExpression('MOD', [new IdentifierExpression('id'), 2]),
            ])
            ->enableHydration(true)
-           ->order('id');
+           ->orderBy('id');
         $expected = [
             1 => [
                 1 => 'mariano',
@@ -148,7 +150,7 @@ class TableTest extends CakeTableTest
      *
      * @return void
      */
-    public function testSaveReplaceSaveStrategyAdding()
+    public function testSaveReplaceSaveStrategyAdding(): void
     {
         $articles = new Table([
                 'table' => 'articles',
@@ -208,7 +210,7 @@ class TableTest extends CakeTableTest
      *
      * @return void
      */
-    public function testFindOrCreatePartialValidation()
+    public function testFindOrCreatePartialValidation(): void
     {
         $articles = $this->getTableLocator()->get('Articles');
         $articles->setEntityClass(ProtectedEntity::class);
@@ -226,9 +228,81 @@ class TableTest extends CakeTableTest
         $articles->findOrCreate(['title' => 'test']);
     }
 
-    public function testPolymorphicBelongsToManySave()
+    public function testSubqueryJoinClause(): void
+    {
+        $subquery = $this->getTableLocator()->get('Articles')->subquery()
+            ->select(['author_id']);
+
+        $query = $this->getTableLocator()->get('Authors')->find();
+        $query
+            ->select([
+                'Authors.id',
+                'total_articles' => $query->func()->count(new IdentifierExpression('articles.author_id')),
+            ])
+            ->leftJoin(['articles' => $subquery], ['articles.author_id' => new IdentifierExpression('Authors.id')])
+            ->groupBy(['Authors.id'])
+            ->orderBy(['Authors.id' => 'ASC']);
+
+        $results = $query->all()->toList();
+        $this->assertEquals(1, $results[0]->id);
+        $this->assertEquals(2, $results[0]->total_articles);
+    }
+
+    public function testUpdateExpression(): void
+    {
+        $table = new Table([
+            'table' => 'counter_cache_users',
+            'connection' => $this->connection,
+        ]);
+        $entity = new Entity([
+            'name' => 'test',
+            'post_count' => 0,
+            'comment_count' => 0,
+            'posts_published' => 0,
+        ]);
+        $table->save($entity);
+        $expression = new QueryExpression(['"post_count" = "post_count" + 1']);
+        $result = $table->updateAll([$expression], ['id' => $entity->id]);
+        $this->assertNotEmpty($result);
+    }
+
+    public function testPolymorphicBelongsToManySave(): void
     {
         $this->skipIf(ConnectionManager::get('test')->getDriver()->getMaxAliasLength() < 31);
-        parent::testPolymorphicBelongsToManySave();
+
+        $articles = $this->getTableLocator()->get('Articles');
+        $articles->Tags->setThrough('PolymorphicTagged')
+            ->setForeignKey('foreign_key')
+            ->setConditions(['PolymorphicTagged.foreign_model' => 'Articles'])
+            ->setSort(['PolymorphicTagged.position' => 'ASC']);
+
+        $entity = $articles->get(1, contain: ['Tags']);
+        $data = [
+            'id' => 1,
+            'tags' => [
+                ['id' => 1, '_joinData' => ['id' => 2, 'foreign_model' => 'Articles', 'position' => 2]],
+                ['id' => 2, '_joinData' => ['foreign_model' => 'Articles', 'position' => 1]],
+            ],
+        ];
+        $entity = $articles->patchEntity($entity, $data, ['associated' => ['Tags._joinData']]);
+        $entity = $articles->save($entity);
+
+        $result = $this->getTableLocator()->get('PolymorphicTagged')
+            ->find('all')
+            ->enableHydration(false)
+            ->orderBy(['id' => 'ASC'])
+            ->toArray();
+
+        $this->assertCount(3, $result);
+
+        $postRow = array_values(array_filter($result, fn($r) => $r['foreign_model'] === 'Posts'));
+        $articleRows = array_values(array_filter($result, fn($r) => $r['foreign_model'] === 'Articles'));
+        usort($articleRows, fn($a, $b) => $a['tag_id'] <=> $b['tag_id']);
+
+        $this->assertSame('Posts', $postRow[0]['foreign_model']);
+        $this->assertSame(1, $articleRows[0]['tag_id']);
+        $this->assertSame(2, $articleRows[0]['position']);
+        $this->assertSame(2, $articleRows[1]['tag_id']);
+        $this->assertSame(1, $articleRows[1]['position']);
     }
 }

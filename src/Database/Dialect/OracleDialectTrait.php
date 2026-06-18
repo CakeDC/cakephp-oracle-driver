@@ -15,12 +15,10 @@ namespace CakeDC\OracleDriver\Database\Dialect;
 use Cake\Database\Expression\FunctionExpression;
 use Cake\Database\ExpressionInterface;
 use Cake\Database\Query;
-use Cake\Database\QueryCompiler;
-use Cake\Database\Schema\BaseSchema;
-use Cake\Database\SqlDialectTrait;
+use Cake\Database\Query\InsertQuery;
+use Cake\Database\Query\SelectQuery;
+use Cake\Database\Schema\SchemaDialect;
 use CakeDC\OracleDriver\Database\Expression\SimpleExpression;
-use CakeDC\OracleDriver\Database\Oracle12Compiler;
-use CakeDC\OracleDriver\Database\OracleCompiler;
 use CakeDC\OracleDriver\Database\Schema\OracleSchema;
 
 /**
@@ -29,47 +27,24 @@ use CakeDC\OracleDriver\Database\Schema\OracleSchema;
  */
 trait OracleDialectTrait
 {
-    use SqlDialectTrait;
-
     /**
-     *  String used to start a database identifier quoting to make it safe
+     * Distinct clause needs no transformation.
      *
-     * @var string
+     * @param \Cake\Database\Query\SelectQuery $query The query to be transformed
+     * @return \Cake\Database\Query\SelectQuery
      */
-    protected $_startQuote = '"';
-
-    /**
-     * String used to end a database identifier quoting to make it safe
-     *
-     * @var string
-     */
-    protected $_endQuote = '"';
-
-    /**
-     * The schema dialect class for this driver
-     *
-     * @var \CakeDC\OracleDriver\Database\Schema\OracleSchema
-     */
-    protected $_schemaDialect;
-
-    /**
-     * Distinct clause needs no transformation
-     *
-     * @param \Cake\Database\Query $query The query to be transformed
-     * @return \Cake\Database\Query
-     */
-    protected function _transformDistinct(Query $query): Query
+    protected function _transformDistinct(SelectQuery $query): SelectQuery
     {
         return $query;
     }
 
     /**
-     * Modify the limit/offset to oracle
+     * Modify the limit/offset to oracle.
      *
-     * @param \Cake\Database\Query $query The query to translate
-     * @return \Cake\Database\Query The modified query
+     * @param \Cake\Database\Query\SelectQuery $query The query to translate
+     * @return \Cake\Database\Query\SelectQuery The modified query
      */
-    protected function _selectQueryTranslator(Query $query): Query
+    protected function _selectQueryTranslator(SelectQuery $query): SelectQuery
     {
         $limit = $query->clause('limit');
         $offset = $query->clause('offset');
@@ -77,9 +52,9 @@ trait OracleDialectTrait
         if ($offset !== null || $limit !== null) {
             if ($this->_serverVersion !== null && $this->_serverVersion >= 12) {
                 return $this->_pagingSubquery12($query, $limit, $offset);
-            } else {
-                return $this->_pagingSubquery($query, $limit, $offset);
             }
+
+            return $this->_pagingSubquery($query, $limit, $offset);
         }
 
         return $this->_transformDistinct($query);
@@ -88,15 +63,12 @@ trait OracleDialectTrait
     /**
      * Generate a paging subquery for older versions of Oracle Server.
      *
-     * Prior to Oracle 12 there was no equivalent to LIMIT OFFSET,
-     * so a subquery must be used.
-     *
-     * @param \Cake\Database\Query $original The query to wrap in a subquery.
-     * @param int $limit The number of rows to fetch.
-     * @param int $offset The number of rows to offset.
-     * @return \Cake\Database\Query Modified query object.
+     * @param \Cake\Database\Query\SelectQuery $original The query to wrap in a subquery.
+     * @param int|null $limit The number of rows to fetch.
+     * @param int|null $offset The number of rows to offset.
+     * @return \Cake\Database\Query\SelectQuery Modified query object.
      */
-    protected function _pagingSubquery($original, $limit, $offset)
+    protected function _pagingSubquery(SelectQuery $original, ?int $limit, ?int $offset): SelectQuery
     {
         $field = 'cake_paging_out."_cake_page_rownum_"';
 
@@ -104,7 +76,8 @@ trait OracleDialectTrait
         $query->limit(null)
             ->offset(null);
 
-        $outer = new Query($query->getConnection());
+        $connection = $query->getConnection();
+        $outer = $connection->selectQuery();
         $outer
             ->select([
                 'cake_paging.*',
@@ -112,7 +85,7 @@ trait OracleDialectTrait
             ])
             ->from(['cake_paging' => $query]);
 
-        $outer2 = new Query($query->getConnection());
+        $outer2 = $connection->selectQuery();
         $outer2->select('*')
             ->from(['cake_paging_out' => $outer]);
 
@@ -138,47 +111,39 @@ trait OracleDialectTrait
     }
 
     /**
-     * Generate a paging subquery for older versions of Oracle Server.
+     * Generate a paging subquery for Oracle 12+.
      *
-     * Prior to Oracle 12 there was no equivalent to LIMIT OFFSET,
-     * so a subquery must be used.
-     *
-     * @param \Cake\Database\Query $original The query to wrap in a subquery.
-     * @param int $limit The number of rows to fetch.
-     * @param int $offset The number of rows to offset.
-     * @return \Cake\Database\Query Modified query object.
+     * @param \Cake\Database\Query\SelectQuery $original The query to wrap in a subquery.
+     * @param int|null $limit The number of rows to fetch.
+     * @param int|null $offset The number of rows to offset.
+     * @return \Cake\Database\Query\SelectQuery Modified query object.
      */
-    protected function _pagingSubquery12($original, $limit, $offset)
+    protected function _pagingSubquery12(SelectQuery $original, ?int $limit, ?int $offset): SelectQuery
     {
-        // @todo add hints support for selects like "select /*+ FIRST_ROWS({$query->limit}) */"
-
         return $original;
     }
 
     /**
      * Returns a dictionary of expressions to be transformed when compiling a Query
-     * to SQL. Array keys are method names to be called in this class
+     * to SQL. Array keys are method names to be called in this class.
      *
-     * @return array
+     * @return array<class-string, string>
      */
     protected function _expressionTranslators(): array
     {
-        $namespace = 'Cake\Database\Expression';
-
         return [
-            $namespace . '\FunctionExpression' => '_transformFunctionExpression',
+            FunctionExpression::class => '_transformFunctionExpression',
         ];
     }
 
     /**
      * Receives a FunctionExpression and changes it so that it conforms to this SQL dialect.
      *
-     * @param \Cake\Database\Expression\FunctionExpression $expression The function expression
-
-     * to convert to oracle SQL.
+     * @param \Cake\Database\Expression\FunctionExpression $expression The function expression to convert to oracle SQL.
+     * @param \Cake\Database\Query $query The query being compiled.
      * @return void
      */
-    protected function _transformFunctionExpression(FunctionExpression $expression): void
+    protected function _transformFunctionExpression(FunctionExpression $expression, Query $query): void
     {
         switch ($expression->getName()) {
             case 'RAND':
@@ -239,14 +204,11 @@ trait OracleDialectTrait
     /**
      * Get the schema dialect.
      *
-     * Used by Cake\Database\Schema package to reflect schema and
-     * generate schema.
-     *
      * @return \CakeDC\OracleDriver\Database\Schema\OracleSchema
      */
-    public function schemaDialect(): BaseSchema
+    public function schemaDialect(): SchemaDialect
     {
-        if (!$this->_schemaDialect) {
+        if (!isset($this->_schemaDialect)) {
             $this->_schemaDialect = new OracleSchema($this);
         }
 
@@ -255,6 +217,7 @@ trait OracleDialectTrait
 
     /**
      * {@inheritDoc}
+     *
      * @see http://www.dba-oracle.com/t_enabling_disabling_constraints.htm
      */
     public function disableForeignKeySQL(): string
@@ -264,6 +227,7 @@ trait OracleDialectTrait
 
     /**
      * {@inheritDoc}
+     *
      * @see http://www.dba-oracle.com/t_enabling_disabling_constraints.htm
      */
     public function enableForeignKeySQL(): string
@@ -272,7 +236,7 @@ trait OracleDialectTrait
     }
 
     /**
-     * Get the SQL for enabling or disabling foreign keys
+     * Get the SQL for enabling or disabling foreign keys.
      *
      * @param string $type "enable" or "disable"
      * @return string
@@ -305,39 +269,21 @@ trait OracleDialectTrait
     }
 
     /**
-     * {@inheritDoc}
-     *
-     * @return \CakeDC\OracleDriver\Database\OracleCompiler
-     */
-    public function newCompiler(): QueryCompiler
-    {
-        if ($this->_serverVersion !== null && $this->_serverVersion >= 12) {
-            $processor = new Oracle12Compiler();
-        } else {
-            $processor = new OracleCompiler();
-        }
-
-        return $processor;
-    }
-
-    /**
      * Transforms an insert query that is meant to insert multiple rows at a time,
      * otherwise it leaves the query untouched.
      *
-     * The way Oracle works with multi insert is by having multiple
-     * "SELECT FROM DUAL" select statements joined with UNION.
-     *
-     * @param \Cake\Database\Query $query The query to translate
-     * @return \Cake\Database\Query
+     * @param \Cake\Database\Query\InsertQuery $query The query to translate
+     * @return \Cake\Database\Query\InsertQuery
      */
-    protected function _insertQueryTranslator(Query $query): Query
+    protected function _insertQueryTranslator(InsertQuery $query): InsertQuery
     {
         $v = $query->clause('values');
         if ((is_countable($v->getValues()) ? count($v->getValues()) : 0) === 1 || $v->getQuery()) {
             return $query;
         }
 
-        $newQuery = $query->getConnection()->newQuery();
+        $connection = $query->getConnection();
+        $newQuery = $connection->selectQuery();
         $cols = $v->getColumns();
         $placeholder = 0;
         $replaceQuery = false;
@@ -362,7 +308,7 @@ trait OracleDialectTrait
                 continue;
             }
 
-            $q = $newQuery->getConnection()->newQuery();
+            $q = $connection->selectQuery();
             $newQuery->unionAll($q->select($select)->from('DUAL'));
         }
 

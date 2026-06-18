@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Copyright 2015 - 2020, Cake Development Corporation (http://cakedc.com)
  *
@@ -11,36 +13,31 @@
 
 namespace CakeDC\OracleDriver\Test\Fixture;
 
-use Cake\TestSuite\Fixture\TestFixture;
-
 /**
- * Short description for class.
- *
+ * Articles fixture for Oracle driver tests.
  */
-class ArticlesFixture extends TestFixture
+class ArticlesFixture extends SchemaAwareTestFixture
 {
-    /**
-     * fields property
-     *
-     * @var array
-     */
-    public $fields = [
-        'id' => ['type' => 'integer'],
-        'author_id' => ['type' => 'integer', 'null' => true],
-        'title' => ['type' => 'string', 'null' => true],
-        'body' => 'text',
-        'published' => ['type' => 'string', 'length' => 1, 'default' => 'N'],
-        '_constraints' => ['primary' => ['type' => 'primary', 'columns' => ['id']]],
-    ];
+    public string $table = 'articles';
 
-    /**
-     * records property
-     *
-     * @var array
-     */
-    public $records = [
+    public array $records = [
         ['author_id' => 1, 'title' => 'First Article', 'body' => 'First Article Body', 'published' => 'Y'],
         ['author_id' => 3, 'title' => 'Second Article', 'body' => 'Second Article Body', 'published' => 'Y'],
         ['author_id' => 1, 'title' => 'Third Article', 'body' => 'Third Article Body', 'published' => 'Y'],
     ];
+
+    /**
+     * @inheritDoc
+     */
+    protected function getFieldDefinitions(): array
+    {
+        return [
+            'id' => ['type' => 'integer'],
+            'author_id' => ['type' => 'integer', 'null' => true],
+            'title' => ['type' => 'string', 'null' => true],
+            'body' => 'text',
+            'published' => ['type' => 'string', 'length' => 1, 'default' => 'N'],
+            '_constraints' => ['primary' => ['type' => 'primary', 'columns' => ['id']]],
+        ];
+    }
 }

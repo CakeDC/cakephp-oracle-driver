@@ -26,7 +26,7 @@ class AssociationProxyTest extends CakeAssociationProxyTest
      *
      * @return void
      */
-    public function testUpdateAllFromAssociation()
+    public function testUpdateAllFromAssociation(): void
     {
         $articles = $this->getTableLocator()->get('articles');
         $comments = $this->getTableLocator()->get('comments');

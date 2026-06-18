@@ -15,27 +15,21 @@ namespace CakeDC\OracleDriver\Database\Driver;
 use CakeDC\OracleDriver\Database\OCI8\OCI8Connection;
 use CakeDC\OracleDriver\Database\Statement\Method\MethodOracleStatement;
 use CakeDC\OracleDriver\Database\Statement\Method\MethodPDOStatement;
+use PDO;
 
 class OracleOCI extends OracleBase
 {
     /**
-     * @var bool|mixed
-     */
-    public $connected;
-
-    /**
      * @inheritDoc
      */
-    protected function _connect(string $dsn, array $config): bool
+    protected function createConnection(string $dsn, array $config): PDO
     {
         $config['flags'] += [
             'charset' => empty($config['encoding']) ? null : $config['encoding'],
             'persistent' => empty($config['persistent']) ? false : $config['persistent'],
         ];
-        $connection = new OCI8Connection($dsn, $config['username'], $config['password'], $config['flags']);
-        $this->setConnection($connection);
 
-        return true;
+        return new OCI8Connection($dsn, $config['username'], $config['password'], $config['flags']);
     }
 
     /**
@@ -47,16 +41,33 @@ class OracleOCI extends OracleBase
     }
 
     /**
+     * @inheritDoc
+     */
+    public function version(): string
+    {
+        if ($this->_version === null) {
+            $this->connect();
+            if ($this->pdo instanceof OCI8Connection) {
+                $this->_version = (string)$this->pdo->getServerVersion();
+            } else {
+                $this->_version = parent::version();
+            }
+        }
+
+        return $this->_version;
+    }
+
+    /**
      * Prepares a PL/SQL statement to be executed.
      *
      * @param string $queryString The PL/SQL to convert into a prepared statement.
-     * @param array $options Statement options.
+     * @param array<string, mixed> $options Statement options.
      * @return \Cake\Database\StatementInterface
      */
-    public function prepareMethod($queryString, $options = [])
+    public function prepareMethod(string $queryString, array $options = []): \Cake\Database\StatementInterface
     {
         $this->connect();
-        $innerStatement = $this->_connection->prepare($queryString);
+        $innerStatement = $this->getPdo()->prepare($queryString);
         $statement = new MethodPDOStatement($innerStatement, $this);
         if (!empty($options['bufferResult'])) {
             $statement = new MethodOracleStatement($statement, $this);
@@ -71,7 +82,7 @@ class OracleOCI extends OracleBase
      *
      * @return bool
      */
-    public function isOci()
+    public function isOci(): bool
     {
         return true;
     }

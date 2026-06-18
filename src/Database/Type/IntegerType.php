@@ -16,10 +16,9 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Type;
 
-use Cake\Database\DriverInterface;
+use Cake\Database\Driver;
 use Cake\Database\Type\BaseType;
 use Cake\Database\Type\BatchCastingInterface;
-use Cake\Database\TypeInterface;
 use InvalidArgumentException;
 use PDO;
 
@@ -28,7 +27,7 @@ use PDO;
  *
  * Use to convert integer data between PHP and the database types.
  */
-class IntegerType extends BaseType implements TypeInterface, BatchCastingInterface
+class IntegerType extends BaseType implements BatchCastingInterface
 {
     /**
      * Identifier name for this type.
@@ -38,7 +37,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
      *
      * @var string|null
      */
-    protected $_name;
+    protected ?string $_name = null;
 
     /**
      * Constructor.
@@ -60,7 +59,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
      * @param mixed $value Value to check
      * @return void
      */
-    protected function checkNumeric($value)
+    protected function checkNumeric(mixed $value): void
     {
         if ($value === false) {
             $value = 0;
@@ -71,7 +70,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
         if (!is_numeric($value)) {
             throw new InvalidArgumentException(sprintf(
                 'Cannot convert value of type `%s` to integer',
-                getTypeName($value)
+                get_debug_type($value)
             ));
         }
     }
@@ -83,7 +82,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
      * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
      * @return int|null
      */
-    public function toDatabase($value, DriverInterface $driver)
+    public function toDatabase(mixed $value, Driver $driver): ?int
     {
         if ($value === null || $value === '') {
             return null;
@@ -101,7 +100,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
      * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
      * @return int|null
      */
-    public function toPHP($value, DriverInterface $driver)
+    public function toPHP(mixed $value, Driver $driver): ?int
     {
         if ($value === null) {
             return $value;
@@ -115,7 +114,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
      *
      * @return array
      */
-    public function manyToPHP(array $values, array $fields, DriverInterface $driver): array
+    public function manyToPHP(array $values, array $fields, Driver $driver): array
     {
         foreach ($fields as $field) {
             if (!isset($values[$field])) {
@@ -137,7 +136,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
      * @param \Cake\Database\Driver $driver The driver.
      * @return int
      */
-    public function toStatement($value, DriverInterface $driver)
+    public function toStatement(mixed $value, Driver $driver): int
     {
         return PDO::PARAM_INT;
     }
@@ -148,7 +147,7 @@ class IntegerType extends BaseType implements TypeInterface, BatchCastingInterfa
      * @param mixed $value The value to convert.
      * @return int|null Converted value.
      */
-    public function marshal($value)
+    public function marshal(mixed $value): ?int
     {
         if ($value === null || $value === '') {
             return null;

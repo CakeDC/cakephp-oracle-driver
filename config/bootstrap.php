@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Copyright 2015 - 2016, Cake Development Corporation (http://cakedc.com)
  *
@@ -9,7 +11,7 @@
  * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 
-use Cake\Database\Type;
+use Cake\Database\TypeFactory;
 
-Type::map('cursor', 'CakeDC\OracleDriver\Database\Type\CursorType');
-Type::map('boolean', 'CakeDC\OracleDriver\Database\Type\BoolType');
+TypeFactory::map('cursor', 'CakeDC\OracleDriver\Database\Type\CursorType');
+TypeFactory::map('boolean', 'CakeDC\OracleDriver\Database\Type\BoolType');

@@ -88,13 +88,13 @@ class MethodLoggingStatement extends MethodStatementDecorator
      * @param string|int|null $type PDO type or name of configured Type class
      * @return void
      */
-    public function bindValue($column, $value, $type = 'string'): void
+    public function bindValue(string|int $column, mixed $value, string|int|null $type = 'string'): void
     {
         parent::bindValue($column, $value, $type);
         if ($type === null) {
             $type = 'string';
         }
-        if (!ctype_digit($type)) {
+        if (!ctype_digit((string)$type)) {
             $value = $this->cast($value, $type)[0];
         }
         $this->_compiledParams[$column] = $value;
@@ -125,12 +125,9 @@ class MethodLoggingStatement extends MethodStatementDecorator
      * @param string|int|null $type PDO type or name of configured Type class
      * @return void
      */
-    public function bindParam($column, &$value, $type = 'string')
+    public function bindParam(string|int $column, mixed &$value, string|int $type = 'string'): void
     {
         parent::bindParam($column, $value, $type);
-        if ($type === null) {
-            $type = 'string';
-        }
         if (!ctype_digit((string)$type)) {
             $value = $this->cast($value, $type)[0];
         }

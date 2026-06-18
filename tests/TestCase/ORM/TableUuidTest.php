@@ -26,16 +26,16 @@ class TableUuidTest extends CakeTableUuidTest
      *
      * @var array
      */
-    public $fixtures = [
+    protected array $fixtures = [
         'core.UuidItems',
     ];
 
     /**
-     * Provider for testing that string and binary uuids work the same
+     * Provider for testing that string and binary uuids work the same.
      *
      * @return array
      */
-    public function uuidTableProvider()
+    public static function uuidTableProvider(): array
     {
         return [['uuid_items']];
     }

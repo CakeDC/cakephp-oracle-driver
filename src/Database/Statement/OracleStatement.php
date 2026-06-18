@@ -12,116 +12,125 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Statement;
 
-use Cake\Database\Statement\BufferedStatement;
-use Cake\Database\Statement\BufferResultsTrait;
-use Cake\Database\Statement\StatementDecorator;
+use Cake\Database\Statement\Statement;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
+use PDO;
 
 /**
- * Statement class meant to be used by an Oracle driver
+ * Statement class meant to be used by an Oracle driver.
  */
-class OracleStatement extends StatementDecorator
+class OracleStatement extends Statement
 {
-    use BufferResultsTrait;
-
-    public $queryString;
-
-    public $paramMap;
+    protected string $rawQueryString = '';
 
     /**
-     * {@inheritDoc}
+     * @var array<int|string, string|int>
      */
-    public function execute(?array $params = null): bool
+    protected array $paramMap = [];
+
+    /**
+     * @param string $sql Raw SQL before Oracle placeholder conversion.
+     * @return void
+     */
+    public function setRawQueryString(string $sql): void
     {
-        if ($this->_statement instanceof BufferedStatement) {
-            $this->_statement = $this->_statement->getInnerStatement();
-        }
-
-        if ($this->_bufferResults) {
-            $this->_statement = new OracleBufferedStatement($this->_statement, $this->_driver);
-        }
-
-        return $this->_statement->execute($params);
+        $this->rawQueryString = $sql;
     }
 
     /**
-     * {@inheritDoc}
+     * @param array<int|string, string|int> $paramMap Positional to named placeholder map.
+     * @return void
      */
-    public function __get($property)
+    public function setParamMap(array $paramMap): void
     {
-        if ($property === 'queryString') {
-            return empty($this->queryString) ? $this->_statement->queryString : $this->queryString;
-        }
+        $this->paramMap = $paramMap;
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function bind(array $params, array $types): void
+    public function queryString(): string
     {
-        if (empty($params)) {
-            return;
+        if ($this->rawQueryString !== '') {
+            return $this->rawQueryString;
         }
 
-        $anonymousParams = is_int(key($params));
-        $offset = 0;
-
-        foreach ($params as $index => $value) {
-            $type = null;
-            if (isset($types[$index])) {
-                $type = $types[$index];
-            }
-            if ($anonymousParams) {
-                $index += $offset;
-            }
-            $this->bindValue($index, $value, $type);
-        }
+        return parent::queryString();
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function bindValue($column, $value, $type = 'string'): void
+    protected function performBind(string|int $column, mixed $value, int $type): void
     {
         $column = $this->paramMap[$column] ?? $column;
-
-        // $type = $type == 'boolean' ? 'integer' : $type;
-
-        $this->_statement->bindValue($column, $value, $type);
+        parent::performBind($column, $value, $type);
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function fetch($type = 'num')
+    public function fetch(string|int $mode = PDO::FETCH_NUM): mixed
     {
-        $result = $this->_statement->fetch($type);
-        if (is_array($result)) {
-            foreach ($result as $key => &$value) {
-                if (is_resource($value)) {
-                    $value = stream_get_contents($value);
-                }
+        $row = parent::fetch($mode);
+        if (is_array($row)) {
+            foreach ($row as &$value) {
+                $value = $this->readLobValue($value);
             }
         }
 
-        return $result;
+        return $row;
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function fetchAll($type = 'num')
+    public function fetchAll(string|int $mode = PDO::FETCH_NUM): array
     {
-        $result = $this->_statement->fetchAll($type);
-        if (is_array($result)) {
-            foreach ($result as $k => $row) {
-                foreach ($row as $key => $value) {
-                    if (is_resource($value)) {
-                        $result[$k][$key] = stream_get_contents($value);
-                    }
-                }
+        $rows = parent::fetchAll($mode);
+        foreach ($rows as &$row) {
+            foreach ($row as &$value) {
+                $value = $this->readLobValue($value);
             }
         }
 
-        return $result;
+        return $rows;
+    }
+
+    /**
+     * @param mixed $value Value that may be a LOB resource or object.
+     * @return mixed
+     */
+    protected function readLobValue(mixed $value): mixed
+    {
+        if (is_resource($value)) {
+            return stream_get_contents($value);
+        }
+        if (is_object($value) && method_exists($value, 'load')) {
+            return $value->load();
+        }
+
+        return $value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function lastInsertId(?string $table = null, ?string $column = null): string|int
+    {
+        if ($column && $this->columnCount()) {
+            $row = $this->fetch(static::FETCH_TYPE_ASSOC);
+
+            if ($row && isset($row[$column])) {
+                return $row[$column];
+            }
+        }
+
+        $driver = $this->_driver;
+        if ($driver instanceof OracleBase) {
+            return $driver->lastInsertId($table, $column);
+        }
+
+        return $driver->lastInsertId($table);
     }
 }

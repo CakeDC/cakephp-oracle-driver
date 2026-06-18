@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\TestSuite\Fixture;
 
-use Cake\Core\Exception\Exception as CakeException;
+use Cake\Core\Exception\CakeException;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Log\Log;
 use Cake\Utility\Inflector;
@@ -119,9 +119,9 @@ class MethodTestFixture
                 $queries = (array)$this->create;
             }
             foreach ($queries as $query) {
-                $stmt = $db->prepare($query);
-                $stmt->execute();
-                $stmt->closeCursor();
+                $statement = $db->getDriver()->prepare($query);
+                $statement->execute();
+                $statement->closeCursor();
             }
         } catch (Exception $e) {
             $msg = sprintf(
@@ -149,9 +149,9 @@ class MethodTestFixture
                 $sql = (array)$this->drop;
             }
             foreach ($sql as $query) {
-                $stmt = $db->prepare($query);
-                $stmt->execute();
-                $stmt->closeCursor();
+                $statement = $db->getDriver()->prepare($query);
+                $statement->execute();
+                $statement->closeCursor();
             }
         } catch (Exception $e) {
             return false;

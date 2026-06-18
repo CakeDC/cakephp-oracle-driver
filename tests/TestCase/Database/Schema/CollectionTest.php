@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Test\TestCase\Database\Schema;
 
 use Cake\Cache\Cache;
-use Cake\Database\Exception;
+use Cake\Database\Exception\DatabaseException;
 use Cake\Datasource\ConnectionManager;
 use CakeDC\OracleDriver\Database\Schema\MethodsCollection;
 use CakeDC\OracleDriver\TestSuite\TestCase;
@@ -24,14 +24,19 @@ use CakeDC\OracleDriver\TestSuite\TestCase;
  */
 class CollectionTest extends TestCase
 {
-    public $codeFixtures = [
+    protected bool $autoFixtures = true;
+
+    /**
+     * @var array<string>
+     */
+    public array $codeFixtures = [
         'plugin.CakeDC/OracleDriver.Calc',
     ];
 
     /**
      * Oracle connection class instance.
      *
-     * @var OracleConnection
+     * @var \Cake\Database\Connection
      */
     public $connection;
 
@@ -69,7 +74,7 @@ class CollectionTest extends TestCase
      */
     public function testDescribeIncorrectMethod()
     {
-        $this->expectException(Exception::class);
+        $this->expectException(DatabaseException::class);
         $schema = new MethodsCollection($this->connection);
         $this->assertNull($schema->describe('CALC.SUM333'));
     }

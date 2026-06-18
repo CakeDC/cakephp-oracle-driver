@@ -149,7 +149,6 @@ class OracleFixtureInjector implements TestListener
      */
     public function startTest(Test $test): void
     {
-        $test->fixtureCodeManager = $this->_fixtureManager;
         if ($test instanceof TestCase) {
             $this->_fixtureManager->fixturize($test);
             $this->_fixtureManager->load($test);

@@ -16,13 +16,15 @@ $findRoot = function () {
     if (is_dir($root . '/vendor/cakephp/cakephp')) {
         return $root;
     }
+
+    return dirname(__DIR__);
 };
 
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 }
 
-function _define($name, $value)
+function _define(string $name, mixed $value): void
 {
     if (!defined($name)) {
         define($name, $value);
@@ -46,10 +48,9 @@ _define('CORE_TESTS', CORE_PATH . 'tests' . DS);
 _define('CORE_TEST_CASES', CORE_TESTS . 'TestCase');
 _define('TEST_APP', CORE_TESTS . 'test_app' . DS);
 
-require_once ROOT . '/vendor/cakephp/cakephp/src/basics.php';
 require_once ROOT . '/vendor/autoload.php';
+require_once CORE_PATH . 'config/bootstrap.php';
 
-//Cake\Core\Configure::write('App', ['namespace' => 'CakeDC\\OracleDriver\\Test\\App']);
 Cake\Core\Configure::write('App', [
     'namespace' => 'CakeDC\\OracleDriver\\Test\\App',
     'encoding' => 'UTF-8',
@@ -64,24 +65,24 @@ Cake\Core\Configure::write('App', [
     'cssBaseUrl' => 'css/',
     'paths' => [
         'plugins' => [dirname(APP) . DS . 'plugins' . DS],
-        // 'templates' => [TEST_APP . 'templates' . DS]
     ],
 ]);
 Cake\Core\Configure::write('debug', true);
-Cake\Core\Configure::write('Error.errorLevel', E_ALL & ~E_USER_DEPRECATED);
 
-$TMP = new \Cake\Filesystem\Folder(TMP);
-$TMP->create(TMP . 'cache/models', 0777);
-$TMP->create(TMP . 'cache/persistent', 0777);
-$TMP->create(TMP . 'cache/views', 0777);
+foreach (['cache/models', 'cache/persistent', 'cache/views', 'logs'] as $dir) {
+    if (!is_dir(TMP . $dir)) {
+        mkdir(TMP . $dir, 0777, true);
+    }
+}
 
 $cache = [
     'default' => [
-        'engine' => 'File',
-    ],
-    '_cake_core_' => [
         'className' => 'File',
-        'prefix' => 'oracle_driver_cake_core_',
+        'path' => CACHE,
+    ],
+    '_cake_translations_' => [
+        'className' => 'File',
+        'prefix' => 'oracle_driver_cake_translations_',
         'path' => CACHE . 'persistent/',
         'serialize' => true,
         'duration' => '+10 seconds',
@@ -90,14 +91,14 @@ $cache = [
         'className' => 'File',
         'prefix' => 'oracle_driver_cake_model_',
         'path' => CACHE . 'models/',
-        'serialize' => 'File',
+        'serialize' => true,
         'duration' => '+10 seconds',
     ],
     '_cake_method_' => [
         'className' => 'File',
         'prefix' => 'oracle_driver_cake_method_',
         'path' => CACHE . 'models/',
-        'serialize' => 'File',
+        'serialize' => true,
         'duration' => '+10 seconds',
     ],
 ];
@@ -107,15 +108,10 @@ Cake\Core\Configure::write('Session', [
     'defaults' => 'php',
 ]);
 
-// Cake\Core\Plugin::load('CakeDC\\OracleDriver', [
-    // 'path' => ROOT . DS,
-    // 'autoload' => true
-// ]);
+Cake\Chronos\Chronos::setTestNow(Cake\Chronos\Chronos::now());
+Cake\Utility\Security::setSalt('oracle-driver-test-salt-value');
+Cake\Datasource\FactoryLocator::add('Table', new Cake\ORM\Locator\TableLocator());
 
-// Cake\Routing\DispatcherFactory::add('Routing');
-// Cake\Routing\DispatcherFactory::add('ControllerFactory');
-
-// Ensure default test connection is defined
 if (!getenv('db_dsn')) {
     putenv('db_dsn=sqlite:///:memory:');
 }
@@ -125,19 +121,79 @@ Cake\Datasource\ConnectionManager::setConfig('test', [
     'timezone' => 'UTC',
 ]);
 
-// Cake\Core\Configure::write('App.paths.plugins', [
-    // TEST_APP . 'Plugin' . DS,
-// ]);
-
 class_alias('CakeDC\OracleDriver\Test\App\Controller\AppController', 'App\Controller\AppController');
 
-$isCli = PHP_SAPI === 'cli';
-if ($isCli) {
-    (new Cake\Error\ConsoleErrorHandler(Cake\Core\Configure::read('Error')))->register();
-} else {
-    (new Cake\Error\ErrorHandler(Cake\Core\Configure::read('Error')))->register();
-}
-\Cake\Routing\Router::reload();
 $application = new \CakeDC\OracleDriver\Test\App\Application(CONFIG);
 $application->bootstrap();
 $application->pluginBootstrap();
+
+Cake\Core\Configure::write(
+    'TestSuite.fixtureStrategy',
+    CakeDC\OracleDriver\TestSuite\Fixture\OracleTruncateStrategy::class,
+);
+
+if (getenv('FIXTURE_SCHEMA_METADATA')) {
+    $schemaFile = ROOT . '/' . ltrim((string)getenv('FIXTURE_SCHEMA_METADATA'), './');
+    $tables = include $schemaFile;
+    /** @var \Cake\Database\Connection $connection */
+    $connection = Cake\Datasource\ConnectionManager::get('test');
+    $connection->getDriver()->enableAutoQuoting(true);
+    $driver = $connection->getDriver();
+    $recreateSchema = filter_var(
+        getenv('ORACLE_RECREATE_SCHEMA') ?: '0',
+        FILTER_VALIDATE_BOOLEAN,
+    );
+
+    if ($recreateSchema) {
+        foreach (array_reverse(array_keys($tables)) as $tableKey) {
+            $tableName = $tables[$tableKey]['table'] ?? $tableKey;
+            try {
+                $connection->execute(sprintf(
+                    'DROP TABLE %s CASCADE CONSTRAINTS PURGE',
+                    $driver->quoteIdentifier($tableName),
+                ));
+            } catch (Throwable $dropException) {
+                if (!str_contains($dropException->getMessage(), 'ORA-00942')) {
+                    throw $dropException;
+                }
+            }
+
+            try {
+                $connection->execute(sprintf(
+                    'DROP SEQUENCE %s',
+                    $driver->quoteIdentifier('SEQ_' . strtoupper($tableName)),
+                ));
+            } catch (Throwable $sequenceDropException) {
+                if (!str_contains($sequenceDropException->getMessage(), 'ORA-02289')
+                    && !str_contains($sequenceDropException->getMessage(), 'ORA-00942')
+                ) {
+                    throw $sequenceDropException;
+                }
+            }
+        }
+    }
+
+    foreach ($tables as $tableName => $table) {
+        $name = $table['table'] ?? $tableName;
+        $schema = new Cake\Database\Schema\TableSchema($name, $table['columns']);
+        if (isset($table['indexes'])) {
+            foreach ($table['indexes'] as $key => $index) {
+                $schema->addIndex($key, $index);
+            }
+        }
+        if (isset($table['constraints'])) {
+            foreach ($table['constraints'] as $key => $constraint) {
+                $schema->addConstraint($key, $constraint);
+            }
+        }
+        foreach ($schema->createSql($connection) as $sql) {
+            try {
+                $connection->execute($sql);
+            } catch (Throwable $createException) {
+                if (!str_contains($createException->getMessage(), 'ORA-00955')) {
+                    throw $createException;
+                }
+            }
+        }
+    }
+}

@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\ORM;
 
-use Cake\Database\TypeConverterTrait;
+use CakeDC\OracleDriver\Database\TypeConverterTrait;
 use Cake\Utility\Inflector;
 use CakeDC\OracleDriver\Database\Schema\MethodSchema;
 use CakeDC\OracleDriver\ORM\Method\ResultSet;
@@ -296,7 +296,7 @@ trait RequestTrait
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toArray();
     }
@@ -349,7 +349,7 @@ trait RequestTrait
      * @param mixed $offset The offset to check.
      * @return bool Success
      */
-    public function offsetExists($offset)
+    public function offsetExists(mixed $offset): bool
     {
         return $this->has($offset);
     }
@@ -360,7 +360,7 @@ trait RequestTrait
      * @param mixed $offset The offset to get.
      * @return mixed
      */
-    public function &offsetGet($offset)
+    public function offsetGet(mixed $offset): mixed
     {
         return $this->get($offset);
     }
@@ -372,7 +372,7 @@ trait RequestTrait
      * @param mixed $value The value to set.
      * @return void
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet(mixed $offset, mixed $value): void
     {
         $this->set($offset, $value);
     }
@@ -383,7 +383,7 @@ trait RequestTrait
      * @param mixed $offset The offset to remove.
      * @return void
      */
-    public function offsetUnset($offset)
+    public function offsetUnset(mixed $offset): void
     {
         $this->unsetProperty($offset);
     }

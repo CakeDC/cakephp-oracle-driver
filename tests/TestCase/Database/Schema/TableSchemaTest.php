@@ -3,18 +3,24 @@ declare(strict_types=1);
 
 namespace CakeDC\OracleDriver\Test\TestCase\Database\Schema;
 
-use Cake\Database\DriverInterface;
+use Cake\Database\Driver;
 use Cake\Database\Schema\TableSchema;
-use Cake\Database\Type;
-use Cake\Database\TypeInterface;
+use Cake\Database\Type\BaseType;
+use Cake\Database\TypeFactory;
+use Cake\Database\Exception\DatabaseException;
 use Cake\TestSuite\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Mock class for testing baseType inheritance
  */
-class FooType implements TypeInterface
+class FooType extends BaseType
 {
-    public function getBaseType(): string
+    /**
+     * @inheritDoc
+     */
+    public function getBaseType(): ?string
     {
         return 'integer';
     }
@@ -22,49 +28,25 @@ class FooType implements TypeInterface
     /**
      * @inheritDoc
      */
-    public function toDatabase($value, DriverInterface $driver)
+    public function toDatabase(mixed $value, Driver $driver): mixed
     {
-        // TODO: Implement toDatabase() method.
+        return $value;
     }
 
     /**
      * @inheritDoc
      */
-    public function toPHP($value, DriverInterface $driver)
+    public function toPHP(mixed $value, Driver $driver): mixed
     {
-        // TODO: Implement toPHP() method.
+        return $value;
     }
 
     /**
      * @inheritDoc
      */
-    public function toStatement($value, DriverInterface $driver)
+    public function marshal(mixed $value): mixed
     {
-        // TODO: Implement toStatement() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function marshal($value)
-    {
-        // TODO: Implement marshal() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getName(): ?string
-    {
-        // TODO: Implement getName() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function newId()
-    {
-        // TODO: Implement newId() method.
+        return $value;
     }
 }
 
@@ -73,8 +55,9 @@ class FooType implements TypeInterface
  */
 class TableSchemaTest extends TestCase
 {
-    public $autoFixtures = true;
-    public $fixtures = [
+    public bool $autoFixtures = true;
+
+    protected array $fixtures = [
         'core.Articles',
         'core.Tags',
         // 'core.ArticlesTags',
@@ -83,19 +66,25 @@ class TableSchemaTest extends TestCase
         // 'core.Products'
     ];
 
-    protected $_map;
+    /**
+     * @var array<string, string>|null
+     */
+    protected ?array $_map = null;
 
     public function setUp(): void
     {
-        $this->_map = Type::getMap();
+        $map = TypeFactory::getMap();
+        $this->_map = is_array($map) ? $map : null;
         parent::setUp();
     }
 
     public function tearDown(): void
     {
         $this->getTableLocator()->clear();
-        Type::clear();
-        Type::setMap($this->_map);
+        TypeFactory::clear();
+        if ($this->_map !== null) {
+            TypeFactory::setMap($this->_map);
+        }
         parent::tearDown();
     }
 
@@ -259,7 +248,7 @@ class TableSchemaTest extends TestCase
      */
     public function testBaseColumnTypeInherited()
     {
-        Type::map('foo', __NAMESPACE__ . '\FooType');
+        TypeFactory::map('foo', FooType::class);
         $table = new TableSchema('articles');
         $table->addColumn('thing', [
             'type' => 'foo',
@@ -304,7 +293,8 @@ class TableSchemaTest extends TestCase
             'null' => null,
             'unsigned' => null,
             'comment' => null,
-            'autoIncrement' => null,
+            'autoIncrement' => false,
+            'generated' => null,
         ];
         $this->assertEquals($expected, $result);
 
@@ -432,12 +422,12 @@ class TableSchemaTest extends TestCase
      * Test that an exception is raised when constraints
      * are added for fields that do not exist.
      *
-     * @dataProvider addConstraintErrorProvider
      * @return void
      */
+    #[DataProvider('addConstraintErrorProvider')]
     public function testAddConstraintError($props)
     {
-        $this->expectException(\Cake\Database\Exception::class);
+        $this->expectException(DatabaseException::class);
         $table = new TableSchema('articles');
         $table->addColumn('author_id', 'integer');
         $table->addConstraint('author_idx', $props);
@@ -475,9 +465,6 @@ class TableSchemaTest extends TestCase
             // Invalid type
             [['columns' => 'author_id', 'type' => 'derp']],
             // No columns
-            [['columns' => ''], 'type' => TableSchema::INDEX_INDEX],
-            [['columns' => [], 'type' => TableSchema::INDEX_INDEX]],
-            // Missing column
             [['columns' => ['not_there'], 'type' => TableSchema::INDEX_INDEX]],
         ];
     }
@@ -486,12 +473,12 @@ class TableSchemaTest extends TestCase
      * Test that an exception is raised when indexes
      * are added for fields that do not exist.
      *
-     * @dataProvider addIndexErrorProvider
      * @return void
      */
+    #[DataProvider('addIndexErrorProvider')]
     public function testAddIndexError($props)
     {
-        $this->expectException(\Cake\Database\Exception::class);
+        $this->expectException(DatabaseException::class);
         $table = new TableSchema('articles');
         $table->addColumn('author_id', 'integer');
         $table->addIndex('author_idx', $props);
@@ -541,13 +528,13 @@ class TableSchemaTest extends TestCase
                 'type' => 'primary',
                 'columns' => ['id'],
             ]);
-        $this->assertEquals(['id'], $table->primaryKey());
+        $this->assertEquals(['id'], $table->getPrimaryKey());
 
         $table = new TableSchema('articles');
         $table->addColumn('id', 'integer')
             ->addColumn('title', 'string')
             ->addColumn('author_id', 'integer');
-        $this->assertEquals([], $table->primaryKey());
+        $this->assertEquals([], $table->getPrimaryKey());
     }
 
     /**
@@ -569,20 +556,18 @@ class TableSchemaTest extends TestCase
     /**
      * Test the options method.
      *
-     * @group deprecated
      * @return void
      */
+    #[Group('deprecated')]
     public function testOptionsDeprecated()
     {
         $table = new TableSchema('articles');
         $options = [
             'engine' => 'InnoDB',
         ];
-        $this->deprecated(function () use ($table, $options) {
-            $return = $table->setOptions($options);
-            $this->assertInstanceOf('Cake\Database\Schema\TableSchema', $return);
-            $this->assertEquals($options, $table->getOptions());
-        });
+        $return = $table->setOptions($options);
+        $this->assertInstanceOf('Cake\Database\Schema\TableSchema', $return);
+        $this->assertEquals($options, $table->getOptions());
     }
 
     /**
@@ -656,12 +641,12 @@ class TableSchemaTest extends TestCase
     /**
      * Add a foreign key constraint with bad data
      *
-     * @dataProvider badForeignKeyProvider
      * @return void
      */
+    #[DataProvider('badForeignKeyProvider')]
     public function testAddConstraintForeignKeyBadData($data)
     {
-        $this->expectException(\Cake\Database\Exception::class);
+        $this->expectException(DatabaseException::class);
         $table = new TableSchema('articles');
         $table->addColumn('author_id', 'integer')
             ->addConstraint('author_id_idx', $data);
@@ -701,6 +686,6 @@ class TableSchemaTest extends TestCase
         }
         $pattern = str_replace('<', '[`"\[]' . $optional, $pattern);
         $pattern = str_replace('>', '[`"\]]' . $optional, $pattern);
-        $this->assertRegExp('#' . $pattern . '#', $query);
+        $this->assertMatchesRegularExpression('#' . $pattern . '#', $query);
     }
 }

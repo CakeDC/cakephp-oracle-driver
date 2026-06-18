@@ -15,7 +15,7 @@ namespace CakeDC\OracleDriver\Test\TestCase\ORM\Behavior;
 
 use Cake\Datasource\EntityInterface;
 use Cake\Event\EventInterface;
-use Cake\ORM\Query;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Test\TestCase\ORM\Behavior\CounterCacheBehaviorTest as CakeCounterCacheBehaviorTest;
 
@@ -30,14 +30,14 @@ class CounterCacheBehaviorTest extends CakeCounterCacheBehaviorTest
      *
      * @return void
      */
-    public function testLambdaSubquery()
+    public function testLambdaSubquery(): void
     {
         $this->post->belongsTo('Users');
 
         $this->post->addBehavior('CounterCache', [
             'Users' => [
                 'posts_published' => function (EventInterface $event, EntityInterface $entity, Table $table) {
-                    $query = new Query($this->connection, $table);
+                    $query = new SelectQuery($table);
 
                     return $query->select(4)->from('DUAL');
                 },

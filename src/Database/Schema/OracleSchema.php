@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Schema;
 
-use Cake\Database\Schema\BaseSchema;
+use Cake\Database\Schema\SchemaDialect;
 use Cake\Database\Schema\TableSchema;
 use Cake\Utility\Hash;
 use CakeDC\OracleDriver\Database\Exception\UnallowedDataTypeException;
@@ -20,9 +20,9 @@ use CakeDC\OracleDriver\Database\Exception\UnallowedDataTypeException;
 /**
  * Schema management/reflection features for Oracle.
  */
-class OracleSchema extends BaseSchema
+class OracleSchema extends SchemaDialect
 {
-    protected $_constraints = [];
+    protected array $_constraints = [];
 
     protected $integerTypes = [
         TableSchema::TYPE_INTEGER => 11,
@@ -45,6 +45,7 @@ class OracleSchema extends BaseSchema
             $table = 'user_procedures';
             $useOwner = false;
             $params = [];
+            $ownerCondition = '';
         } else {
             $table = 'all_procedures';
             $useOwner = true;
@@ -110,6 +111,14 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * {@inheritDoc}
      */
     public function listTablesSql(array $config): array
+    {
+        return $this->listTablesWithoutViewsSql($config);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function listTablesWithoutViewsSql(array $config): array
     {
         if (empty($config['schema'])) {
             $table = 'user_tables';
@@ -247,6 +256,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 ];
                 break;
             default:
+                throw new UnallowedDataTypeException(['type' => $row['type']]);
         }
         $field += [
             'null' => $row['null'] === 'Y',
@@ -402,6 +412,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 ];
                 break;
             default:
+                throw new UnallowedDataTypeException(['type' => $row['type']]);
         }
         $out = strpos($row['direction'], 'OUT') !== false;
         $name = $row['name'];
@@ -605,6 +616,110 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
+     * @inheritDoc
+     */
+    public function describeColumns(string $tableName): array
+    {
+        $config = $this->_driver->config();
+        if (str_contains($tableName, '.')) {
+            [$config['schema'], $tableName] = explode('.', $tableName);
+        }
+        /** @var \Cake\Database\Schema\TableSchema $table */
+        $table = $this->_driver->newTableSchema($tableName);
+
+        [$sql, $params] = $this->describeColumnSql($tableName, $config);
+        $statement = $this->_driver->execute($sql, $params);
+        foreach ($statement->fetchAll('assoc') as $row) {
+            $this->convertColumnDescription($table, $row);
+        }
+        $columns = [];
+        foreach ($table->columns() as $columnName) {
+            $column = $table->getColumn($columnName);
+            $column['name'] = $columnName;
+            $columns[] = $column;
+        }
+
+        return $columns;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function describeIndexes(string $tableName): array
+    {
+        $config = $this->_driver->config();
+        if (str_contains($tableName, '.')) {
+            [$config['schema'], $tableName] = explode('.', $tableName);
+        }
+        /** @var \Cake\Database\Schema\TableSchema $table */
+        $table = $this->_driver->newTableSchema($tableName);
+        foreach ($this->describeColumns($tableName) as $column) {
+            $table->addColumn($column['name'], $column);
+        }
+
+        [$sql, $params] = $this->describeIndexSql($tableName, $config);
+        $statement = $this->_driver->execute($sql, $params);
+        foreach ($statement->fetchAll('assoc') as $row) {
+            $this->convertIndexDescription($table, $row);
+        }
+        $indexes = [];
+        foreach ($table->indexes() as $name) {
+            $index = $table->getIndex($name);
+            $index['name'] = $name;
+            $indexes[] = $index;
+        }
+        foreach ($table->constraints() as $name) {
+            $constraint = $table->getConstraint($name);
+            if (in_array($constraint['type'], [TableSchema::CONSTRAINT_UNIQUE, TableSchema::CONSTRAINT_PRIMARY], true)) {
+                $constraint['name'] = $name;
+                $indexes[] = $constraint;
+            }
+        }
+
+        return $indexes;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function describeForeignKeys(string $tableName): array
+    {
+        $config = $this->_driver->config();
+        if (str_contains($tableName, '.')) {
+            [$config['schema'], $tableName] = explode('.', $tableName);
+        }
+        /** @var \Cake\Database\Schema\TableSchema $table */
+        $table = $this->_driver->newTableSchema($tableName);
+        foreach ($this->describeColumns($tableName) as $column) {
+            $table->addColumn($column['name'], $column);
+        }
+
+        [$sql, $params] = $this->describeForeignKeySql($tableName, $config);
+        $statement = $this->_driver->execute($sql, $params);
+        foreach ($statement->fetchAll('assoc') as $row) {
+            $this->convertForeignKeyDescription($table, $row);
+        }
+        $keys = [];
+        foreach ($table->constraints() as $name) {
+            $key = $table->getConstraint($name);
+            if ($key['type'] === TableSchema::CONSTRAINT_FOREIGN) {
+                $key['name'] = $name;
+                $keys[] = $key;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function describeOptions(string $tableName): array
+    {
+        return [];
+    }
+
+    /**
      * {@inheritDoc}
      */
     protected function _convertOnClause(string $clause): string
@@ -623,12 +738,37 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
+     * Quotes an identifier when driver auto-quoting is enabled.
+     *
+     * @param string $identifier Identifier to quote.
+     * @return string
+     */
+    protected function quoteIfAutoQuote(string $identifier): string
+    {
+        if ($this->_driver->isAutoQuotingEnabled()) {
+            return $this->_driver->quoteIdentifier($identifier);
+        }
+
+        return $identifier;
+    }
+
+    /**
+     * Whether sequence-based autoincrement is enabled for this connection.
+     *
+     * @return bool
+     */
+    protected function useAutoincrement(): bool
+    {
+        return !empty($this->_driver->config()['autoincrement']);
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function columnSql(TableSchema $schema, string $name): string
     {
         $data = $schema->getColumn($name);
-        $out = $this->_driver->quoteIfAutoQuote($name);
+        $out = $this->quoteIfAutoQuote($name);
         $typeMap = [
             TableSchema::TYPE_INTEGER => ' NUMBER',
             TableSchema::TYPE_SMALLINTEGER => ' NUMBER',
@@ -644,6 +784,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             TableSchema::TYPE_DATETIME => ' TIMESTAMP',
             TableSchema::TYPE_TIMESTAMP => ' TIMESTAMP',
             TableSchema::TYPE_UUID => ' VARCHAR2(36)',
+            TableSchema::TYPE_BINARY_UUID => ' RAW(16)',
         ];
 
         if (!isset($typeMap[$data['type']]) && $data['type'] != TableSchema::TYPE_STRING) {
@@ -679,7 +820,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             $out .= '(' . (int)$data['length'] . ',' . (int)$data['precision'] . ')';
         }
 
-        if ($this->_driver->useAutoincrement()) {
+        if ($this->useAutoincrement()) {
             if (
                 $this->__isInteger($data['type']) && (array)$schema->getPrimaryKey() ===
                 [$name]
@@ -719,7 +860,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         foreach ($schema->constraints() as $name) {
             $constraint = $schema->getConstraint($name);
             if ($constraint['type'] === TableSchema::CONSTRAINT_FOREIGN) {
-                $tableName = $this->_driver->quoteIfAutoQuote($schema->name());
+                $tableName = $this->quoteIfAutoQuote($schema->name());
                 $sql[] = sprintf($sqlPattern, $tableName, $this->constraintSql($schema, $name));
             }
         }
@@ -738,8 +879,8 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         foreach ($schema->constraints() as $name) {
             $constraint = $schema->getConstraint($name);
             if ($constraint['type'] === TableSchema::CONSTRAINT_FOREIGN) {
-                $tableName = $this->_driver->quoteIfAutoQuote($schema->name());
-                $constraintName = $this->_driver->quoteIfAutoQuote($name);
+                $tableName = $this->quoteIfAutoQuote($schema->name());
+                $constraintName = $this->quoteIfAutoQuote($name);
                 $sql[] = sprintf($sqlPattern, $tableName, $constraintName);
             }
         }
@@ -753,15 +894,15 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     public function indexSql(TableSchema $schema, string $name): string
     {
         $data = $schema->getIndex($name);
-        $columns = array_map([
-            $this->_driver,
-            'quoteIfAutoQuote',
-        ], $data['columns']);
+        $columns = array_map(
+            $this->quoteIfAutoQuote(...),
+            $data['columns'],
+        );
 
         return sprintf(
             'CREATE INDEX %s ON %s (%s)',
-            $this->_driver->quoteIfAutoQuote($name),
-            $this->_driver->quoteIfAutoQuote($schema->name()),
+            $this->quoteIfAutoQuote($name),
+            $this->quoteIfAutoQuote($schema->name()),
             implode(', ', $columns)
         );
     }
@@ -772,7 +913,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     public function constraintSql(TableSchema $schema, string $name): string
     {
         $data = $schema->getConstraint($name);
-        $out = 'CONSTRAINT ' . $this->_driver->quoteIfAutoQuote($name);
+        $out = 'CONSTRAINT ' . $this->quoteIfAutoQuote($name);
         if ($data['type'] === TableSchema::CONSTRAINT_PRIMARY) {
             $out = 'PRIMARY KEY';
         }
@@ -792,15 +933,15 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      */
     protected function _keySql($prefix, $data)
     {
-        $columns = array_map([
-            $this->_driver,
-            'quoteIfAutoQuote',
-        ], $data['columns']);
+        $columns = array_map(
+            $this->quoteIfAutoQuote(...),
+            $data['columns'],
+        );
         if ($data['type'] === TableSchema::CONSTRAINT_FOREIGN) {
             return $prefix . sprintf(
                 ' FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s DEFERRABLE INITIALLY IMMEDIATE',
                 implode(', ', $columns),
-                $this->_driver->quoteIfAutoQuote($data['references'][0]),
+                $this->quoteIfAutoQuote($data['references'][0]),
                 $this->_convertConstraintColumns($data['references'][1]),
                 $this->_foreignOnClause($data['update']),
                 $this->_foreignOnClause($data['delete'])
@@ -821,7 +962,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     ): array {
         $content = array_merge($columns, $constraints);
         $content = implode(",\n", array_filter($content));
-        $tableName = $this->_driver->quoteIfAutoQuote($schema->name());
+        $tableName = $this->quoteIfAutoQuote($schema->name());
         $temporary = $schema->isTemporary() ? ' TEMPORARY ' : ' ';
         $out = [];
         $out[] = sprintf("CREATE%sTABLE %s (\n%s\n)", $temporary, $tableName, $content);
@@ -834,7 +975,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 $out[] = sprintf(
                     'COMMENT ON COLUMN %s.%s IS %s',
                     $tableName,
-                    $this->_driver->quoteIfAutoQuote($column),
+                    $this->quoteIfAutoQuote($column),
                     $this->_driver->schemaValue($columnData['comment'])
                 );
             }
@@ -854,28 +995,52 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      */
     public function truncateTableSql(TableSchema $schema): array
     {
-        $name = $this->_driver->quoteIfAutoQuote($schema->name());
+        $name = $this->quoteIfAutoQuote($schema->name());
+        $sql = [
+            sprintf('DELETE FROM %s', $name),
+        ];
+
+        return array_merge($sql, $this->resetAutoincrementSql($schema));
+    }
+
+    /**
+     * Builds SQL statements that reset autoincrement values after a table truncate.
+     *
+     * @param \Cake\Database\Schema\TableSchema $schema Table schema.
+     * @return array<string>
+     */
+    protected function resetAutoincrementSql(TableSchema $schema): array
+    {
+        $primaryKeyColumns = (array)$schema->getPrimaryKey();
+        if (count($primaryKeyColumns) !== 1) {
+            return [];
+        }
+
+        $columnName = $primaryKeyColumns[0];
+        $column = $schema->getColumn($columnName);
+        if ($column === null || !$this->__isInteger($column['type'])) {
+            return [];
+        }
+
+        $quotedTable = $this->quoteIfAutoQuote($schema->name());
+        $quotedColumn = $this->quoteIfAutoQuote($columnName);
+
+        if ($this->useAutoincrement()) {
+            return [
+                sprintf(
+                    'ALTER TABLE %s MODIFY (%s GENERATED BY DEFAULT AS IDENTITY (RESTART START WITH 1))',
+                    $quotedTable,
+                    $quotedColumn,
+                ),
+            ];
+        }
+
         $sequenceName = $this->_getSequenceName($schema->name());
-        $result = [
-            sprintf('TRUNCATE TABLE %s', $name),
+
+        return [
             $this->dropSequenceIfExists($sequenceName),
             $this->createSequenceIfNotExists($sequenceName),
         ];
-
-        $keys = $schema->getPrimaryKey();
-        if (count($keys) == 1 && $this->_driver->useAutoincrement()) {
-            $primaryKeyField = $schema->getColumn($keys[0]);
-            if ($this->__isInteger($primaryKeyField['type'])) {
-                $primaryKey = $this->_driver->quoteIfAutoQuote($keys[0]);
-                $result[] = sprintf(
-                    'ALTER TABLE %s MODIFY(%s GENERATED AS IDENTITY (START WITH 1))',
-                    $name,
-                    $primaryKey
-                );
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -886,7 +1051,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      */
     public function dropTableSql(TableSchema $table): array
     {
-        $sql = sprintf('DROP TABLE %s CASCADE CONSTRAINTS', $this->_driver->quoteIfAutoQuote($table->name()));
+        $sql = sprintf('DROP TABLE %s CASCADE CONSTRAINTS', $this->quoteIfAutoQuote($table->name()));
 
         return [$sql];
     }
@@ -1040,12 +1205,12 @@ SQL;
      */
     public function getCreateAutoincrementSql($name, $tableName, $start = 1)
     {
-        if ($this->_driver->useAutoincrement()) {
+        if ($this->useAutoincrement()) {
             return [];
         }
-        $quotedTableName = $this->_driver->quoteIfAutoQuote($tableName);
+        $quotedTableName = $this->quoteIfAutoQuote($tableName);
 
-        $quotedName = $this->_driver->quoteIfAutoQuote($name);
+        $quotedName = $this->quoteIfAutoQuote($name);
 
         $sql = [];
 
@@ -1100,7 +1265,7 @@ END;';
      */
     protected function _transformValueCase($value)
     {
-        $case = $this->_driver->config('case');
+        $case = $this->_driver->config()['case'] ?? null;
         if ($case == 'lower') {
             return strtolower($value);
         }
@@ -1116,7 +1281,7 @@ END;';
      */
     protected function _transformFieldCase($field)
     {
-        $case = $this->_driver->config('case');
+        $case = $this->_driver->config()['case'] ?? null;
         if ($case == 'lower') {
             return "lower($field)";
         }

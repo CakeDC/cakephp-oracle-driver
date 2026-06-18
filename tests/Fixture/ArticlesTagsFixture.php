@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Copyright 2015 - 2020, Cake Development Corporation (http://cakedc.com)
  *
@@ -11,43 +13,31 @@
 
 namespace CakeDC\OracleDriver\Test\Fixture;
 
-use Cake\TestSuite\Fixture\TestFixture;
-
 /**
- * Short description for class.
- *
+ * Articles tags junction fixture for Oracle driver tests.
  */
-class ArticlesTagsFixture extends TestFixture
+class ArticlesTagsFixture extends SchemaAwareTestFixture
 {
-    /**
-     * fields property
-     *
-     * @var array
-     */
-    public $fields = [
-        'article_id' => ['type' => 'integer', 'null' => false],
-        'tag_id' => ['type' => 'integer', 'null' => false],
-        '_constraints' => [
-            'unique_tag' => ['type' => 'primary', 'columns' => ['article_id', 'tag_id']],
-            // 'tag_idx' => [
-                // 'type' => 'foreign',
-                // 'columns' => ['tag_id'],
-                // 'references' => ['tags', 'id'],
-               // 'update' => 'cascade',
-                // 'delete' => 'cascade',
-            // ],
-        ],
-    ];
+    public string $table = 'articles_tags';
 
-    /**
-     * records property
-     *
-     * @var array
-     */
-    public $records = [
+    public array $records = [
         ['article_id' => 1, 'tag_id' => 1],
         ['article_id' => 1, 'tag_id' => 2],
         ['article_id' => 2, 'tag_id' => 1],
         ['article_id' => 2, 'tag_id' => 3],
     ];
+
+    /**
+     * @inheritDoc
+     */
+    protected function getFieldDefinitions(): array
+    {
+        return [
+            'article_id' => ['type' => 'integer', 'null' => false],
+            'tag_id' => ['type' => 'integer', 'null' => false],
+            '_constraints' => [
+                'unique_tag' => ['type' => 'primary', 'columns' => ['article_id', 'tag_id']],
+            ],
+        ];
+    }
 }

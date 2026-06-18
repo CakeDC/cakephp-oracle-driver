@@ -12,16 +12,11 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Statement\Method;
 
-use Cake\Database\Statement\BufferedStatement;
-use Cake\Database\Statement\BufferResultsTrait;
-
 /**
  * Statement class meant to be used by an Oracle driver
  */
 class MethodOracleStatement extends MethodStatementDecorator
 {
-    use BufferResultsTrait;
-
     public $queryString;
 
     public $paramMap;
@@ -31,14 +26,6 @@ class MethodOracleStatement extends MethodStatementDecorator
      */
     public function execute(?array $params = null): bool
     {
-        if ($this->_statement instanceof BufferedStatement) {
-            $this->_statement = $this->_statement->getInnerStatement();
-        }
-
-        if ($this->_bufferResults) {
-            $this->_statement = new OracleBufferedStatement($this->_statement, $this->_driver);
-        }
-
         return $this->_statement->execute($params);
     }
 
@@ -80,11 +67,11 @@ class MethodOracleStatement extends MethodStatementDecorator
     /**
      * {@inheritDoc}
      */
-    public function bindValue($column, $value, $type = 'string'): void
+    public function bindValue(string|int $column, mixed $value, string|int|null $type = 'string'): void
     {
         $column = $this->paramMap[$column] ?? $column;
 
-        $type = $type == 'boolean' ? 'integer' : $type;
+        $type = $type === 'boolean' ? 'integer' : $type;
 
         $this->_statement->bindValue($column, $value, $type);
     }
@@ -92,9 +79,9 @@ class MethodOracleStatement extends MethodStatementDecorator
     /**
      * {@inheritDoc}
      */
-    public function fetch($type = 'num')
+    public function fetch(string|int $mode = \PDO::FETCH_NUM): mixed
     {
-        $result = $this->_statement->fetch($type);
+        $result = $this->_statement->fetch($mode);
         if (is_array($result)) {
             foreach ($result as $key => &$value) {
                 if (is_resource($value)) {
@@ -109,8 +96,8 @@ class MethodOracleStatement extends MethodStatementDecorator
     /**
      * {@inheritDoc}
      */
-    public function fetchAll($type = 'num')
+    public function fetchAll(string|int $mode = \PDO::FETCH_NUM): array
     {
-        return $this->_statement->fetchAll($type);
+        return $this->_statement->fetchAll($mode);
     }
 }

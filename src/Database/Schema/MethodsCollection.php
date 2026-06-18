@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Schema;
 
-use Cake\Database\Exception;
+use Cake\Database\Exception\DatabaseException;
 use Cake\Datasource\ConnectionInterface;
 use PDOException;
 
@@ -110,7 +110,7 @@ class MethodsCollection
         $config = $this->_connection->config();
         $methods = $this->getMethod($name);
         if (empty($methods)) {
-            throw new Exception(sprintf('Cannot describe %s. Method not found.', $name));
+            throw new DatabaseException(sprintf('Cannot describe %s. Method not found.', $name));
         }
         $method = new MethodSchema($name);
 
@@ -137,7 +137,7 @@ class MethodsCollection
         try {
             $statement = $this->_connection->execute($sql, $params);
         } catch (PDOException $e) {
-            throw new Exception($e->getMessage(), 500, $e);
+            throw new DatabaseException($e->getMessage(), 500, $e);
         }
         foreach ($statement->fetchAll('assoc') as $row) {
             $this->_dialect->convertParametersDescription($method, $row);
