@@ -59,15 +59,19 @@ class Method
         if (!empty($config['method'])) {
             $this->setMethod($config['method']);
         }
+        
         if (!empty($config['connection'])) {
             $this->setConnection($config['connection']);
         }
+        
         if (!empty($config['schema'])) {
             $this->setSchema($config['schema']);
         }
+        
         if (!empty($config['requestClass'])) {
             $this->requestClass($config['requestClass']);
         }
+        
         $this->initialize($config);
     }
 
@@ -187,7 +191,7 @@ class Method
      * @return \CakeDC\OracleDriver\Database\Schema\MethodSchema the altered schema
      * @api
      */
-    protected function _initializeSchema(MethodSchema $method)
+    protected function _initializeSchema(MethodSchema $method): MethodSchema
     {
         return $method;
     }
@@ -202,7 +206,7 @@ class Method
     public function requestClass($name = null)
     {
         if ($name === null && !$this->_requestClass) {
-            $default = '\CakeDC\OracleDriver\ORM\Request';
+            $default = \CakeDC\OracleDriver\ORM\Request::class;
             $self = static::class;
             $parts = explode('\\', $self);
 
@@ -257,7 +261,7 @@ class Method
      * @param array $data Parameters data.
      * @return \CakeDC\OracleDriver\ORM\Request
      */
-    public function newRequest($data = null)
+    public function newRequest($data = null): object
     {
         $class = $this->requestClass();
         $request = new $class([], [
@@ -295,12 +299,13 @@ class Method
      *
      * @return string
      */
-    protected function _generateSql()
+    protected function _generateSql(): string
     {
         $query = '';
         if ($this->getSchema()->isFunction() !== null) {
             $query = ':result := ';
         }
+        
         $parameters = $this->getSchema()->parameters();
         $query .= $this->getMethod() . '(';
         $names = [];
@@ -308,13 +313,14 @@ class Method
             if ($name === ':result') {
                 continue;
             }
+            
             $names[] = $name . ' => :' . $name;
         }
+        
         $query .= implode(',', $names);
         $query .= ');';
-        $query = 'begin ' . $query . ' end;';
 
-        return $query;
+        return 'begin ' . $query . ' end;';
     }
 
     /**
@@ -329,7 +335,7 @@ class Method
 
         return [
             'method' => $this->getMethod(),
-            'defaultConnection' => $this->defaultConnectionName(),
+            'defaultConnection' => static::defaultConnectionName(),
             'connectionName' => $conn ? $conn->configName() : null,
         ];
     }
@@ -343,7 +349,7 @@ class Method
      * @return string
      * @see \CakeDC\OracleDriver\ORM\MethodRegistry::get()
      */
-    public static function defaultConnectionName()
+    public static function defaultConnectionName(): string
     {
         return 'default';
     }

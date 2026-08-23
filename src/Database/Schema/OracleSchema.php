@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Schema;
 
+use Cake\Database\Schema\ForeignKey;
 use Cake\Database\Schema\SchemaDialect;
 use Cake\Database\Schema\TableSchema;
 use Cake\Utility\Hash;
@@ -22,6 +23,8 @@ use CakeDC\OracleDriver\Database\Exception\UnallowedDataTypeException;
  */
 class OracleSchema extends SchemaDialect
 {
+    public const GENERATED_BY_DEFAULT = 'BY DEFAULT';
+
     protected array $_constraints = [];
 
     protected $integerTypes = [
@@ -39,7 +42,7 @@ class OracleSchema extends SchemaDialect
      *    getting tables from.
      * @return array An array of (sql, params) to execute.
      */
-    public function listMethodsSql($config)
+    public function listMethodsSql(array $config): array
     {
         if (empty($config['schema'])) {
             $table = 'user_procedures';
@@ -52,6 +55,7 @@ class OracleSchema extends SchemaDialect
             $params = [':ownerParam' => strtoupper($config['schema'])];
             $ownerCondition = 'AND OWNER = :ownerParam';
         }
+
         $objectNameField = $this->_transformFieldCase("OBJECT_NAME");
         $procedureName = $this->_transformFieldCase("PROCEDURE_NAME");
         $objectCondition = '';
@@ -65,9 +69,11 @@ class OracleSchema extends SchemaDialect
             } elseif ($itemsCount === 2) {
                 [$package, $object] = explode('.', $objectName);
             } else {
-                $schema = $package = null;
+                $schema = null;
+                $package = null;
                 $object = $objectName;
             }
+
             $ownerCondition = '';
             $params = [
                 ':objectParam' => $object,
@@ -97,6 +103,7 @@ class OracleSchema extends SchemaDialect
                 }
             }
         }
+
         $procedureName = $this->_transformFieldCase("PROCEDURE_NAME");
         $sql = "SELECT $objectNameField as object, $procedureName as name, OBJECT_TYPE FROM $table
 WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY object, name";
@@ -129,6 +136,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             $useOwner = true;
             $params = [':ownerParam' => strtoupper($config['schema'])];
         }
+
         $tableName = $this->_transformFieldCase("TABLE_NAME");
         $sql = "SELECT $tableName as name FROM $table " . ($useOwner ? 'WHERE owner = :ownerParam' : '') . " ORDER BY name";
 
@@ -143,7 +151,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      */
     public function describeColumnSql(string $tableName, array $config): array
     {
-        [$schema, $table] = $this->tableSplit($tableName, $config);
+        [$schema, $table] = $this->splitTablename($tableName, $config);
         if (empty($schema)) {
             $columnsTable = 'user_tab_columns';
             $commentsTable = 'user_col_comments';
@@ -158,7 +166,24 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 ':ownerParam' => $schema,
             ];
         }
-        $sql = "SELECT
+
+        return [
+            $this->describeColumnQuery($columnsTable, $commentsTable, $useOwner),
+            $params,
+        ];
+    }
+
+    /**
+     * Builds the SQL query used to describe table columns.
+     *
+     * @param string $columnsTable Oracle columns catalog view name.
+     * @param string $commentsTable Oracle column comments catalog view name.
+     * @param bool $useOwner Whether to filter by schema owner.
+     * @return string
+     */
+    protected function describeColumnQuery(string $columnsTable, string $commentsTable, bool $useOwner): string
+    {
+        return "SELECT
                     utc.table_name as \"table\",
                     utc.column_name AS name,
                     utc.data_type AS type,
@@ -168,7 +193,9 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                     utc.nullable AS \"null\",
                     utc.data_default AS \"default\",
                     ucc.comments AS \"comment\",
-                    utc.column_id AS ordinal_position
+                    utc.column_id AS ordinal_position,
+                    utc.identity_column,
+                    utc.default_on_null
                 FROM $columnsTable utc
                 JOIN $commentsTable ucc ON (
                     utc.table_name = ucc.table_name
@@ -178,11 +205,6 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 WHERE UPPER(utc.table_name) = :tableParam
                 " . ($useOwner ? 'AND utc.OWNER = :ownerParam' : '') . "
                 ORDER BY utc.column_id";
-
-        return [
-            $sql,
-            $params,
-        ];
     }
 
     /**
@@ -239,6 +261,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                         'length' => $length,
                     ];
                 }
+
                 break;
             case 'NCLOB':
             case 'CLOB':
@@ -256,12 +279,25 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 ];
                 break;
             default:
+                $pluginType = $this->_applyTypeSpecificColumnConversion(
+                    strtolower($row['type']),
+                    ['length' => null, 'precision' => null, 'scale' => null],
+                );
+                if ($pluginType !== null) {
+                    $field = $pluginType;
+                    break;
+                }
+
                 throw new UnallowedDataTypeException(['type' => $row['type']]);
         }
+
+        $isIdentity = isset($row['identity_column']) && strtoupper((string)$row['identity_column']) === 'YES';
         $field += [
             'null' => $row['null'] === 'Y',
             'default' => $row['default'],
             'comment' => $row['comment'],
+            'autoIncrement' => $isIdentity ?: null,
+            'generated' => $isIdentity ? self::GENERATED_BY_DEFAULT : null,
         ];
         $schema->addColumn($this->_transformValueCase($row['name']), $field);
     }
@@ -273,7 +309,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $config The connection configuration.
      * @return array An array of (sql, params) to execute.
      */
-    public function describeParametersSql($objectName, $config)
+    public function describeParametersSql($objectName, $config): array
     {
         $items = explode('.', $objectName);
         $itemsCount = count($items);
@@ -282,9 +318,11 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         } elseif ($itemsCount === 2) {
             [$package, $object] = explode('.', $objectName);
         } else {
-            $schema = $package = null;
+            $schema = null;
+            $package = null;
             $object = $objectName;
         }
+
         $ownerCondition = '';
         $params = [
             ':objectParam' => $object,
@@ -310,6 +348,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                 ];
             }
         }
+
         $sql = "SELECT
                     args.object_name as \"object\",
                     args.package_name AS package,
@@ -339,7 +378,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $row The row data from `describeParametersSql`.
      * @return void
      */
-    public function convertParametersDescription(MethodSchema $method, $row)
+    public function convertParametersDescription(MethodSchema $method, $row): void
     {
         $row = array_change_key_case($row);
         switch ($row['type']) {
@@ -390,6 +429,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                         'length' => $length,
                     ];
                 }
+
                 break;
             case 'NCLOB':
             case 'CLOB':
@@ -414,17 +454,19 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             default:
                 throw new UnallowedDataTypeException(['type' => $row['type']]);
         }
-        $out = strpos($row['direction'], 'OUT') !== false;
+
+        $out = str_contains($row['direction'], 'OUT');
         $name = $row['name'];
         $function = $out && $name === null;
         $field += [
-            'in' => strpos($row['direction'], 'IN') !== false,
+            'in' => str_contains($row['direction'], 'IN'),
             'out' => $out,
             'function' => $function,
         ];
         if ($function) {
             $name = ':result';
         }
+
         $method->addParameter($name, $field);
     }
 
@@ -434,7 +476,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     public function describeIndexSql(string $tableName, array $config): array
     {
         $this->_constraints[$tableName] = [];
-        [$schema, $table] = $this->tableSplit($tableName, $config);
+        [$schema, $table] = $this->splitTablename($tableName, $config);
         if (empty($schema)) {
             $constraintsTable = 'user_constraints';
             $indexesTable = 'user_indexes';
@@ -490,20 +532,20 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     public function convertIndexDescription(TableSchema $schema, array $row): void
     {
         $tableIndex = array_change_key_case($row);
-        $type = null;
-        $columns = $length = [];
+        $columns = [];
 
         $keyName = $this->_transformValueCase($tableIndex['name']);
         $name = $this->_transformValueCase($tableIndex['column_name']);
-        if ( !empty($tableIndex['is_primary']) && strtolower($tableIndex['is_primary']) === 'p') {
-            $keyName = $type = TableSchema::CONSTRAINT_PRIMARY;
-        } elseif ($tableIndex['is_unique'] !== []) {
+        if (!empty($tableIndex['is_primary']) && strtolower((string)$tableIndex['is_primary']) === 'p') {
+            $keyName = TableSchema::CONSTRAINT_PRIMARY;
+            $type = TableSchema::CONSTRAINT_PRIMARY;
+        } elseif ((int)($tableIndex['is_unique'] ?? 0) === 1) {
             $type = TableSchema::CONSTRAINT_UNIQUE;
         } else {
             $type = TableSchema::INDEX_INDEX;
         }
 
-        $columns[] = $this->_transformValueCase($name);
+        $columns[] = $name;
 
         $isIndex = $type === TableSchema::INDEX_INDEX;
         $existing = $isIndex ? $schema->getIndex($keyName) : $schema->getConstraint($keyName);
@@ -511,6 +553,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         if (!empty($existing)) {
             $columns = array_merge($existing['columns'], $columns);
         }
+
         if ($isIndex) {
             $schema->addIndex($keyName, [
                 'type' => $type,
@@ -530,7 +573,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param string $columns comma separated column list.
      * @return array
      */
-    protected function _convertColumnList($columns)
+    protected function _convertColumnList($columns): array
     {
         $columns = explode(', ', $columns);
         foreach ($columns as &$column) {
@@ -545,42 +588,70 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      */
     public function describeForeignKeySql(string $tableName, array $config): array
     {
-        [$schema, $table] = $this->tableSplit($tableName, $config);
+        [$schema, $table] = $this->splitTablename($tableName, $config);
 
         if (empty($schema)) {
             $sql = "SELECT
                         cc.column_name,
                         cc.constraint_name,
-                        r.owner as referenced_owner,
-                        r.table_name as referenced_table_name,
+                        cc.position AS column_position,
+                        rc.owner as referenced_owner,
+                        rc.table_name as referenced_table_name,
                         r.column_name as referenced_column_name,
-                        c.delete_rule
+                        c.delete_rule,
+                        c.deferrable,
+                        c.deferred
                     FROM user_cons_columns cc
-                    JOIN user_constraints c ON c.constraint_name = cc.constraint_name
-                    JOIN user_cons_columns r ON r.constraint_name = c.r_constraint_name
+                    JOIN user_constraints c ON (
+                        c.constraint_name = cc.constraint_name
+                        AND c.table_name = cc.table_name
+                    )
+                    JOIN user_constraints rc ON rc.constraint_name = c.r_constraint_name
+                    JOIN user_cons_columns r ON (
+                        r.constraint_name = rc.constraint_name
+                        AND r.table_name = rc.table_name
+                        AND r.position = cc.position
+                    )
                     WHERE c.constraint_type = 'R'
                     AND upper(cc.table_name) = :tableParam
-                    ";
+                    ORDER BY cc.constraint_name, cc.position ASC";
 
             return [
                 $sql,
                 [':tableParam' => $table],
             ];
         }
-        $sql = "
-            SELECT
-                cc.column_name,
-                cc.constraint_name,
-                r.owner as referenced_owner,
-                r.table_name as referenced_table_name,
-                r.column_name as referenced_column_name,
-                c.delete_rule
-            FROM all_cons_columns cc
-            JOIN all_constraints c ON (c.constraint_name = cc.constraint_name AND c.owner = cc.owner)
-            JOIN all_cons_columns r ON (r.constraint_name = c.r_constraint_name AND r.owner = c.r_owner)
-            WHERE c.constraint_type = 'R'
-            AND cc.owner = :ownerParam
-            AND upper(cc.table_name) = :tableParam";
+
+        $sql = "SELECT
+                    cc.column_name,
+                    cc.constraint_name,
+                    cc.position AS column_position,
+                    rc.owner as referenced_owner,
+                    rc.table_name as referenced_table_name,
+                    r.column_name as referenced_column_name,
+                    c.delete_rule,
+                    c.deferrable,
+                    c.deferred
+                FROM all_cons_columns cc
+                JOIN all_constraints c ON (
+                    c.constraint_name = cc.constraint_name
+                    AND c.owner = cc.owner
+                    AND c.table_name = cc.table_name
+                )
+                JOIN all_constraints rc ON (
+                    rc.constraint_name = c.r_constraint_name
+                    AND rc.owner = c.r_owner
+                )
+                JOIN all_cons_columns r ON (
+                    r.constraint_name = rc.constraint_name
+                    AND r.owner = rc.owner
+                    AND r.table_name = rc.table_name
+                    AND r.position = cc.position
+                )
+                WHERE c.constraint_type = 'R'
+                AND cc.owner = :ownerParam
+                AND upper(cc.table_name) = :tableParam
+                ORDER BY cc.constraint_name, cc.position ASC";
 
         return [
             $sql,
@@ -592,27 +663,70 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
+     * Convert deferrable columns from Oracle metadata into a deferrable string constant.
+     *
+     * Oracle stores: DEFERRABLE column = 'DEFERRABLE' | 'NOT DEFERRABLE'
+     *                DEFERRED column   = 'DEFERRED'   | 'IMMEDIATE'
+     *
+     * @param array $row The constraint metadata row.
+     * @return string|null
+     */
+    protected function convertDeferrable(array $row): ?string
+    {
+        $deferrable = strtoupper(trim($row['deferrable'] ?? ''));
+        if ($deferrable === 'NOT DEFERRABLE') {
+            return ForeignKey::NOT_DEFERRED;
+        }
+
+        if ($deferrable === 'DEFERRABLE') {
+            $deferred = strtoupper(trim($row['deferred'] ?? ''));
+            if ($deferred === 'DEFERRED') {
+                return ForeignKey::DEFERRED;
+            }
+
+            return ForeignKey::IMMEDIATE;
+        }
+
+        return null;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function convertForeignKeyDescription(TableSchema $schema, array $row): void
     {
         $row = array_change_key_case($row);
-        // Fix: fk data case must be transformed
-        $column_name = $this->_transformValueCase($row['column_name']);
-        $constraint_name = $this->_transformValueCase($row['constraint_name']);
-        $referenced_table_name = $this->_transformValueCase($row['referenced_table_name']);
-        $referenced_column_name = $this->_transformValueCase($row['referenced_column_name']);
-        $data = [
+        $columnName = $this->_transformValueCase($row['column_name']);
+        $constraintName = $this->_transformValueCase($row['constraint_name']);
+        $referencedTableName = $this->_transformValueCase($row['referenced_table_name']);
+        $referencedColumnName = $this->_transformValueCase($row['referenced_column_name']);
+        $referencedTable = $row['referenced_owner'] . '.' . $referencedTableName;
+
+        $existing = $schema->getConstraint($constraintName);
+        if ($existing !== null && $existing['type'] === TableSchema::CONSTRAINT_FOREIGN) {
+            $columns = array_merge((array)$existing['columns'], [$columnName]);
+            $referencedColumns = array_merge((array)$existing['references'][1], [$referencedColumnName]);
+            $schema->dropConstraint($constraintName);
+            $schema->addConstraint($constraintName, [
+                'type' => TableSchema::CONSTRAINT_FOREIGN,
+                'columns' => $columns,
+                'references' => [$existing['references'][0], $referencedColumns],
+                'update' => $existing['update'],
+                'delete' => $existing['delete'],
+                'deferrable' => $existing['deferrable'] ?? null,
+            ]);
+
+            return;
+        }
+
+        $schema->addConstraint($constraintName, [
             'type' => TableSchema::CONSTRAINT_FOREIGN,
-            'columns' => $column_name,
-            'references' => [
-                $row['referenced_owner'] . '.' . $referenced_table_name,
-                $referenced_column_name,
-            ],
+            'columns' => [$columnName],
+            'references' => [$referencedTable, $referencedColumnName],
             'update' => TableSchema::ACTION_SET_NULL,
             'delete' => $this->_convertOnClause($row['delete_rule']),
-        ];
-        $schema->addConstraint($constraint_name, $data);
+            'deferrable' => $this->convertDeferrable($row),
+        ]);
     }
 
     /**
@@ -624,6 +738,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         if (str_contains($tableName, '.')) {
             [$config['schema'], $tableName] = explode('.', $tableName);
         }
+
         /** @var \Cake\Database\Schema\TableSchema $table */
         $table = $this->_driver->newTableSchema($tableName);
 
@@ -632,6 +747,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         foreach ($statement->fetchAll('assoc') as $row) {
             $this->convertColumnDescription($table, $row);
         }
+
         $columns = [];
         foreach ($table->columns() as $columnName) {
             $column = $table->getColumn($columnName);
@@ -651,6 +767,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         if (str_contains($tableName, '.')) {
             [$config['schema'], $tableName] = explode('.', $tableName);
         }
+
         /** @var \Cake\Database\Schema\TableSchema $table */
         $table = $this->_driver->newTableSchema($tableName);
         foreach ($this->describeColumns($tableName) as $column) {
@@ -662,12 +779,14 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         foreach ($statement->fetchAll('assoc') as $row) {
             $this->convertIndexDescription($table, $row);
         }
+
         $indexes = [];
         foreach ($table->indexes() as $name) {
             $index = $table->getIndex($name);
             $index['name'] = $name;
             $indexes[] = $index;
         }
+
         foreach ($table->constraints() as $name) {
             $constraint = $table->getConstraint($name);
             if (in_array($constraint['type'], [TableSchema::CONSTRAINT_UNIQUE, TableSchema::CONSTRAINT_PRIMARY], true)) {
@@ -688,6 +807,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         if (str_contains($tableName, '.')) {
             [$config['schema'], $tableName] = explode('.', $tableName);
         }
+
         /** @var \Cake\Database\Schema\TableSchema $table */
         $table = $this->_driver->newTableSchema($tableName);
         foreach ($this->describeColumns($tableName) as $column) {
@@ -699,11 +819,16 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         foreach ($statement->fetchAll('assoc') as $row) {
             $this->convertForeignKeyDescription($table, $row);
         }
+
         $keys = [];
         foreach ($table->constraints() as $name) {
             $key = $table->getConstraint($name);
             if ($key['type'] === TableSchema::CONSTRAINT_FOREIGN) {
                 $key['name'] = $name;
+                if (count((array)$key['references'][1]) === 1) {
+                    $key['references'][1] = $key['references'][1][0];
+                }
+
                 $keys[] = $key;
             }
         }
@@ -720,6 +845,52 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
+     * @inheritDoc
+     */
+    public function describeCheckConstraints(string $tableName): array
+    {
+        $config = $this->_driver->config();
+        if (str_contains($tableName, '.')) {
+            [$config['schema'], $tableName] = explode('.', $tableName);
+        }
+
+        if (empty($config['schema'])) {
+            $sql = "SELECT constraint_name AS name, search_condition AS expression
+                FROM user_constraints
+                WHERE table_name = :tableName AND constraint_type = 'C'
+                ORDER BY constraint_name";
+            $params = [':tableName' => strtoupper($tableName)];
+        } else {
+            $sql = "SELECT constraint_name AS name, search_condition AS expression
+                FROM all_constraints
+                WHERE table_name = :tableName AND owner = :owner AND constraint_type = 'C'
+                ORDER BY constraint_name";
+            $params = [
+                ':tableName' => strtoupper($tableName),
+                ':owner' => strtoupper($config['schema']),
+            ];
+        }
+
+        $results = [];
+        $statement = $this->_driver->execute($sql, $params);
+        foreach ($statement->fetchAll('assoc') as $row) {
+            $name = $this->_transformValueCase($row['name'] ?? $row['NAME']);
+            $expression = $row['expression'] ?? $row['EXPRESSION'];
+            if ($expression === null) {
+                continue;
+            }
+
+            $results[] = [
+                'name' => $name,
+                'type' => TableSchema::CONSTRAINT_CHECK,
+                'expression' => trim($expression),
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
      * {@inheritDoc}
      */
     protected function _convertOnClause(string $clause): string
@@ -727,9 +898,11 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         if ($clause === 'RESTRICT') {
             return TableSchema::ACTION_RESTRICT;
         }
+
         if ($clause === 'NO ACTION') {
             return TableSchema::ACTION_NO_ACTION;
         }
+
         if ($clause === 'CASCADE') {
             return TableSchema::ACTION_CASCADE;
         }
@@ -768,6 +941,12 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     public function columnSql(TableSchema $schema, string $name): string
     {
         $data = $schema->getColumn($name);
+
+        $sql = $this->_getTypeSpecificColumnSql($data['type'], $schema, $name);
+        if ($sql !== null) {
+            return $sql;
+        }
+
         $out = $this->quoteIfAutoQuote($name);
         $typeMap = [
             TableSchema::TYPE_INTEGER => ' NUMBER',
@@ -801,10 +980,12 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             if ($isFixed) {
                 $type = ' CHAR';
             }
+
             $out .= $type;
             if (!isset($data['length'])) {
                 $data['length'] = 255;
             }
+
             $out .= '(' . (int)$data['length'] . ')';
         }
 
@@ -822,7 +1003,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
 
         if ($this->useAutoincrement()) {
             if (
-                $this->__isInteger($data['type']) && (array)$schema->getPrimaryKey() ===
+                $this->__isInteger($data['type']) && $schema->getPrimaryKey() ===
                 [$name]
             ) {
                 $out .= ' GENERATED BY DEFAULT AS IDENTITY (START WITH 1)';
@@ -834,11 +1015,13 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             $out .= ' DEFAULT NULL';
             unset($data['default']);
         }
+
         if (isset($data['default']) && $data['type'] !== TableSchema::TYPE_TIMESTAMP) {
             $defaultValue = $data['default'];
             if ($data['type'] === TableSchema::TYPE_BOOLEAN) {
                 $defaultValue = (int)$defaultValue;
             }
+
             $out .= ' DEFAULT ' . $this->_driver->schemaValue($defaultValue);
         }
 
@@ -913,15 +1096,29 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     public function constraintSql(TableSchema $schema, string $name): string
     {
         $data = $schema->getConstraint($name);
+        assert($data !== null);
         $out = 'CONSTRAINT ' . $this->quoteIfAutoQuote($name);
         if ($data['type'] === TableSchema::CONSTRAINT_PRIMARY) {
             $out = 'PRIMARY KEY';
-        }
-        if ($data['type'] === TableSchema::CONSTRAINT_UNIQUE) {
+        } elseif ($data['type'] === TableSchema::CONSTRAINT_UNIQUE) {
             $out .= ' UNIQUE';
+        } elseif ($data['type'] === TableSchema::CONSTRAINT_CHECK) {
+            return $out . ' CHECK (' . $data['expression'] . ')';
         }
 
         return $this->_keySql($out, $data);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function columnDefinitionSql(array $column): string
+    {
+        $name = $column['name'];
+        $table = $this->_driver->newTableSchema('placeholder');
+        $table->addColumn($name, $column);
+
+        return $this->columnSql($table, $name);
     }
 
     /**
@@ -931,7 +1128,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $data Key data.
      * @return string
      */
-    protected function _keySql($prefix, $data)
+    protected function _keySql($prefix, array $data): string
     {
         $columns = array_map(
             $this->quoteIfAutoQuote(...),
@@ -939,12 +1136,12 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
         );
         if ($data['type'] === TableSchema::CONSTRAINT_FOREIGN) {
             return $prefix . sprintf(
-                ' FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s DEFERRABLE INITIALLY IMMEDIATE',
+                ' FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s %s',
                 implode(', ', $columns),
                 $this->quoteIfAutoQuote($data['references'][0]),
                 $this->_convertConstraintColumns($data['references'][1]),
-                $this->_foreignOnClause($data['update']),
-                $this->_foreignOnClause($data['delete'])
+                $this->_foreignOnClause($data['delete']),
+                $data['deferrable'] ?? ForeignKey::IMMEDIATE,
             );
         }
 
@@ -962,13 +1159,20 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     ): array {
         $content = array_merge($columns, $constraints);
         $content = implode(",\n", array_filter($content));
+
         $tableName = $this->quoteIfAutoQuote($schema->name());
+        $driverConfig = $this->_driver->config();
+        if (!empty($driverConfig['schema'])) {
+            $tableName = $this->quoteIfAutoQuote($driverConfig['schema']) . '.' . $tableName;
+        }
+
         $temporary = $schema->isTemporary() ? ' TEMPORARY ' : ' ';
         $out = [];
         $out[] = sprintf("CREATE%sTABLE %s (\n%s\n)", $temporary, $tableName, $content);
         foreach ($indexes as $index) {
             $out[] = $index;
         }
+
         foreach ($schema->columns() as $column) {
             $columnData = $schema->getColumn($column);
             if (isset($columnData['comment'])) {
@@ -1011,7 +1215,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      */
     protected function resetAutoincrementSql(TableSchema $schema): array
     {
-        $primaryKeyColumns = (array)$schema->getPrimaryKey();
+        $primaryKeyColumns = $schema->getPrimaryKey();
         if (count($primaryKeyColumns) !== 1) {
             return [];
         }
@@ -1057,27 +1261,37 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
+     * Splits a table name into schema and table components.
+     *
+     * @param string $tableName Table name optionally with schema name.
+     * @param array $config The connection configuration.
+     * @return array{0: string|null, 1: string}
+     */
+    protected function splitTablename(string $tableName, array $config = []): array
+    {
+        $tableName = strtoupper($tableName);
+        $schema = null;
+        $table = $tableName;
+        if (str_contains($tableName, '.')) {
+            [$schema, $table] = explode('.', $tableName, 2);
+        } elseif (!empty($config['schema'])) {
+            $schema = strtoupper((string)$config['schema']);
+        }
+
+        return [$schema, $table];
+    }
+
+    /**
      * Builds array with schema and table names.
      *
      * @param string $name Table name optionally with schema name.
      * @param array $config The connection configuration.
-     * @return string
+     * @return array{0: string|null, 1: string}
+     * @deprecated 3.0.0 Use splitTablename() instead.
      */
-    public function tableSplit($name, $config)
+    public function tableSplit(string $name, array $config): array
     {
-        $name = strtoupper($name);
-        $schema = null;
-        $table = $name;
-        if (strpos($name, '.') !== false) {
-            [$schema, $table] = explode('.', $table);
-        } elseif (!empty($config['schema'])) {
-            $schema = strtoupper($config['schema']);
-        }
-
-        return [
-            $schema,
-            $table,
-        ];
+        return $this->splitTablename($name, $config);
     }
 
     /**
@@ -1086,7 +1300,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param \Cake\Database\Schema\TableSchema $table Table schema object.
      * @return array|null
      */
-    protected function _getPrimaryKey(TableSchema $table)
+    protected function _getPrimaryKey(TableSchema $table): ?array
     {
         $constraints = $table->constraints();
         foreach ($constraints as $name) {
@@ -1106,16 +1320,18 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $constraints Constraints list.
      * @return bool
      */
-    protected function _isSingleKey(TableSchema $table, $constraints)
+    protected function _isSingleKey(TableSchema $table, array $constraints)
     {
         if (count($constraints) !== 1) {
             return false;
         }
+
         $constraint = $constraints[0];
         $columns = $constraint['columns'];
         if ((is_countable($columns) ? count($columns) : 0) !== 1) {
             return false;
         }
+
         $column = $table->getColumn($columns[0]);
 
         return $column['type'] === 'integer' && $constraint['type'] === TableSchema::CONSTRAINT_PRIMARY;
@@ -1127,7 +1343,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param string $sequenceName Sequence name.
      * @return string
      */
-    public function getCreateSequenceSql($sequenceName)
+    public function getCreateSequenceSql($sequenceName): string
     {
         return 'CREATE SEQUENCE ' . $sequenceName . ' START WITH 1' . ' MINVALUE 1' . ' INCREMENT BY 1' . ' CACHE 20';
     }
@@ -1138,7 +1354,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param string $sequenceName Sequence name.
      * @return string
      */
-    public function getDropSequenceSql($sequenceName)
+    public function getDropSequenceSql($sequenceName): string
     {
         return 'DROP SEQUENCE ' . $sequenceName;
     }
@@ -1150,7 +1366,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param string $createCommand Operation to execute.
      * @return string
      */
-    public function createSequenceIfNotExists($name, $createCommand = null)
+    public function createSequenceIfNotExists($name, $createCommand = null): string
     {
         $name = strtoupper($name);
         if (empty($createCommand)) {
@@ -1176,7 +1392,7 @@ SQL;
      * @param null $dropCommand Operation to execute.
      * @return string
      */
-    public function dropSequenceIfExists($name, $dropCommand = null)
+    public function dropSequenceIfExists($name, $dropCommand = null): string
     {
         $name = strtoupper($name);
         if (empty($dropCommand)) {
@@ -1203,11 +1419,12 @@ SQL;
      * @param int $start Start index for autoincrement field.
      * @return array
      */
-    public function getCreateAutoincrementSql($name, $tableName, $start = 1)
+    public function getCreateAutoincrementSql(string $name, $tableName, $start = 1): array
     {
         if ($this->useAutoincrement()) {
             return [];
         }
+
         $quotedTableName = $this->quoteIfAutoQuote($tableName);
 
         $quotedName = $this->quoteIfAutoQuote($name);
@@ -1250,7 +1467,7 @@ END;';
      * @param string $name Original table name.
      * @return mixed
      */
-    protected function _getSequenceName($name)
+    protected function _getSequenceName($name): string
     {
         $name = 'seq_' . $name;
 

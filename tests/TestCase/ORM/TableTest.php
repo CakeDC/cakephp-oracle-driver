@@ -58,6 +58,7 @@ class TableTest extends CakeTableTest
             'connection' => $this->connection,
         ]);
         $table->setDisplayField('username');
+        
         $query = $table
             ->find('list')
             ->enableHydration(false)
@@ -114,6 +115,7 @@ class TableTest extends CakeTableTest
             'connection' => $this->connection,
         ]);
         $table->setDisplayField('username');
+        
         $query = $table->find('list', keyField: 'id', valueField: 'username')
                        ->orderBy('id');
         $expected = [
@@ -156,7 +158,7 @@ class TableTest extends CakeTableTest
                 'table' => 'articles',
                 'alias' => 'Articles',
                 'connection' => $this->connection,
-                'entityClass' => 'Cake\ORM\Entity',
+                'entityClass' => \Cake\ORM\Entity::class,
             ]);
 
         $articles->hasMany('Comments', ['saveStrategy' => 'replace']);
@@ -177,6 +179,7 @@ class TableTest extends CakeTableTest
         ], ['associated' => ['Comments']]);
 
         $article = $articles->save($article, ['associated' => ['Comments']]);
+        
         $commentId = $article->comments[0]->id;
         $sizeComments = count($article->comments);
         $articleId = $article->id;
@@ -214,6 +217,7 @@ class TableTest extends CakeTableTest
     {
         $articles = $this->getTableLocator()->get('Articles');
         $articles->setEntityClass(ProtectedEntity::class);
+        
         $validator = new Validator();
         $validator->notBlank('title')->requirePresence('title', 'create');
         $validator->notBlank('body')->requirePresence('body', 'create');
@@ -285,7 +289,7 @@ class TableTest extends CakeTableTest
             ],
         ];
         $entity = $articles->patchEntity($entity, $data, ['associated' => ['Tags._joinData']]);
-        $entity = $articles->save($entity);
+        $articles->save($entity);
 
         $result = $this->getTableLocator()->get('PolymorphicTagged')
             ->find('all')
@@ -295,9 +299,9 @@ class TableTest extends CakeTableTest
 
         $this->assertCount(3, $result);
 
-        $postRow = array_values(array_filter($result, fn($r) => $r['foreign_model'] === 'Posts'));
-        $articleRows = array_values(array_filter($result, fn($r) => $r['foreign_model'] === 'Articles'));
-        usort($articleRows, fn($a, $b) => $a['tag_id'] <=> $b['tag_id']);
+        $postRow = array_values(array_filter($result, fn($r): bool => $r['foreign_model'] === 'Posts'));
+        $articleRows = array_values(array_filter($result, fn($r): bool => $r['foreign_model'] === 'Articles'));
+        usort($articleRows, fn($a, $b): int => $a['tag_id'] <=> $b['tag_id']);
 
         $this->assertSame('Posts', $postRow[0]['foreign_model']);
         $this->assertSame(1, $articleRows[0]['tag_id']);

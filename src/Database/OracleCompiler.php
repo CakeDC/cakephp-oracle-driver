@@ -20,8 +20,11 @@ class OracleCompiler extends QueryCompiler
 {
     /**
      * {@inheritDoc}
+     *
+     * @var array<string>
      */
-    protected $_selectParts = [
+    protected array $_selectParts = [
+        'comment',
         'select',
         'from',
         'join',
@@ -40,7 +43,23 @@ class OracleCompiler extends QueryCompiler
      *
      * @var bool
      */
-    protected $_quotedSelectAliases = true;
+    protected bool $_quotedSelectAliases = true;
+
+    /**
+     * {@inheritDoc}
+     *
+     * @var array<string, string>
+     */
+    protected array $_templates = [
+        'delete' => 'DELETE',
+        'where' => ' WHERE %s',
+        'group' => ' GROUP BY %s',
+        'order' => ' %s',
+        'limit' => ' LIMIT %s',
+        'offset' => ' OFFSET %s',
+        'epilog' => ' %s',
+        'comment' => '/* %s */ ',
+    ];
 
     /**
      * Builds the SQL fragment for INSERT INTO.

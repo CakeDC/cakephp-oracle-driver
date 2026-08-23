@@ -92,12 +92,13 @@ trait OracleDialectTrait
         if ($offset) {
             $outer2->where(["$field > " . (int)$offset]);
         }
+        
         if ($limit) {
             $value = (int)$offset + (int)$limit;
             $outer2->where(["$field <= $value"]);
         }
 
-        $original->decorateResults(function ($row) {
+        $original->decorateResults(function (array $row): array {
             if (is_object($row) && property_exists($row, '_cake_page_rownum_')) {
                 unset($row->_cake_page_rownum_);
             } elseif (isset($row['_cake_page_rownum_'])) {
@@ -156,7 +157,7 @@ trait OracleDialectTrait
                 $expression
                     ->setName('')
                     ->setConjunction('-')
-                    ->iterateParts(function ($p) {
+                    ->iterateParts(function ($p): \Cake\Database\Expression\FunctionExpression {
                         if (is_string($p)) {
                             $p = ['value' => [$p => 'literal'], 'type' => null];
                         } else {
@@ -197,6 +198,8 @@ trait OracleDialectTrait
                 $expression
                     ->setName('TO_CHAR')
                     ->add(['d']);
+                break;
+            case 'JSON_VALUE':
                 break;
         }
     }

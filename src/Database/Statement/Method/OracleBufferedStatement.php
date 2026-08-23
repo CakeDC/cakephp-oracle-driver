@@ -19,6 +19,11 @@ namespace CakeDC\OracleDriver\Database\Statement\Method;
 class OracleBufferedStatement extends MethodStatementDecorator
 {
     /**
+     * @var string
+     */
+    public $_fetchType;
+
+    /**
      * Records count
      *
      * @var int
@@ -51,7 +56,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
      * @param \Cake\Database\StatementInterface|null $statement Statement implementation such as PDOStatement
      * @param \Cake\Database\Driver|null $driver Driver instance
      */
-    public function __construct($statement = null, $driver = null)
+    public function __construct(mixed $statement = null, ?\Cake\Database\Driver $driver = null)
     {
         parent::__construct($statement, $driver);
         $this->_reset();
@@ -76,7 +81,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
      * @param string $type The type to fetch.
      * @return mixed
      */
-    public function fetch($type = 'num')
+    public function fetch($type = 'num'): mixed
     {
         if ($this->_allFetched) {
             $row = $this->_counter < $this->_count ? $this->_records[$this->_counter++] : false;
@@ -96,7 +101,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
         }
 
         if (is_array($record)) {
-            foreach ($record as $key => &$value) {
+            foreach ($record as &$value) {
                 if (is_resource($value)) {
                     $value = stream_get_contents($value);
                 }
@@ -114,7 +119,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
      * @param string $type The type to fetch.
      * @return mixed
      */
-    public function fetchAll($type = 'num')
+    public function fetchAll(string|int $type = 'num'): array
     {
         if ($this->_allFetched) {
             return $this->_records;
@@ -137,6 +142,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
             $counter = $this->_counter;
             while ($this->fetch('assoc')) {
             }
+            
             $this->_counter = $counter;
         }
 
@@ -148,7 +154,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
      *
      * @return void
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->_counter = 0;
     }
@@ -160,7 +166,8 @@ class OracleBufferedStatement extends MethodStatementDecorator
      */
     protected function _reset()
     {
-        $this->_count = $this->_counter = 0;
+        $this->_count = 0;
+        $this->_counter = 0;
         $this->_records = [];
         $this->_allFetched = false;
     }

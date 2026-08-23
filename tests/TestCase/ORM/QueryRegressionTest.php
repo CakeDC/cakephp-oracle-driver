@@ -93,18 +93,16 @@ class QueryRegressionTest extends CakeQueryRegressionTest
 
         $query = $table
             ->find()
-            ->select(function (SelectQuery $q) use ($table) {
-                return [
-                    'value' => $q
-                        ->func()
-                        ->ABS([
-                            $table
-                                ->getConnection()
-                                ->selectQuery(-1),
-                        ])
-                        ->setReturnType('integer'),
-                ];
-            });
+            ->select(fn(SelectQuery $q): array => [
+                'value' => $q
+                    ->func()
+                    ->ABS([
+                        $table
+                            ->getConnection()
+                            ->selectQuery(-1),
+                    ])
+                    ->setReturnType('integer'),
+            ]);
 
         $result = $query->first()->get('value');
         $this->assertEquals(1, $result);
@@ -119,22 +117,20 @@ class QueryRegressionTest extends CakeQueryRegressionTest
 
         $query = $table
             ->find()
-            ->select(function (SelectQuery $q) use ($table) {
-                return [
-                    'value' => $q
-                        ->func()
-                        ->ROUND(
-                            [
-                                $table
-                                    ->getConnection()
-                                    ->selectQuery(1.23456),
-                                2,
-                            ],
-                            [null, 'integer']
-                        )
-                        ->setReturnType('float'),
-                ];
-            });
+            ->select(fn(SelectQuery $q): array => [
+                'value' => $q
+                    ->func()
+                    ->ROUND(
+                        [
+                            $table
+                                ->getConnection()
+                                ->selectQuery(1.23456),
+                            2,
+                        ],
+                        [null, 'integer']
+                    )
+                    ->setReturnType('float'),
+            ]);
 
         $result = $query->first()->get('value');
         $this->assertEquals(1.23, $result);
@@ -180,6 +176,7 @@ class QueryRegressionTest extends CakeQueryRegressionTest
     {
         $table = $this->getTableLocator()->get('Articles');
         $table->belongsToMany('ArticlesTags');
+
         $results = $table->find()->where(['id >' => 100])->contain('ArticlesTags')->toArray();
         $this->assertEmpty($results);
     }
@@ -270,19 +267,15 @@ class QueryRegressionTest extends CakeQueryRegressionTest
 
         $query = $table
             ->find()
-            ->select(function (SelectQuery $q) use ($table) {
-                return [
-                    'value' => $q->func()->UPPER([
-                        $table
-                            ->getAssociation('Authors')
-                            ->find()
-                            ->select(['Authors.name'])
-                            ->where(function (QueryExpression $exp) {
-                                return $exp->equalFields('Authors.id', 'Articles.author_id');
-                            }),
-                    ]),
-                ];
-            });
+            ->select(fn(SelectQuery $q): array => [
+                'value' => $q->func()->UPPER([
+                    $table
+                        ->getAssociation('Authors')
+                        ->find()
+                        ->select(['Authors.name'])
+                        ->where(fn(QueryExpression $exp) => $exp->equalFields('Authors.id', 'Articles.author_id')),
+                ]),
+            ]);
 
         $result = $query->first()->get('value');
         $this->assertEquals('MARIANO', $result);

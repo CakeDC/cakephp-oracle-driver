@@ -43,7 +43,7 @@
         <ini name="memory_limit" value="-1"/>
         <ini name="apc.enable_cli" value="1"/>
         <ini name="date.timezone" value="Europe/Moscow"/>
-		<env name="db_dsn"
+		<env name="db_dsn" force="false"
 			 value="oracle://username:password@XE?className=CakeDC\OracleDriver\Database\OracleConnection&amp;driver=CakeDC\OracleDriver\Database\Driver\OracleOCI&amp;host=oracle11g&amp;database=XE"/>
 		<!-- oracle pdo
 		<env name="db_dsn" value="oracle://username:password@XE?className=CakeDC\OracleDriver\Database\OracleConnection&amp;driver==CakeDC\OracleDriver\Database\Driver\OraclePDO&amp;host=oracle11g&amp;database=XE"/>

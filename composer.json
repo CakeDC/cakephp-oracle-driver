@@ -42,9 +42,13 @@
         "ext-pdo": "*"
     },
     "require-dev": {
-        "cakephp/cakephp-codesniffer": "^5.3",
+        "boundwize/structarmed": "^0.14",
+        "cakedc/cakephp-phpstan": "^4.3",
+        "cakephp/cakephp-codesniffer": "^5.0",
         "mockery/mockery": "^1.6",
-        "phpunit/phpunit": "^11.5"
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^11.5 | ^12.0",
+        "rector/rector": "^2.5"
     },
     "autoload": {
         "psr-4": {
@@ -65,11 +69,29 @@
     },
     "scripts": {
         "check": [
-            "@test"
+            "@cs-check",
+            "@rector-check",
+            "@test",
+            "@analyse"
         ],
-        "cs-check": "phpcs -p --standard=vendor/cakephp/cakephp-codesniffer/CakePHP src/ tests/",
-        "cs-fix": "phpcbf --standard=vendor/cakephp/cakephp-codesniffer/CakePHP src/ tests/",
-        "test": "phpunit",
-        "single-test": "phpunit"
+        "fix": [
+            "@cs-fix",
+            "@rector-fix",
+            "@cs-fix",
+            "@analyse"
+        ],
+        "analyse": [
+            "@stan"
+        ],
+        "cs-check": "phpcs -p --standard=phpcs.xml src/ tests/",
+        "cs-fix": "phpcbf --standard=phpcs.xml src/ tests/",
+        "test": "php tests/run-database-tests.php",
+        "test:database": "vendor/bin/phpunit --testsuite=Database",
+        "test:orm": "vendor/bin/phpunit --testsuite=ORM",
+        "rector-check": "vendor/bin/rector process --dry-run",
+        "rector-fix": "vendor/bin/rector process",
+        "stan": "vendor/bin/phpstan analyse src/",
+        "stan-baseline": "vendor/bin/ analyse --generate-baseline",
+        "structarmed": "vendor/bin/structarmed analyze src"
     }
 }

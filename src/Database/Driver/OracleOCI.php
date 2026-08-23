@@ -48,7 +48,7 @@ class OracleOCI extends OracleBase
         if ($this->_version === null) {
             $this->connect();
             if ($this->pdo instanceof OCI8Connection) {
-                $this->_version = (string)$this->pdo->getServerVersion();
+                $this->_version = $this->pdo->getServerVersion();
             } else {
                 $this->_version = parent::version();
             }
@@ -72,6 +72,7 @@ class OracleOCI extends OracleBase
         if (!empty($options['bufferResult'])) {
             $statement = new MethodOracleStatement($statement, $this);
         }
+        
         $statement->queryString = $queryString;
 
         return $statement;

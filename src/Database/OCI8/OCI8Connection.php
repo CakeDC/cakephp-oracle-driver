@@ -106,7 +106,7 @@ class OCI8Connection extends PDO
      * @throws \UnexpectedValueException if the version string returned by the database server does not parsed
      * @return int Version number
      */
-    public function getServerVersion()
+    public function getServerVersion(): string
     {
         $versionData = oci_server_version($this->dbh);
         if (!preg_match('/\s+(\d+\.\d+\.\d+\.\d+\.\d+)\s+/', $versionData, $version)) {
@@ -162,6 +162,7 @@ class OCI8Connection extends PDO
         if ($stmt === false) {
             return false;
         }
+
         $stmt->execute();
 
         return $stmt->rowCount();
@@ -183,7 +184,7 @@ class OCI8Connection extends PDO
      * @deprecated Use inTransaction() instead
      * @return bool
      */
-    public function isTransaction()
+    public function isTransaction(): bool
     {
         return $this->inTransaction();
     }
@@ -215,6 +216,7 @@ class OCI8Connection extends PDO
             $error = oci_error($this->dbh) ?: ['message' => 'Commit failed', 'code' => 0];
             throw OCI8Exception::fromErrorInfo($error);
         }
+
         $this->executeMode = OCI_COMMIT_ON_SUCCESS;
 
         return true;
@@ -229,6 +231,7 @@ class OCI8Connection extends PDO
             $error = oci_error($this->dbh) ?: ['message' => 'Rollback failed', 'code' => 0];
             throw OCI8Exception::fromErrorInfo($error);
         }
+
         $this->executeMode = OCI_COMMIT_ON_SUCCESS;
 
         return true;

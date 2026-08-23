@@ -26,10 +26,8 @@ class MethodsCollection
 {
     /**
      * Connection object
-     *
-     * @var \Cake\Datasource\ConnectionInterface
      */
-    protected $_connection;
+    protected \Cake\Datasource\ConnectionInterface $_connection;
 
     /**
      * Schema dialect instance.
@@ -54,7 +52,7 @@ class MethodsCollection
      *
      * @return array The list of methods in the connected database/schema.
      */
-    public function listMethods()
+    public function listMethods(): array
     {
         // @todo fix this method to return only high level data
         [$sql, $params] = $this->_dialect->listMethodsSql($this->_connection->config());
@@ -63,6 +61,7 @@ class MethodsCollection
         while ($row = $statement->fetch()) {
             $result[] = $row[0];
         }
+        
         $statement->closeCursor();
 
         return $result;
@@ -74,7 +73,7 @@ class MethodsCollection
      * @param string $name Method name.
      * @return array The list of methods in the connected database/schema.
      */
-    public function getMethod($name)
+    public function getMethod($name): array
     {
         $config = $this->_connection->config();
         $config['objectName'] = $name;
@@ -84,6 +83,7 @@ class MethodsCollection
         while ($row = $statement->fetch()) {
             $result[] = $row[0];
         }
+        
         $statement->closeCursor();
 
         return $result;
@@ -105,13 +105,14 @@ class MethodsCollection
      * @return \CakeDC\OracleDriver\Database\Schema\MethodSchema Object with method metadata.
      * @throws \Cake\Database\Exception when method cannot be described.
      */
-    public function describe($name, array $options = [])
+    public function describe(string $name, array $options = []): \CakeDC\OracleDriver\Database\Schema\MethodSchema
     {
         $config = $this->_connection->config();
         $methods = $this->getMethod($name);
-        if (empty($methods)) {
+        if ($methods === []) {
             throw new DatabaseException(sprintf('Cannot describe %s. Method not found.', $name));
         }
+        
         $method = new MethodSchema($name);
 
         $this->_reflect($method, $name, $config);
@@ -134,14 +135,17 @@ class MethodsCollection
         if (empty($sql)) {
             return;
         }
+        
         try {
             $statement = $this->_connection->execute($sql, $params);
-        } catch (PDOException $e) {
-            throw new DatabaseException($e->getMessage(), 500, $e);
+        } catch (PDOException $pdoException) {
+            throw new DatabaseException($pdoException->getMessage(), 500, $pdoException);
         }
+        
         foreach ($statement->fetchAll('assoc') as $row) {
             $this->_dialect->convertParametersDescription($method, $row);
         }
+        
         $statement->closeCursor();
     }
 }

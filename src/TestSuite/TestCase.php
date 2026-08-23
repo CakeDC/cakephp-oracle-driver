@@ -44,9 +44,10 @@ abstract class TestCase extends CakeTestCase
         parent::setUp();
 
         if (property_exists($this, 'codeFixtures') && !empty($this->codeFixtures)) {
-            if (self::$oracleFixtureManager === null) {
+            if (!self::$oracleFixtureManager instanceof \CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager) {
                 self::$oracleFixtureManager = new OracleFixtureManager();
             }
+            
             $this->methodFixtureManager = self::$oracleFixtureManager;
             self::$oracleFixtureManager->fixturize($this);
             self::$oracleFixtureManager->load($this);
@@ -61,12 +62,12 @@ abstract class TestCase extends CakeTestCase
      * @return void
      * @throws \Exception when no fixture manager is available.
      */
-    public function loadMethodFixtures()
+    public function loadMethodFixtures(...$args): void
     {
-        if (empty($this->methodFixtureManager)) {
+        if (!$this->methodFixtureManager instanceof \CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager) {
             throw new Exception('No fixture manager to load the test fixture');
         }
-        $args = func_get_args();
+        
         foreach ($args as $class) {
             $this->methodFixtureManager->loadSingleMethod($class, null, $this->dropTables);
         }

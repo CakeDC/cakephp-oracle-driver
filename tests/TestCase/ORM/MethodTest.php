@@ -30,7 +30,7 @@ class MethodTest extends TestCase
      *
      * @return void
      */
-    public function testMethodCall()
+    public function testMethodCall(): void
     {
         $method = MethodRegistry::get('CalcSum', ['method' => 'CALC.SUM']);
 
@@ -52,7 +52,7 @@ class MethodTest extends TestCase
      *
      * @return void
      */
-    public function testOutParameterMethodCall()
+    public function testOutParameterMethodCall(): void
     {
         $method = MethodRegistry::get('CalcTwice', ['method' => 'CALC.TWICE']);
 

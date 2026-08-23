@@ -50,7 +50,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         Configure::write('App.namespace', 'TestApp');
@@ -63,13 +63,13 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testConfig()
+    public function testConfig(): void
     {
         $this->assertEquals([], $this->_locator->config('Tests'));
 
         $data = [
             'connection' => 'testing',
-            'entityClass' => 'TestApp\Model\Entity\Article',
+            'entityClass' => \TestApp\Model\Entity\Article::class,
         ];
         $result = $this->_locator->config('Tests', $data);
         $this->assertEquals($data, $result, 'Returns config data.');
@@ -84,14 +84,14 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testConfigPlugin()
+    public function testConfigPlugin(): void
     {
         $this->markTestSkipped('TestPlugin class not available in this test environment');
         Plugin::getCollection()->add(new \TestPlugin\Plugin());
 
         $data = [
             'connection' => 'testing',
-            'entityClass' => 'TestPlugin\Model\Entity\Comment',
+            'entityClass' => \TestPlugin\Model\Entity\Comment::class,
         ];
 
         $result = $this->_locator->config('TestPlugin.TestPluginComments', $data);
@@ -103,11 +103,11 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testConfigOnDefinedInstance()
+    public function testConfigOnDefinedInstance(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('You cannot configure "Users", it has already been constructed.');
-        $users = $this->_locator->get('Users');
+        $this->_locator->get('Users');
         $this->_locator->config('Users', ['method' => 'my_users']);
     }
 
@@ -116,7 +116,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testExists()
+    public function testExists(): void
     {
         $this->assertFalse($this->_locator->exists('Articles'));
 
@@ -132,7 +132,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testExistsPlugin()
+    public function testExistsPlugin(): void
     {
         $this->assertFalse($this->_locator->exists('Comments'));
         $this->assertFalse($this->_locator->exists('TestPlugin.Comments'));
@@ -151,12 +151,12 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testGet()
+    public function testGet(): void
     {
         $result = $this->_locator->get('Articles', [
             'method' => 'my_articles',
         ]);
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $result);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $result);
         $this->assertEquals('my_articles', $result->getMethod());
 
         $result2 = $this->_locator->get('Articles');
@@ -169,35 +169,35 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testGetFallbacks()
+    public function testGetFallbacks(): void
     {
         $result = $this->_locator->get('Droids');
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $result);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $result);
         $this->assertEquals('droids', $result->getMethod());
 //        $this->assertEquals('Droids', $result->alias());
 
         $result = $this->_locator->get('R2D2', ['className' => 'Droids']);
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $result);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $result);
         $this->assertEquals('droids', $result->getMethod(), 'The method should be derived from the className');
 //        $this->assertEquals('R2D2', $result->alias());
 
         $result = $this->_locator->get('C3P0', ['className' => 'Droids', 'method' => 'rebels']);
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $result);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $result);
         $this->assertEquals('rebels', $result->getMethod(), 'The method should be taken from options');
 //        $this->assertEquals('C3P0', $result->alias());
 
         $result = $this->_locator->get('Funky.Chipmunks');
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $result);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $result);
         $this->assertEquals('chipmunks', $result->getMethod(), 'The method should be derived from the alias');
 //        $this->assertEquals('Chipmunks', $result->alias());
 
         $result = $this->_locator->get('Awesome', ['className' => 'Funky.Monkies']);
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $result);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $result);
         $this->assertEquals('monkies', $result->getMethod(), 'The method should be derived from the classname');
 //        $this->assertEquals('Awesome', $result->alias());
 
-        $result = $this->_locator->get('Stuff', ['className' => 'CakeDC\OracleDriver\ORM\Method']);
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $result);
+        $result = $this->_locator->get('Stuff', ['className' => \CakeDC\OracleDriver\ORM\Method::class]);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $result);
         $this->assertEquals('stuff', $result->getMethod(), 'The method should be derived from the alias');
 //        $this->assertEquals('Stuff', $result->alias());
     }
@@ -207,7 +207,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testGetWithConfig()
+    public function testGetWithConfig(): void
     {
         $this->_locator->config('Articles', [
             'method' => 'my_articles',
@@ -221,13 +221,13 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testGetWithConfigClassName()
+    public function testGetWithConfigClassName(): void
     {
         $this->_locator->config('MyUsersMethodAlias', [
-            'className' => '\CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod',
+            'className' => \CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod::class,
         ]);
         $result = $this->_locator->get('MyUsersMethodAlias');
-        $this->assertInstanceOf('\CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod', $result, 'Should use config() data className option.');
+        $this->assertInstanceOf(\CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod::class, $result, 'Should use config() data className option.');
     }
 
     /**
@@ -235,11 +235,11 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testGetExistingWithConfigData()
+    public function testGetExistingWithConfigData(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('You cannot configure "Users", it already exists in the registry.');
-        $users = $this->_locator->get('Users');
+        $this->_locator->get('Users');
         $this->_locator->get('Users', ['method' => 'my_users']);
     }
 
@@ -249,10 +249,10 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testGetWithSameOption()
+    public function testGetWithSameOption(): void
     {
-        $result = $this->_locator->get('Users', ['className' => 'CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod']);
-        $result2 = $this->_locator->get('Users', ['className' => 'CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod']);
+        $result = $this->_locator->get('Users', ['className' => \CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod::class]);
+        $result2 = $this->_locator->get('Users', ['className' => \CakeDC\OracleDriver\Test\TestCase\ORM\Locator\MyUsersMethod::class]);
         $this->assertEquals($result, $result2);
     }
 
@@ -372,7 +372,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testConfigAndBuild()
+    public function testConfigAndBuild(): void
     {
         $this->_locator->clear();
         $map = $this->_locator->config();
@@ -390,7 +390,7 @@ class MethodLocatorTest extends TestCase
         $this->_locator->config('users', $options);
 
         $method = $this->_locator->get('users', ['method' => 'users']);
-        $this->assertInstanceOf('CakeDC\OracleDriver\ORM\Method', $method);
+        $this->assertInstanceOf(\CakeDC\OracleDriver\ORM\Method::class, $method);
         $this->assertEquals('users', $method->getMethod());
 //        $this->assertSame($connection, $method->connection());
 
@@ -415,7 +415,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testSet()
+    public function testSet(): void
     {
         $mock = $this->getMockBuilder(Method::class)->getMock();
         $this->assertSame($mock, $this->_locator->set('Articles', $mock));
@@ -442,7 +442,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testGenericInstances()
+    public function testGenericInstances(): void
     {
         $foos = $this->_locator->get('Foos');
         $bars = $this->_locator->get('Bars');
@@ -455,7 +455,7 @@ class MethodLocatorTest extends TestCase
      *
      * @return void
      */
-    public function testRemove()
+    public function testRemove(): void
     {
         $first = $this->_locator->get('Comments');
 

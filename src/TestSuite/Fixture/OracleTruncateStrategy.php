@@ -31,6 +31,7 @@ class OracleTruncateStrategy extends TruncateStrategy
         $fixtures = $this->helper->loadFixtures($fixtureNames);
         $this->helper->truncate($fixtures);
         $this->helper->insert($fixtures);
+
         $this->fixtures = $fixtures;
     }
 

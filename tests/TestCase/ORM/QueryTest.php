@@ -97,10 +97,8 @@ class QueryTest extends CakeSelectQueryTest
             ->enableAutoFields(true)
             ->enableHydration(false)
             ->contain([
-                'Authors' => function ($q) {
-                    return $q->select(['compute' => '(SELECT 2 + 20 FROM DUAL)'])
-                             ->enableAutoFields(true);
-                },
+                'Authors' => fn($q) => $q->select(['compute' => '(SELECT 2 + 20 FROM DUAL)'])
+                         ->enableAutoFields(true),
             ])
             ->first();
 
@@ -144,15 +142,11 @@ class QueryTest extends CakeSelectQueryTest
 
         $results = $table->find()
              ->enableHydration(false)
-             ->matching('articles', function ($q) {
-                 return $q->notMatching('tags', function ($q) {
-                    return $q->where(function ($exp) {
-                        $e = new QueryExpression();
+             ->matching('articles', fn($q) => $q->notMatching('tags', fn($q) => $q->where(function ($exp) {
+                 $e = new QueryExpression();
 
-                        return $exp->add($e->eq(new IdentifierExpression('tags.name'), 'tag3'));
-                    });
-                 });
-             })
+                 return $exp->add($e->eq(new IdentifierExpression('tags.name'), 'tag3'));
+             })))
              ->orderBy(['authors.id' => 'ASC', 'articles.id' => 'ASC']);
 
         $expected = [
@@ -184,9 +178,8 @@ class QueryTest extends CakeSelectQueryTest
         $table = $this->getTableLocator()->get('authors');
         $table->hasMany('articles');
         $table->articles->deleteAll(['author_id' => 4]);
-        $orderFn = function ($q) {
-                 return $q->orderBy(['id']);
-        };
+        
+        $orderFn = (fn($q) => $q->orderBy(['id']));
         $results = $table->find()
              ->select(['total_articles' => 'count(articles.id)'])
              ->enableAutoFields(true)

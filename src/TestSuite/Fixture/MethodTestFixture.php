@@ -36,7 +36,7 @@ class MethodTestFixture
      *
      * @var string
      */
-    public $name = null;
+    public $name;
 
     /**
      * The plain pl/sql code blocks to create object.
@@ -61,7 +61,7 @@ class MethodTestFixture
     {
         if (!empty($this->connection)) {
             $connection = $this->connection;
-            if (strpos($connection, 'test') !== 0) {
+            if (!str_starts_with($connection, 'test')) {
                 $message = sprintf(
                     'Invalid datasource name "%s" for "%s" fixture. Fixture datasource names must begin with "test".',
                     $connection,
@@ -70,6 +70,7 @@ class MethodTestFixture
                 throw new CakeException($message);
             }
         }
+        
         $this->init();
     }
 
@@ -95,7 +96,7 @@ class MethodTestFixture
      * @return void
      * @throws \Cake\ORM\Exception\MissingTableClassException When importing from a table that does not exist.
      */
-    public function init()
+    public function init(): void
     {
         if ($this->name === null) {
             [, $class] = namespaceSplit(static::class);
@@ -104,6 +105,7 @@ class MethodTestFixture
             if (isset($matches[1])) {
                 $method = $matches[1];
             }
+            
             $this->name = Inflector::tableize($method);
         }
     }
@@ -111,23 +113,24 @@ class MethodTestFixture
     /**
      * {@inheritDoc}
      */
-    public function create(ConnectionInterface $db)
+    public function create(ConnectionInterface $db): bool
     {
         try {
             $queries = [];
-            if (!empty($this->create)) {
+            if ($this->create !== []) {
                 $queries = (array)$this->create;
             }
+            
             foreach ($queries as $query) {
                 $statement = $db->getDriver()->prepare($query);
                 $statement->execute();
                 $statement->closeCursor();
             }
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             $msg = sprintf(
                 'Fixture creation for "%s" failed "%s"',
                 $this->name,
-                $e->getMessage()
+                $exception->getMessage()
             );
             Log::error($msg);
             trigger_error($msg, E_USER_WARNING);
@@ -141,19 +144,20 @@ class MethodTestFixture
     /**
      * {@inheritDoc}
      */
-    public function drop(ConnectionInterface $db)
+    public function drop(ConnectionInterface $db): bool
     {
         try {
             $sql = [];
             if ($this->drop !== null) {
                 $sql = (array)$this->drop;
             }
+            
             foreach ($sql as $query) {
                 $statement = $db->getDriver()->prepare($query);
                 $statement->execute();
                 $statement->closeCursor();
             }
-        } catch (Exception $e) {
+        } catch (Exception) {
             return false;
         }
 
@@ -163,7 +167,7 @@ class MethodTestFixture
     /**
      * {@inheritDoc}
      */
-    public function insert(ConnectionInterface $db)
+    public function insert(ConnectionInterface $db): bool
     {
         return true;
     }
@@ -171,7 +175,7 @@ class MethodTestFixture
     /**
      * {@inheritDoc}
      */
-    public function createConstraints(ConnectionInterface $db)
+    public function createConstraints(ConnectionInterface $db): bool
     {
         return true;
     }
@@ -179,7 +183,7 @@ class MethodTestFixture
     /**
      * {@inheritDoc}
      */
-    public function dropConstraints(ConnectionInterface $db)
+    public function dropConstraints(ConnectionInterface $db): bool
     {
         return true;
     }
@@ -187,7 +191,7 @@ class MethodTestFixture
     /**
      * {@inheritDoc}
      */
-    public function truncate(ConnectionInterface $db)
+    public function truncate(ConnectionInterface $db): bool
     {
         return true;
     }

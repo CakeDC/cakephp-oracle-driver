@@ -34,7 +34,9 @@ class QueryTest extends TestCase
     use QueryAssertsTrait;
 
     public const ARTICLE_COUNT = 3;
+    
     public const AUTHOR_COUNT = 4;
+    
     public const COMMENT_COUNT = 6;
 
     protected array $fixtures = [
@@ -90,7 +92,7 @@ class QueryTest extends TestCase
     /**
      * @inheritDoc
      */
-    public function testSelectAliasedTables()
+    public function testSelectAliasedTables(): void
     {
         $this->loadFixtures('Authors', 'Articles');
         $query = $this->connection->selectQuery();
@@ -116,7 +118,7 @@ class QueryTest extends TestCase
     /**
      * @inheritDoc
      */
-    public function testSelectOrderBy()
+    public function testSelectOrderBy(): void
     {
         $this->loadFixtures('Authors', 'Articles');
         $query = $this->connection->selectQuery();
@@ -155,7 +157,7 @@ class QueryTest extends TestCase
         $expression = $query->expr(["MOD(($idField + :offset), 2)"]);
         $result = $query
             ->orderBy([$expression, 'id' => 'desc'], true)
-            ->bind(':offset', 1, null)
+            ->bind(':offset', 1)
             ->execute();
         $this->assertEquals(['id' => 3], $result->fetch('assoc'));
         $this->assertEquals(['id' => 1], $result->fetch('assoc'));
@@ -164,7 +166,7 @@ class QueryTest extends TestCase
         $result = $query
             ->orderBy($expression, true)
             ->orderBy(['id' => 'asc'])
-            ->bind(':offset', 1, null)
+            ->bind(':offset', 1)
             ->execute();
         $this->assertEquals(['id' => 1], $result->fetch('assoc'));
         $this->assertEquals(['id' => 3], $result->fetch('assoc'));
@@ -174,7 +176,7 @@ class QueryTest extends TestCase
     /**
      * @inheritDoc
      */
-    public function testSelectGroup()
+    public function testSelectGroup(): void
     {
         $this->loadFixtures('Authors', 'Articles');
         $query = $this->connection->selectQuery();
@@ -214,7 +216,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectWhereUsingExpressionInField()
+    public function testSelectWhereUsingExpressionInField(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
         $query = $this->connection->selectQuery();
@@ -245,14 +247,12 @@ class QueryTest extends TestCase
      * @return void
      */
     #[Group('FunctionExpression')]
-    public function testSQLFunctions()
+    public function testSQLFunctions(): void
     {
         $this->loadFixtures('Comments');
         $query = $this->connection->selectQuery();
         $result = $query->select(
-            function ($q) {
-                return ['total' => $q->func()->count('*')];
-            }
+            fn($q): array => ['total' => $q->func()->count('*')]
         )
             ->from('comments')
             ->execute();
@@ -359,7 +359,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectOrderByString()
+    public function testSelectOrderByString(): void
     {
         $this->loadFixtures('Articles');
         $query = $this->connection->selectQuery();
@@ -377,7 +377,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectHaving()
+    public function testSelectHaving(): void
     {
         $this->loadFixtures('Authors', 'Articles');
         $query = $this->connection->selectQuery();
@@ -403,7 +403,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectAndHaving()
+    public function testSelectAndHaving(): void
     {
         $this->loadFixtures('Authors', 'Articles');
         $query = $this->connection->selectQuery();
@@ -435,7 +435,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testBind()
+    public function testBind(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
         $query = $this->connection->selectQuery();
@@ -465,7 +465,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testInsertExpressionValues()
+    public function testInsertExpressionValues(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
         $query = $this->connection->insertQuery();
@@ -479,6 +479,7 @@ class QueryTest extends TestCase
         if (!$this->connection->getDriver() instanceof \Cake\Database\Driver\Sqlserver) {
             $this->assertSame(1, $result->rowCount());
         }
+        
         $result->closeCursor();
 
         $rows = ($this->connection->selectQuery())->select('*')
@@ -510,6 +511,7 @@ class QueryTest extends TestCase
         if (!$this->connection->getDriver() instanceof \Cake\Database\Driver\Sqlserver) {
             $this->assertSame(1, $result->rowCount());
         }
+        
         $result->closeCursor();
 
         $rows = ($this->connection->selectQuery())->select('*')
@@ -533,7 +535,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectDistinctON()
+    public function testSelectDistinctON(): void
     {
         $this->markTestSkipped('Distinct on not supported in Oracle');
     }
@@ -543,7 +545,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testUnion()
+    public function testUnion(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
         $union = ($this->connection->selectQuery())->select(['id', 'title'])->from(['a' => 'articles']);
@@ -582,13 +584,12 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testUnionOrderBy()
+    public function testUnionOrderBy(): void
     {
         $this->skipIf(
             ($this->connection->getDriver() instanceof \CakeDC\OracleDriver\Database\Driver\OracleBase),
             'Driver does not support ORDER BY in UNIONed queries.'
         );
-        parent::testUnionOrderBy();
     }
 
     /**
@@ -596,7 +597,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testUnionAll()
+    public function testUnionAll(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
         $union = ($this->connection->selectQuery())->select(['id', 'title'])->from(['a' => 'articles']);
@@ -626,7 +627,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectAliasedJoins()
+    public function testSelectAliasedJoins(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
         $query = $this->connection->selectQuery();
@@ -670,7 +671,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectPageWithOrder()
+    public function testSelectPageWithOrder(): void
     {
         $this->loadFixtures('Comments');
         $query = $this->connection->selectQuery();
@@ -705,7 +706,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectWhereNull()
+    public function testSelectWhereNull(): void
     {
         $this->loadFixtures('MenuLinkTrees');
 
@@ -733,7 +734,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectWhereNotNull()
+    public function testSelectWhereNotNull(): void
     {
         $this->loadFixtures('MenuLinkTrees');
 
@@ -761,7 +762,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectOrderAsc()
+    public function testSelectOrderAsc(): void
     {
         $this->loadFixtures('Articles');
         $query = $this->connection->selectQuery();
@@ -802,7 +803,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testSelectOrderDesc()
+    public function testSelectOrderDesc(): void
     {
         $this->loadFixtures('Articles');
         $query = $this->connection->selectQuery();
@@ -842,7 +843,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testOrderBySubquery()
+    public function testOrderBySubquery(): void
     {
         $this->markTestSkipped('QueryExpression::addCase() was removed in CakePHP 5');
         $this->autoQuote = true;
@@ -904,7 +905,7 @@ class QueryTest extends TestCase
         );
     }
 
-    public function testReusingExpressions()
+    public function testReusingExpressions(): void
     {
         $this->markTestSkipped('Oracle returns strings for computed fields; assertSame would fail type checks');
         $this->loadFixtures('Articles');
@@ -1008,7 +1009,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testStringExpression()
+    public function testStringExpression(): void
     {
         $driver = $this->connection->getDriver();
         $collation = 'LATIN_AI';
@@ -1029,7 +1030,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testInsertNoInto()
+    public function testInsertNoInto(): void
     {
         $this->expectException(DatabaseException::class);
         $this->expectExceptionMessage('Could not compile insert query. No table was specified');
@@ -1042,7 +1043,7 @@ class QueryTest extends TestCase
      *
      * @return void
      */
-    public function testIdentifierCollation()
+    public function testIdentifierCollation(): void
     {
         $this->loadFixtures('Articles');
         $driver = $this->connection->getDriver();
@@ -1059,6 +1060,7 @@ class QueryTest extends TestCase
         } else {
             $expected = "SELECT \(<title> COLLATE {$collation}\) AS <test_string>";
         }
+        
         $this->assertRegExpSql($expected, $query->sql(new ValueBinder()), !$this->autoQuote);
 
         $statement = $query->execute();

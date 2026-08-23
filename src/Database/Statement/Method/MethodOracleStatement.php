@@ -32,7 +32,7 @@ class MethodOracleStatement extends MethodStatementDecorator
     /**
      * {@inheritDoc}
      */
-    public function __get($property)
+    public function __get(string $property): mixed
     {
         if ($property === 'queryString') {
             return empty($this->queryString) ? $this->_statement->queryString : $this->queryString;
@@ -44,7 +44,7 @@ class MethodOracleStatement extends MethodStatementDecorator
      */
     public function bind(array $params, array $types): void
     {
-        if (empty($params)) {
+        if ($params === []) {
             return;
         }
 
@@ -57,9 +57,11 @@ class MethodOracleStatement extends MethodStatementDecorator
             if (isset($types[$index])) {
                 $type = $types[$index];
             }
+            
             if ($annonymousParams) {
                 $index += $offset;
             }
+            
             $this->bindValue($index, $value, $type);
         }
     }
@@ -83,7 +85,7 @@ class MethodOracleStatement extends MethodStatementDecorator
     {
         $result = $this->_statement->fetch($mode);
         if (is_array($result)) {
-            foreach ($result as $key => &$value) {
+            foreach ($result as &$value) {
                 if (is_resource($value)) {
                     $value = stream_get_contents($value);
                 }

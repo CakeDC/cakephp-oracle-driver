@@ -45,7 +45,7 @@ class CollectionTest extends TestCase
      *
      * @return void
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->connection = ConnectionManager::get('test');
@@ -58,7 +58,7 @@ class CollectionTest extends TestCase
      *
      * @return void
      */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
         unset($this->connection);
@@ -72,7 +72,7 @@ class CollectionTest extends TestCase
      *
      * @return void
      */
-    public function testDescribeIncorrectMethod()
+    public function testDescribeIncorrectMethod(): void
     {
         $this->expectException(DatabaseException::class);
         $schema = new MethodsCollection($this->connection);
@@ -84,7 +84,7 @@ class CollectionTest extends TestCase
      *
      * @return void
      */
-    public function testDescribeCache()
+    public function testDescribeCache(): void
     {
         $schema = $this->connection->methodSchemaCollection();
         $method = $this->connection->methodSchemaCollection()->describe('CALC.SUM');

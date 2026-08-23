@@ -88,7 +88,7 @@ class BoolType extends BaseType implements BatchCastingInterface
      */
     public function toPHP(mixed $value, Driver $driver): ?bool
     {
-        if ($value === null || $value === true || $value === false) {
+        if (in_array($value, [null, true, false], true)) {
             return $value;
         }
 
@@ -160,12 +160,15 @@ class BoolType extends BaseType implements BatchCastingInterface
         if ($value === null) {
             return null;
         }
+        
         if ($value === 'true') {
             return true;
         }
+        
         if ($value === 'false') {
             return false;
         }
+        
         if (!is_scalar($value)) {
             return null;
         }

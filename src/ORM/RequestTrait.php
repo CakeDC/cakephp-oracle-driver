@@ -133,7 +133,7 @@ trait RequestTrait
      * @param string $method the method to check for existence
      * @return bool true if method exists
      */
-    protected function _methodExists($method)
+    protected function _methodExists($method): bool
     {
         if (empty(static::$_accessors[$this->_className])) {
             static::$_accessors[$this->_className] = array_flip(get_class_methods($this));
@@ -196,6 +196,7 @@ trait RequestTrait
         if (!is_array($property)) {
             throw new InvalidArgumentException('Cannot set an empty property');
         }
+        
         $options += ['setter' => true];
 
         foreach ($property as $p => $value) {
@@ -208,6 +209,7 @@ trait RequestTrait
             if ($this->_methodExists($setter)) {
                 $value = $this->{$setter}($value);
             }
+            
             $this->_properties[$p] = $value;
         }
 
@@ -246,7 +248,7 @@ trait RequestTrait
      * @param string|array $property The property or properties to check.
      * @return bool
      */
-    public function has($property)
+    public function has($property): bool
     {
         foreach ((array)$property as $prop) {
             if ($this->get($prop) === null) {
@@ -310,7 +312,7 @@ trait RequestTrait
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $result = [];
         foreach ($this->visibleProperties() as $property) {
@@ -338,7 +340,7 @@ trait RequestTrait
 
      *     representations.
      */
-    public function visibleProperties()
+    public function visibleProperties(): array
     {
         return array_keys($this->_properties);
     }
@@ -394,17 +396,19 @@ trait RequestTrait
      * @param \Cake\Database\StatementInterface $statement The statement to add parameters to.
      * @return void
      */
-    public function attachTo($statement)
+    public function attachTo($statement): void
     {
         $properties = $this->_properties;
         if (empty($properties)) {
             return;
         }
+        
         foreach ($properties as $name => $value) {
             $parameter = $this->_repository->getSchema()->parameter($name);
             if ($parameter === null) {
                 continue;
             }
+            
             $paramName = $name === ':result' ? $name : ':' . $name;
             if ($parameter !== null) {
                 $type = $parameter['type'];
@@ -413,6 +417,7 @@ trait RequestTrait
                 if ($parameter['in'] && $parameter['out']) {
                     $this->_properties[$name] = $value;
                 }
+                
                 if ($parameter['out']) {
                     $statement->bindParam($paramName, $this->_properties[$name], $type);
                 } else {
@@ -429,19 +434,22 @@ trait RequestTrait
      * @param array $options Cursor ResultSet configuration options.
      * @return \CakeDC\OracleDriver\ORM\Method\ResultSet
      */
-    public function fetchCursor($name, $options = [])
+    public function fetchCursor($name, $options = []): \CakeDC\OracleDriver\ORM\Method\ResultSet
     {
-        $options += ['entityClass' => 'Cake\ORM\Entity'];
+        $options += ['entityClass' => \Cake\ORM\Entity::class];
         if ($this->isNew()) {
             throw new InvalidArgumentException('Cannot fetch cursor on not executed request');
         }
+        
         $parameter = $this->_repository->getSchema()->parameter($name);
         if (empty($parameter)) {
             throw new InvalidArgumentException('Cannot fetch cursor for not declared parameter');
         }
+        
         if ($parameter['type'] !== 'cursor') {
             throw new InvalidArgumentException('Cannot fetch cursor for parameter that have wrong type');
         }
+        
         $property = $this->get($name);
         $statement = $this->_repository->getConnection()->prepareMethod($property);
         $statement->queryString = __('fetch {0} cursor', $name);
@@ -478,7 +486,7 @@ trait RequestTrait
      * @param \CakeDC\OracleDriver\Database\Schema\MethodSchema $schema Method schema object instance.
      * @return void
      */
-    public function applySchema(MethodSchema $schema)
+    public function applySchema(MethodSchema $schema): void
     {
         $parameters = $schema->parameters();
         foreach ($parameters as $name) {
@@ -486,6 +494,7 @@ trait RequestTrait
             if ($parameter['in']) {
                 $this->set($name, null); // @todo default ???
             }
+            
             if ($parameter['out']) {
                 $this->set($name, null);
             }

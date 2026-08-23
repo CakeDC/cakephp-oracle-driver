@@ -1,18 +1,18 @@
 <?php
 declare(strict_types=1);
 
-$findRoot = function () {
+$findRoot = function (): string {
     $root = dirname(__DIR__);
     if (is_dir($root . '/vendor/cakephp/cakephp')) {
         return $root;
     }
 
-    $root = dirname(dirname(__DIR__));
+    $root = dirname(__DIR__, 2);
     if (is_dir($root . '/vendor/cakephp/cakephp')) {
         return $root;
     }
 
-    $root = dirname(dirname(dirname(__DIR__)));
+    $root = dirname(__DIR__, 3);
     if (is_dir($root . '/vendor/cakephp/cakephp')) {
         return $root;
     }
@@ -121,7 +121,7 @@ Cake\Datasource\ConnectionManager::setConfig('test', [
     'timezone' => 'UTC',
 ]);
 
-class_alias('CakeDC\OracleDriver\Test\App\Controller\AppController', 'App\Controller\AppController');
+class_alias(\CakeDC\OracleDriver\Test\App\Controller\AppController::class, 'App\Controller\AppController');
 
 $application = new \CakeDC\OracleDriver\Test\App\Application(CONFIG);
 $application->bootstrap();
@@ -181,11 +181,13 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
                 $schema->addIndex($key, $index);
             }
         }
+
         if (isset($table['constraints'])) {
             foreach ($table['constraints'] as $key => $constraint) {
                 $schema->addConstraint($key, $constraint);
             }
         }
+
         foreach ($schema->createSql($connection) as $sql) {
             try {
                 $connection->execute($sql);

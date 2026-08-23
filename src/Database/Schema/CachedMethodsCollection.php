@@ -45,7 +45,7 @@ class CachedMethodsCollection extends MethodsCollection
      * {@inheritDoc}
      *
      */
-    public function describe($name, array $options = [])
+    public function describe(string $name, array $options = []): \CakeDC\OracleDriver\Database\Schema\MethodSchema
     {
         $options += ['forceRefresh' => false];
         $cacheConfig = $this->cacheMetadata();
@@ -73,7 +73,7 @@ class CachedMethodsCollection extends MethodsCollection
      * @param string $name The name to get a cache key for.
      * @return string The cache key.
      */
-    public function cacheKey($name)
+    public function cacheKey($name): string
     {
         return $this->_connection->configName() . '_' . $name;
     }
@@ -91,6 +91,7 @@ class CachedMethodsCollection extends MethodsCollection
         if ($enable === null) {
             return $this->_cache;
         }
+        
         if ($enable) {
             $enable = '_cake_method_';
         }

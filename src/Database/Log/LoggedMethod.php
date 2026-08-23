@@ -16,7 +16,7 @@ namespace CakeDC\OracleDriver\Database\Log;
  * Contains a method string, the params used to executed it, time taken to do it
  * and the number of rows found or affected by its execution.
  */
-class LoggedMethod
+class LoggedMethod implements \Stringable
 {
     /**
      * Method query string that was executed
@@ -58,7 +58,7 @@ class LoggedMethod
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->method;
     }

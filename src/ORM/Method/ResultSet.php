@@ -86,10 +86,8 @@ class ResultSet implements ResultSetInterface
      * Type cache for type converters.
      *
      * Converters are indexed by alias and column name.
-     *
-     * @var array
      */
-    protected $_types = [];
+    protected array $_types;
 
     /**
      * Type schema for cursor result.
@@ -115,10 +113,10 @@ class ResultSet implements ResultSetInterface
      * @param array $options Additional resultset options that setup result entity.
      * @internal param \Cake\ORM\Query $query Query from where results come
      */
-    public function __construct($repository, $statement, $options = [])
+    public function __construct($repository, $statement, array $options = [])
     {
         $options += [
-            'entityClass' => 'Cake\ORM\Entity',
+            'entityClass' => \Cake\ORM\Entity::class,
             'hydrate' => true,
             'useBuffering' => false,
             'schema' => [],
@@ -168,7 +166,7 @@ class ResultSet implements ResultSetInterface
      *
      * @return void
      */
-    public function next()
+    public function next(): void
     {
         $this->_index++;
     }
@@ -181,7 +179,7 @@ class ResultSet implements ResultSetInterface
      * @throws \Cake\Database\Exception
      * @return void
      */
-    public function rewind()
+    public function rewind(): void
     {
         if ($this->_index === 0) {
             return;
@@ -211,6 +209,7 @@ class ResultSet implements ResultSetInterface
 
                 return true;
             }
+            
             if (!$valid) {
                 return $valid;
             }
@@ -222,6 +221,7 @@ class ResultSet implements ResultSetInterface
         if ($valid && $this->_useBuffering) {
             $this->_results[$this->_index] = $this->_current;
         }
+        
         if (!$valid && $this->_statement !== null) {
             $this->_statement->closeCursor();
         }
@@ -235,7 +235,7 @@ class ResultSet implements ResultSetInterface
      *
      * @return mixed
      */
-    protected function _fetchResult()
+    protected function _fetchResult(): false|object|array
     {
         if (!$this->_statement) {
             return false;
@@ -255,12 +255,12 @@ class ResultSet implements ResultSetInterface
      * @param mixed $row Array containing columns and values or false if there is no results
      * @return array Results
      */
-    protected function _groupResult($row)
+    protected function _groupResult(array $row): object|array
     {
         $results = $this->_castValues($row);
         $options = [];
         if ($this->_hydrate && !($results instanceof EntityInterface)) {
-            $results = new $this->_entityClass($results, $options);
+            return new $this->_entityClass($results, $options);
         }
 
         return $results;
@@ -273,7 +273,7 @@ class ResultSet implements ResultSetInterface
      *
      * @return array|object
      */
-    public function first()
+    public function first(): mixed
     {
         foreach ($this as $result) {
             if ($this->_statement && !$this->_useBuffering) {
@@ -291,7 +291,7 @@ class ResultSet implements ResultSetInterface
      *
      * @return string Serialized object
      */
-    public function serialize()
+    public function serialize(): string
     {
         while ($this->valid()) {
             $this->next();
@@ -308,7 +308,7 @@ class ResultSet implements ResultSetInterface
      * @param string $serialized Serialized object
      * @return void
      */
-    public function unserialize($serialized)
+    public function unserialize($serialized): void
     {
         $this->_results = unserialize($serialized);
         $this->_useBuffering = true;
@@ -327,6 +327,7 @@ class ResultSet implements ResultSetInterface
         if ($this->_count !== null) {
             return $this->_count;
         }
+        
         if ($this->_statement) {
             return $this->_count = $this->_statement->rowCount();
         }
@@ -341,7 +342,7 @@ class ResultSet implements ResultSetInterface
      * @param array $values The values to cast
      * @return array
      */
-    protected function _castValues($values)
+    protected function _castValues(array $values): array
     {
         foreach ($this->_types as $field => $type) {
             $values[$field] = $type->toPHP($values[$field], $this->_driver);
@@ -357,7 +358,7 @@ class ResultSet implements ResultSetInterface
      * @param array $fields The fields whitelist to use for fields in the schema.
      * @return array
      */
-    protected function _getTypes($fields)
+    protected function _getTypes($fields): array
     {
         $types = [];
         $schema = $this->_schema;

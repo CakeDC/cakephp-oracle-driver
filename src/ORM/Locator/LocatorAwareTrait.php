@@ -35,9 +35,10 @@ trait LocatorAwareTrait
      */
     public function methodLocator(?LocatorInterface $methodLocator = null)
     {
-        if ($methodLocator !== null) {
+        if ($methodLocator instanceof \CakeDC\OracleDriver\ORM\Locator\LocatorInterface) {
             $this->_methodLocator = $methodLocator;
         }
+        
         if (!$this->_methodLocator) {
             $this->_methodLocator = MethodRegistry::locator();
         }

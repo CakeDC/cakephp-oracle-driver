@@ -55,7 +55,7 @@ class MethodRegistry
      *
      * @var string
      */
-    protected static $_defaultLocatorClass = 'CakeDC\OracleDriver\ORM\Locator\MethodLocator';
+    protected static $_defaultLocatorClass = \CakeDC\OracleDriver\ORM\Locator\MethodLocator::class;
 
     /**
      * Stores a list of options to be used when instantiating an object
@@ -78,7 +78,7 @@ class MethodRegistry
      */
     public static function locator(?LocatorInterface $locator = null)
     {
-        if ($locator !== null) {
+        if ($locator instanceof \CakeDC\OracleDriver\ORM\Locator\LocatorInterface) {
             static::$_locator = $locator;
         }
 
@@ -130,7 +130,7 @@ class MethodRegistry
      * @param string $alias The alias to remove.
      * @return void
      */
-    public static function remove($alias)
+    public static function remove($alias): void
     {
         static::locator()->remove($alias);
     }
@@ -140,7 +140,7 @@ class MethodRegistry
      *
      * @return void
      */
-    public static function clear()
+    public static function clear(): void
     {
         static::locator()->clear();
     }
@@ -152,7 +152,7 @@ class MethodRegistry
      * @param array $arguments Method arguments.
      * @return mixed
      */
-    public static function __callStatic($name, $arguments)
+    public static function __callStatic(string $name, array $arguments)
     {
         return call_user_func_array([static::locator(), $name], $arguments);
     }

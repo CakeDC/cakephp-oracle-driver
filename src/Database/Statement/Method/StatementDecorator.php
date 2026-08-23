@@ -165,7 +165,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
      */
     public function bind(array $params, array $types): void
     {
-        if (empty($params)) {
+        if ($params === []) {
             return;
         }
 
@@ -176,6 +176,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
             if ($anonymousParams) {
                 $index += $offset;
             }
+
             $this->bindValue($index, $value, $type);
         }
     }

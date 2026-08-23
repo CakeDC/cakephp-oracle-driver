@@ -106,6 +106,7 @@ class OracleStatement extends Statement
         if (is_resource($value)) {
             return stream_get_contents($value);
         }
+        
         if (is_object($value) && method_exists($value, 'load')) {
             return $value->load();
         }

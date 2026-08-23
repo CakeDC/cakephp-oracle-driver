@@ -31,12 +31,7 @@ class MethodTest extends TestCase
         'plugin.CakeDC/OracleDriver.Calc',
     ];
 
-    public function setUp(): void
-    {
-        parent::setUp();
-    }
-
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         MethodRegistry::clear();
         parent::tearDown();
@@ -47,7 +42,7 @@ class MethodTest extends TestCase
      *
      * @return void
      */
-    public function testConstructWithParameters()
+    public function testConstructWithParameters(): void
     {
         $parameters = [
             'a' => [

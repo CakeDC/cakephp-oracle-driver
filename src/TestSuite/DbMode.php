@@ -20,13 +20,6 @@ class DbMode implements TestListener
     protected $_first;
 
     /**
-     * Constructor. Save internally the reference to the passed fixture manager
-     */
-    public function __construct()
-    {
-    }
-
-    /**
      * Iterates the tests inside a test suite and creates the required fixtures as
      * they were expressed inside each test case.
      *
@@ -38,6 +31,7 @@ class DbMode implements TestListener
         if (empty($this->_first)) {
             $this->_first = $suite;
         }
+        
         ConnectionManager::get('test')->getDriver()->enableAutoQuoting(true);
     }
 

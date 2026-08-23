@@ -84,6 +84,7 @@ abstract class OracleBase extends Driver
                 ? $config['server_version'] + 0
                 : $config['server_version'];
         }
+        
         parent::__construct($config);
         $this->_autoincrement = !empty($config['autoincrement']);
     }
@@ -103,9 +104,10 @@ abstract class OracleBase extends Driver
      */
     public function connect(): void
     {
-        if ($this->pdo !== null) {
+        if ($this->pdo instanceof \PDO) {
             return;
         }
+        
         $config = $this->_config;
 
         $config['init'][] = "ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS' NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS' NLS_TIMESTAMP_TZ_FORMAT='YYYY-MM-DD HH24:MI:SS'";
@@ -188,8 +190,8 @@ abstract class OracleBase extends Driver
 
         try {
             $innerStatement = $this->getPdo()->prepare($queryString);
-        } catch (PDOException $e) {
-            throw new QueryException($queryString, $e);
+        } catch (PDOException $pdoException) {
+            throw new QueryException($queryString, $pdoException);
         }
 
         /** @var \CakeDC\OracleDriver\Database\Statement\OracleStatement $statement */
@@ -280,7 +282,7 @@ abstract class OracleBase extends Driver
         $name = trim((string)$name, '"');
         if (str_contains($name, '.')) {
             $parts = explode('.', $name);
-            $name = (string)end($parts);
+            $name = end($parts);
             $name = trim($name, '"');
         }
 
@@ -325,7 +327,7 @@ abstract class OracleBase extends Driver
         }
 
         $columnName = $column !== null && $column !== '' ? $column : 'id';
-        $quotedTable = $this->quoteIfAutoQuote(trim((string)$table, '"'));
+        $quotedTable = $this->quoteIfAutoQuote(trim($table, '"'));
         $quotedColumn = $this->quoteIfAutoQuote($columnName);
 
         try {
@@ -362,6 +364,7 @@ abstract class OracleBase extends Driver
                     $sql .= ' AND column_name = :p_column';
                     $params[':p_column'] = $columnName;
                 }
+                
                 $seqStatement = $this->getPdo()->prepare($sql);
                 $seqStatement->execute($params);
                 $result = $seqStatement->fetch(PDO::FETCH_NUM);
@@ -379,6 +382,7 @@ abstract class OracleBase extends Driver
         if ($this->isAutoQuotingEnabled()) {
             $sequenceCandidates[] = 'seq_' . $tableName;
         }
+        
         $sequenceCandidates[] = 'SEQ_' . strtoupper($tableName);
 
         foreach ($sequenceCandidates as $sequenceName) {
@@ -401,7 +405,7 @@ abstract class OracleBase extends Driver
      */
     public function isConnected(): bool
     {
-        if ($this->pdo === null) {
+        if (!$this->pdo instanceof \PDO) {
             return false;
         }
 

@@ -35,10 +35,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      */
     protected $_sth;
 
-    /**
-     * @var \CakeDC\OracleDriver\Database\OCI8\OCI8Connection
-     */
-    protected $_conn;
+    protected \CakeDC\OracleDriver\Database\OCI8\OCI8Connection $_conn;
 
     /**
      * @var string
@@ -81,7 +78,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
 
     protected $_fetchClassName = '\stdClass';
 
-    protected $_fetchIntoObject = null;
+    protected $_fetchIntoObject;
 
     protected $_fetchArguments = [];
 
@@ -100,9 +97,10 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
             $this->_sth = $statement;
             $paramMap = [];
         } else {
-            [$statement, $paramMap] = self::convertPositionalToNamedPlaceholders($statement);
+            [$statement, $paramMap] = str_split(self::convertPositionalToNamedPlaceholders($statement));
             $this->_sth = oci_parse($dbh, $statement);
         }
+
         $this->_dbh = $dbh;
         $this->_paramMap = $paramMap;
         $this->_conn = $conn;
@@ -124,7 +122,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      *
      * @return string
      */
-    public static function convertPositionalToNamedPlaceholders($statement)
+    public static function convertPositionalToNamedPlaceholders($statement): array
     {
         $count = 1;
         $inLiteral = false;
@@ -172,7 +170,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
         // where $type = ['ociType' => "REAL_OCI_TYPE", 'plsql_type' => 'VARRAY', 'php_type' => 'string']
         // this way we could choose correct type and correct binding function like oci_bind_array_by_name
 
-        if ($type == \PDO::PARAM_STMT) {
+        if ($type === \PDO::PARAM_STMT) {
             $variable = oci_new_cursor($this->_dbh);
 
             return oci_bind_by_name($this->_sth, $column, $variable, -1, OCI_B_CURSOR);
@@ -303,9 +301,11 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                 if ($rs === false) {
                     return false;
                 }
+
                 if ($toLowercase) {
                     $rs = array_change_key_case($rs);
                 }
+
                 if ($this->_returnLobs && is_array($rs)) {
                     foreach ($rs as $field => $value) {
                         if (is_object($value)) {
@@ -321,9 +321,11 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                 if ($rs === false) {
                     return false;
                 }
+
                 if ($toLowercase) {
                     $rs = array_change_key_case($rs);
                 }
+
                 if ($this->_returnLobs && is_array($rs)) {
                     foreach ($rs as $field => $value) {
                         if (is_object($value)) {
@@ -339,6 +341,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                 if ($rs === false) {
                     return false;
                 }
+
                 if ($this->_returnLobs && is_array($rs)) {
                     foreach ($rs as $field => $value) {
                         if (is_object($value)) {
@@ -356,13 +359,12 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                     $value = $rs[$columnNumber];
                     if (is_object($value)) {
                         return $value->load();
-                    } else {
-                        return $value;
                     }
-                } else {
-                    return false;
+
+                    return $value;
                 }
-                break;
+
+                return false;
 
             case PDO::FETCH_OBJ:
             case PDO::FETCH_INTO:
@@ -372,6 +374,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                 if ($rs === false) {
                     return false;
                 }
+
                 if ($toLowercase) {
                     $rs = array_change_key_case($rs);
                 }
@@ -514,6 +517,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                 if ($param) {
                     $this->_fetchClassName = $param;
                 }
+
                 $this->_fetchArguments = $arguments;
                 $this->_fetchIntoObject = null;
                 break;
@@ -521,6 +525,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                 if (!is_object($param)) {
                     throw new OCI8Exception(__('$param must be instance of an object'));
                 }
+
                 $this->_fetchMode = $fetchMode;
                 $this->_fetchColumnNumber = 0;
                 $this->_fetchClassName = '\stdClass';

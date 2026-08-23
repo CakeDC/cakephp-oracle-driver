@@ -22,11 +22,12 @@ class MethodLogger
      * @param \CakeDC\OracleDriver\Database\Log\LoggedMethod $method to be written in log
      * @return void
      */
-    public function log(LoggedMethod $method)
+    public function log(LoggedMethod $method): void
     {
         if (!empty($method->params)) {
             $method->method = $this->_interpolate($method);
         }
+        
         $this->_log($method);
     }
 
@@ -49,12 +50,14 @@ class MethodLogger
      * @param \CakeDC\OracleDriver\Database\Log\LoggedMethod $method The method to log
      * @return string
      */
-    protected function _interpolate($method)
+    protected function _interpolate($method): ?string
     {
         $params = array_map(function ($p) {
             if ($p === null) {
                 return 'NULL';
-            } elseif (is_bool($p)) {
+            }
+
+            if (is_bool($p)) {
                 return $p ? '1' : '0';
             }
 
@@ -68,6 +71,7 @@ class MethodLogger
                 unset($params[$key]);
                 continue;
             }
+            
             $keys[] = is_string($key) ? "/$key\b/" : '/[?]/';
         }
 

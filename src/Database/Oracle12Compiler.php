@@ -20,11 +20,9 @@ use Cake\Database\ValueBinder;
 class Oracle12Compiler extends QueryCompiler
 {
     /**
-     * List of sprintf templates that will be used for compiling the SQL for
-     * this query. There are some clauses that can be built as just as the
-     * direct concatenation of the internal parts, those are listed here.
+     * {@inheritDoc}
      *
-     * @var array
+     * @var array<string, string>
      */
     protected array $_templates = [
         'delete' => 'DELETE',
@@ -35,14 +33,16 @@ class Oracle12Compiler extends QueryCompiler
         'offset' => ' OFFSET %s ROWS ',
         'limit' => ' FETCH NEXT %s ROWS ONLY ',
         'epilog' => ' %s',
+        'comment' => '/* %s */ ',
     ];
 
     /**
-     * The list of query clauses to traverse for generating a SELECT statement
+     * {@inheritDoc}
      *
-     * @var array
+     * @var array<string>
      */
     protected array $_selectParts = [
+        'comment',
         'select',
         'from',
         'join',
@@ -81,6 +81,7 @@ class Oracle12Compiler extends QueryCompiler
                 'Use `into()` to define a table.'
             );
         }
+        
         $driver = $query->getConnection()->getDriver();
         $table = $driver->quoteIfAutoQuote($parts[0]);
         $columns = $this->_stringifyExpressions($parts[1], $generator);

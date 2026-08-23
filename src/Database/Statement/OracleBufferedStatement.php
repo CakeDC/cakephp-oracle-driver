@@ -35,6 +35,7 @@ class OracleBufferedStatement extends BufferedStatement
         if ($this->_allFetched) {
             return $this->buffer;
         }
+        
         while (!$this->_allFetched) {
             $this->fetch($type);
         }
@@ -52,6 +53,7 @@ class OracleBufferedStatement extends BufferedStatement
             if (isset($this->buffer[$this->index])) {
                 $row = $this->buffer[$this->index];
             }
+            
             $this->index += 1;
 
             if ($row && $type === static::FETCH_TYPE_NUM) {
@@ -60,6 +62,7 @@ class OracleBufferedStatement extends BufferedStatement
 
             return $row;
         }
+        
         $record = $this->statement->fetch($type);
 
         if ($record === false) {
@@ -70,12 +73,13 @@ class OracleBufferedStatement extends BufferedStatement
         }
 
         if (is_array($record)) {
-            foreach ($record as $key => &$value) {
+            foreach ($record as &$value) {
                 if (is_resource($value)) {
                     $value = stream_get_contents($value);
                 }
             }
         }
+        
         $this->buffer[] = $record;
 
         return $record;

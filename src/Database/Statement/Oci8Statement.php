@@ -19,7 +19,7 @@ class Oci8Statement extends Statement
     /**
      * {@inheritDoc}
      */
-    public function closeCursor()
+    public function closeCursor(): bool
     {
         $this->_sth->closeCursor();
 

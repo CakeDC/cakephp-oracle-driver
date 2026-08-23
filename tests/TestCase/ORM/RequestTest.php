@@ -26,14 +26,23 @@ use PHPUnit\Framework\Attributes\DataProvider;
 class RequestWithAccessors extends Request
 {
     protected function _setName(mixed $value): mixed { return $value; }
+    
     protected function _getName(mixed $value): mixed { return $value; }
+    
     protected function _setStuff(mixed $value): mixed { return $value; }
+    
     protected function _getThings(mixed $value): mixed { return $value; }
+    
     protected function _setFoo(mixed $value): mixed { return $value; }
+    
     protected function _getBar(mixed $value): mixed { return $value; }
+    
     protected function _setBar(mixed $value): mixed { return $value; }
+    
     protected function _getVeryLongProperty(mixed $value): mixed { return $value; }
+    
     protected function _setVeryLongProperty(mixed $value): mixed { return $value; }
+    
     public function clean(): void {}
 }
 
@@ -47,7 +56,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testSetOneParamNoSetters()
+    public function testSetOneParamNoSetters(): void
     {
         $request = new Request();
         $request->set('foo', 'bar');
@@ -65,7 +74,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testSetMultiplePropertiesNoSetters()
+    public function testSetMultiplePropertiesNoSetters(): void
     {
         $request = new Request();
 
@@ -84,14 +93,14 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testSetOneParamWithSetter()
+    public function testSetOneParamWithSetter(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_setName'])
             ->getMock();
         $request->expects($this->once())->method('_setName')
             ->with('Jones')
-            ->willReturnCallback(function ($name) {
+            ->willReturnCallback(function ($name): string {
                 $this->assertEquals('Jones', $name);
 
                 return 'Dr. ' . $name;
@@ -105,21 +114,21 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testMultipleWithSetter()
+    public function testMultipleWithSetter(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_setName', '_setStuff'])
             ->getMock();
         $request->expects($this->once())->method('_setName')
             ->with('Jones')
-            ->willReturnCallback(function ($name) {
+            ->willReturnCallback(function ($name): string {
                 $this->assertEquals('Jones', $name);
 
                 return 'Dr. ' . $name;
             });
         $request->expects($this->once())->method('_setStuff')
             ->with(['a', 'b'])
-            ->willReturnCallback(function ($stuff) {
+            ->willReturnCallback(function ($stuff): array {
                 $this->assertEquals(['a', 'b'], $stuff);
 
                 return ['c', 'd'];
@@ -134,7 +143,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testBypassSetters()
+    public function testBypassSetters(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_setName', '_setStuff'])
@@ -158,7 +167,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testConstructor()
+    public function testConstructor(): void
     {
         $request = $this->getMockBuilder(Request::class)
             ->onlyMethods(['set'])
@@ -166,7 +175,7 @@ class RequestTest extends TestCase
             ->getMock();
         $request->expects($this->exactly(2))
             ->method('set')
-            ->willReturnCallback(function (array $properties, array $options = []) {
+            ->willReturnCallback(function (array $properties, array $options = []): void {
                 static $call = 0;
                 $call++;
                 if ($call === 1) {
@@ -187,7 +196,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testGetNoGetters()
+    public function testGetNoGetters(): void
     {
         $request = new Request(['id' => 1, 'foo' => 'bar']);
         $this->assertSame(1, $request->get('id'));
@@ -199,7 +208,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testGetCustomGetters()
+    public function testGetCustomGetters(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_getName'])
@@ -207,9 +216,7 @@ class RequestTest extends TestCase
         $request->expects($this->any())
             ->method('_getName')
             ->with('Jones')
-            ->willReturnCallback(function ($name) {
-                return 'Dr. ' . $name;
-            });
+            ->willReturnCallback(fn($name): string => 'Dr. ' . $name);
         $request->set('name', 'Jones');
         $this->assertEquals('Dr. Jones', $request->get('name'));
         $this->assertEquals('Dr. Jones', $request->get('name'));
@@ -220,16 +227,14 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testGetCustomGettersAfterSet()
+    public function testGetCustomGettersAfterSet(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_getName'])
             ->getMock();
         $request->expects($this->any())
             ->method('_getName')
-            ->willReturnCallback(function ($name) {
-                return 'Dr. ' . $name;
-            });
+            ->willReturnCallback(fn($name): string => 'Dr. ' . $name);
         $request->set('name', 'Jones');
         $this->assertEquals('Dr. Jones', $request->get('name'));
         $this->assertEquals('Dr. Jones', $request->get('name'));
@@ -244,15 +249,13 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testGetCacheClearedByUnset()
+    public function testGetCacheClearedByUnset(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_getName'])
             ->getMock();
         $request->expects($this->any())->method('_getName')
-            ->willReturnCallback(function ($name) {
-                return 'Dr. ' . $name;
-            });
+            ->willReturnCallback(fn($name): string => 'Dr. ' . $name);
         $request->set('name', 'Jones');
         $this->assertEquals('Dr. Jones', $request->get('name'));
 
@@ -265,7 +268,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testMagicSet()
+    public function testMagicSet(): void
     {
         $request = new Request();
         $request->name = 'Jones';
@@ -279,14 +282,14 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testMagicSetWithSetter()
+    public function testMagicSetWithSetter(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_setName'])
             ->getMock();
         $request->expects($this->once())->method('_setName')
             ->with('Jones')
-            ->willReturnCallback(function ($name) {
+            ->willReturnCallback(function ($name): string {
                 $this->assertEquals('Jones', $name);
 
                 return 'Dr. ' . $name;
@@ -300,14 +303,14 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testMagicGetWithGetter()
+    public function testMagicGetWithGetter(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_getName'])
             ->getMock();
         $request->expects($this->once())->method('_getName')
             ->with('Jones')
-            ->willReturnCallback(function ($name) {
+            ->willReturnCallback(function ($name): string {
                 $this->assertSame('Jones', $name);
 
                 return 'Dr. ' . $name;
@@ -321,7 +324,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testIndirectModification()
+    public function testIndirectModification(): void
     {
         $request = new Request();
         $request->things = ['a', 'b'];
@@ -334,7 +337,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testHas()
+    public function testHas(): void
     {
         $request = new Request(['id' => 1, 'name' => 'Juan', 'foo' => null]);
         $this->assertTrue($request->has('id'));
@@ -360,7 +363,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testUnset()
+    public function testUnset(): void
     {
         $request = new Request(['id' => 1, 'name' => 'bar']);
         $request->unsetProperty('id');
@@ -375,7 +378,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testUnsetMultiple()
+    public function testUnsetMultiple(): void
     {
         $request = new Request(['id' => 1, 'name' => 'bar', 'thing' => 2]);
         $request->unsetProperty(['id', 'thing']);
@@ -389,7 +392,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testMagicIsset()
+    public function testMagicIsset(): void
     {
         $request = new Request(['id' => 1, 'name' => 'Juan', 'foo' => null]);
         $this->assertTrue(isset($request->id));
@@ -403,7 +406,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testMagicUnset()
+    public function testMagicUnset(): void
     {
         $request = $this->getMockBuilder(Request::class)
             ->onlyMethods(['unsetProperty'])
@@ -419,7 +422,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testIssetArrayAccess()
+    public function testIssetArrayAccess(): void
     {
         $request = new Request(['id' => 1, 'name' => 'Juan', 'foo' => null]);
         $this->assertTrue(isset($request['id']));
@@ -433,14 +436,14 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testGetArrayAccess()
+    public function testGetArrayAccess(): void
     {
         $request = $this->getMockBuilder(Request::class)
             ->onlyMethods(['get'])
             ->getMock();
         $request->expects($this->exactly(2))
             ->method('get')
-            ->willReturnCallback(function (string $property) {
+            ->willReturnCallback(function (string $property): string {
                 static $call = 0;
                 $call++;
                 if ($call === 1) {
@@ -448,6 +451,7 @@ class RequestTest extends TestCase
 
                     return 'worked';
                 }
+                
                 $this->assertSame('bar', $property);
 
                 return 'worked too';
@@ -462,7 +466,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testSetArrayAccess()
+    public function testSetArrayAccess(): void
     {
         $request = $this->getMockBuilder(Request::class)
             ->onlyMethods(['set'])
@@ -470,7 +474,7 @@ class RequestTest extends TestCase
 
         $request->expects($this->exactly(2))
             ->method('set')
-            ->willReturnCallback(function (string $property, mixed $value) use ($request) {
+            ->willReturnCallback(function (string $property, mixed $value) use ($request): \PHPUnit\Framework\MockObject\MockObject {
                 static $call = 0;
                 $call++;
                 if ($call === 1) {
@@ -493,7 +497,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testUnsetArrayAccess()
+    public function testUnsetArrayAccess(): void
     {
         $request = $this->getMockBuilder(Request::class)
             ->onlyMethods(['unsetProperty'])
@@ -511,7 +515,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testMethodCache()
+    public function testMethodCache(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_setFoo', '_getBar'])
@@ -525,6 +529,7 @@ class RequestTest extends TestCase
 
         $request->set('foo', 1);
         $request->get('bar');
+        
         $request2->set('bar', 1);
     }
 
@@ -533,7 +538,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testSetGetLongProperyNames()
+    public function testSetGetLongProperyNames(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_getVeryLongProperty', '_setVeryLongProperty'])
@@ -549,7 +554,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testJsonSerialize()
+    public function testJsonSerialize(): void
     {
         $data = ['name' => 'James', 'age' => 20, 'phones' => ['123', '457']];
         $request = new Request($data);
@@ -561,7 +566,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testIsNew()
+    public function testIsNew(): void
     {
         $data = [
             'id' => 1,
@@ -586,7 +591,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testConstructorWithMarkNew()
+    public function testConstructorWithMarkNew(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['isNew', 'clean'])
@@ -608,7 +613,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testToArray()
+    public function testToArray(): void
     {
         $data = ['name' => 'James', 'age' => 20, 'phones' => ['123', '457']];
         $request = new Request($data);
@@ -621,7 +626,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testToArrayWithAccessor()
+    public function testToArrayWithAccessor(): void
     {
         $request = $this->getMockBuilder(RequestWithAccessors::class)
             ->onlyMethods(['_getName'])
@@ -640,7 +645,7 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testToString()
+    public function testToString(): void
     {
         $request = new Request(['foo' => 1, 'bar' => 2]);
         $this->assertEquals(json_encode($request, JSON_PRETTY_PRINT), (string)$request);
@@ -651,10 +656,11 @@ class RequestTest extends TestCase
      *
      * @return void
      */
-    public function testDebugInfo()
+    public function testDebugInfo(): void
     {
         $request = new Request(['foo' => 'bar'], ['markClean' => true]);
         $request->somethingElse = 'value';
+        
         $result = $request->__debugInfo();
         $expected = [
             'foo' => 'bar',
@@ -692,7 +698,7 @@ class RequestTest extends TestCase
      * @return void
      */
     #[DataProvider('emptyNamesProvider')]
-    public function testEmptyProperties($property)
+    public function testEmptyProperties(string|bool|null $property): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $request = new Request();
@@ -705,7 +711,7 @@ class RequestTest extends TestCase
      * @return void
      */
     #[DataProvider('emptyNamesProvider')]
-    public function testSetEmptyPropertyName($property)
+    public function testSetEmptyPropertyName(string|bool|null $property): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $request = new Request();

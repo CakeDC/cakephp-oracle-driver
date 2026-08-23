@@ -53,8 +53,6 @@ trait SingletonTrait
 
     /**
      * Default clone behavior.
-     *
-     * @return void
      */
     private function __clone()
     {

@@ -42,7 +42,7 @@ class MethodLogPanel extends DebugPanel
      *
      * @return void
      */
-    public function initialize()
+    public function initialize(): void
     {
         $configs = ConnectionManager::configured();
         foreach ($configs as $name) {
@@ -50,9 +50,11 @@ class MethodLogPanel extends DebugPanel
             if (!$connection instanceof OracleConnection) {
                 continue;
             }
+            
             if ($connection->configName() === 'debug_kit') {
                 continue;
             }
+            
             $logger = null;
             if ($connection->isQueryLoggingEnabled()) {
                 $logger = $connection->methodLogger();
@@ -61,6 +63,7 @@ class MethodLogPanel extends DebugPanel
             if ($logger instanceof DebugMethodLog) {
                 continue;
             }
+            
             $logger = new DebugMethodLog($logger, $name);
 
             $connection->enableQueryLogging(true);
@@ -77,9 +80,7 @@ class MethodLogPanel extends DebugPanel
     public function data()
     {
         return [
-            'methods' => array_map(function ($method) {
-                return $method->method();
-            }, MethodRegistry::genericInstances()),
+            'methods' => array_map(fn($method) => $method->method(), MethodRegistry::genericInstances()),
             'loggers' => $this->_loggers,
         ];
     }
@@ -91,11 +92,13 @@ class MethodLogPanel extends DebugPanel
      */
     public function summary()
     {
-        $count = $time = 0;
+        $count = 0;
+        $time = 0;
         foreach ($this->_loggers as $logger) {
             $count += count($logger->queries());
             $time += $logger->totalTime();
         }
+        
         if (!$count) {
             return '0';
         }

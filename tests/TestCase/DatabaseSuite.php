@@ -31,7 +31,7 @@ final class DatabaseQuotingSubscriber implements StartedSubscriber
     public function notify(Started $event): void
     {
         $suiteName = $event->testSuite()->name();
-        if ($suiteName !== 'Database' && $suiteName !== 'ORM' && $suiteName !== 'default') {
+        if (!in_array($suiteName, ['Database', 'ORM', 'default'], true)) {
             return;
         }
 

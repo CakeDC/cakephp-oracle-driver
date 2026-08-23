@@ -27,10 +27,8 @@ class OracleFixtureInjector implements TestListener
 {
     /**
      * The instance of the fixture manager to use
-     *
-     * @var \CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager
      */
-    protected $_fixtureManager;
+    protected \CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager $_fixtureManager;
 
     /**
      * Holds a reference to the container test suite
@@ -49,6 +47,7 @@ class OracleFixtureInjector implements TestListener
         if (isset($_SERVER['argv'])) {
             $manager->setDebug(in_array('--debug', $_SERVER['argv']));
         }
+        
         $this->_fixtureManager = $manager;
         $this->_fixtureManager->shutDown();
     }

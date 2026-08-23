@@ -114,14 +114,16 @@ class DebugMethodLog extends MethodLogger
      * @param \CakeDC\OracleDriver\Database\Log\LoggedMethod $method The query being logged.
      * @return void
      */
-    public function log(LoggedMethod $method)
+    public function log(LoggedMethod $method): void
     {
         if ($this->_logger) {
             $this->_logger->log($method);
         }
+        
         if (!empty($method->params)) {
             $method->method = $this->_interpolate($method);
         }
+        
         $this->_totalTime += $method->took;
         $this->_totalRows += $method->numRows;
 

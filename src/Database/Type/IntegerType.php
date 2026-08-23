@@ -64,9 +64,11 @@ class IntegerType extends BaseType implements BatchCastingInterface
         if ($value === false) {
             $value = 0;
         }
+        
         if ($value === true) {
             $value = 1;
         }
+        
         if (!is_numeric($value)) {
             throw new InvalidArgumentException(sprintf(
                 'Cannot convert value of type `%s` to integer',
@@ -152,6 +154,7 @@ class IntegerType extends BaseType implements BatchCastingInterface
         if ($value === null || $value === '') {
             return null;
         }
+        
         if (is_numeric($value)) {
             return (int)$value;
         }

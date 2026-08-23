@@ -30,6 +30,7 @@ class SimpleExpression implements ExpressionInterface
      * @var string
      */
     public $_returnType;
+    
     /**
      * The name of the function to be constructed when generating the SQL string
      *
@@ -67,6 +68,7 @@ class SimpleExpression implements ExpressionInterface
         if ($name === null) {
             return $this->_name;
         }
+        
         $this->_name = $name;
 
         return $this;

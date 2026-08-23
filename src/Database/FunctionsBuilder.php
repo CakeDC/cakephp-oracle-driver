@@ -26,7 +26,7 @@ class FunctionsBuilder
      * @param array $types list of types for each function param
      * @return \Cake\Database\Expression\FunctionExpression
      */
-    protected function _build($name, $params = [], $types = [])
+    protected function _build($name, $params = [], $types = []): \Cake\Database\Expression\FunctionExpression
     {
         return new FunctionExpression($name, $params, $types);
     }
@@ -80,8 +80,8 @@ class FunctionsBuilder
         if ($format === null) {
             $format = $builder->_defaultDateFormat;
         }
+        
         $args += $builder->_literalArgument($expression);
-        $args = (array)$args;
         $args[] = $format;
 
         return $builder->_build('TO_CHAR', $args, $types);
@@ -102,8 +102,8 @@ class FunctionsBuilder
         if ($format === null) {
             $format = $builder->_defaultDateFormat;
         }
+        
         $args += $builder->_literalArgument($expression);
-        $args = (array)$args;
         $args[] = $format;
 
         return $builder->_build('TO_DATE', $args, $types);
@@ -118,16 +118,13 @@ class FunctionsBuilder
      * params
      * @return \Cake\Database\Expression\FunctionExpression
      */
-    public function __call($name, $args)
+    public function __call(string $name, array $args)
     {
         $builder = self::getInstance();
-        switch (count($args)) {
-            case 0:
-                return $builder->_build($name);
-            case 1:
-                return $builder->_build($name, $args[0]);
-            default:
-                return $builder->_build($name, $args[0], $args[1]);
-        }
+        return match (count($args)) {
+            0 => $builder->_build($name),
+            1 => $builder->_build($name, $args[0]),
+            default => $builder->_build($name, $args[0], $args[1]),
+        };
     }
 }

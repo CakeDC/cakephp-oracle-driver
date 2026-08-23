@@ -76,12 +76,15 @@ class MethodLocator implements LocatorInterface
         if ($alias === null) {
             return $this->_config;
         }
+        
         if (!is_string($alias)) {
             return $this->_config = $alias;
         }
+        
         if ($options === null) {
             return $this->_config[$alias] ?? [];
         }
+        
         if (isset($this->_instances[$alias])) {
             throw new RuntimeException(sprintf(
                 'You cannot configure "%s", it has already been constructed.',
@@ -129,7 +132,7 @@ class MethodLocator implements LocatorInterface
     public function get($alias, array $options = [])
     {
         if (isset($this->_instances[$alias])) {
-            if (!empty($options) && $this->_options[$alias] !== $options) {
+            if ($options !== [] && $this->_options[$alias] !== $options) {
                 throw new RuntimeException(sprintf(
                     'You cannot configure "%s", it already exists in the registry.',
                     $alias
@@ -156,17 +159,19 @@ class MethodLocator implements LocatorInterface
             $options['className'] = $className;
             $options['method'] = Inflector::underscore($alias);
         } else {
-            if (!isset($options['method']) && strpos($options['className'], '\\') === false) {
+            if (!isset($options['method']) && !str_contains($options['className'], '\\')) {
                 [, $method] = pluginSplit($options['className']);
                 $options['method'] = Inflector::underscore($method);
             }
-            $options['className'] = 'CakeDC\OracleDriver\ORM\Method';
+            
+            $options['className'] = \CakeDC\OracleDriver\ORM\Method::class;
         }
 
         if (empty($options['connection'])) {
             $connectionName = $options['className']::defaultConnectionName();
             $options['connection'] = ConnectionManager::get($connectionName);
         }
+        
         if (!($options['connection'] instanceof OracleConnection)) {
             $options['connection'] = OracleConnection::build($options['connection']);
         }
@@ -174,7 +179,7 @@ class MethodLocator implements LocatorInterface
         $options['registryAlias'] = $alias;
         $this->_instances[$alias] = $this->_create($options);
 
-        if ($options['className'] === 'CakeDC\OracleDriver\ORM\Method') {
+        if ($options['className'] === \CakeDC\OracleDriver\ORM\Method::class) {
             $this->_fallbacked[$alias] = $this->_instances[$alias];
         }
 
@@ -188,7 +193,7 @@ class MethodLocator implements LocatorInterface
      * @param array $options Method options array.
      * @return string
      */
-    protected function _getClassName($alias, array $options = [])
+    protected function _getClassName(string $alias, array $options = []): ?string
     {
         if (empty($options['className'])) {
             $options['className'] = Inflector::camelize($alias);
@@ -211,7 +216,7 @@ class MethodLocator implements LocatorInterface
     /**
      * {@inheritDoc}
      */
-    public function exists($alias)
+    public function exists($alias): bool
     {
         return isset($this->_instances[$alias]);
     }
@@ -227,7 +232,7 @@ class MethodLocator implements LocatorInterface
     /**
      * {@inheritDoc}
      */
-    public function clear()
+    public function clear(): void
     {
         $this->_instances = [];
         $this->_config = [];
@@ -250,7 +255,7 @@ class MethodLocator implements LocatorInterface
     /**
      * {@inheritDoc}
      */
-    public function remove($alias)
+    public function remove($alias): void
     {
         unset(
             $this->_instances[$alias],

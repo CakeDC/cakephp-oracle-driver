@@ -32,6 +32,7 @@ class AssociationProxyTest extends CakeAssociationProxyTest
         $comments = $this->getTableLocator()->get('comments');
         $articles->hasMany('comments', ['conditions' => ['published' => 'Y']]);
         $articles->comments->updateAll(['comment' => 'changed'], ['article_id' => 1]);
+        
         $changed = $comments
             ->find()
             ->where(['to_char(comment)' => 'changed'])

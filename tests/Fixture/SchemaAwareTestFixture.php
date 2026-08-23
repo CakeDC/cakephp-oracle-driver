@@ -48,10 +48,12 @@ abstract class SchemaAwareTestFixture extends TestFixture
                 $constraints = $field;
                 continue;
             }
+
             if (is_string($field)) {
                 $columns[$name] = ['type' => $field];
                 continue;
             }
+
             $columns[$name] = $field;
         }
 

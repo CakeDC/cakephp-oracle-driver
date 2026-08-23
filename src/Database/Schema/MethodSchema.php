@@ -118,13 +118,16 @@ class MethodSchema
         if (is_string($attrs)) {
             $attrs = ['type' => $attrs];
         }
+        
         $valid = static::$_columnParameters;
         if (isset(static::$_columnExtras[$attrs['type']])) {
             $valid += static::$_columnExtras[$attrs['type']];
         }
+        
         if ($attrs['function'] === true) {
             $this->_isFunction = true;
         }
+        
         $attrs = array_intersect_key($attrs, $valid);
         $this->_parameters[$name] = $attrs + $valid;
         $this->_typeMap[$name] = $this->_parameters[$name]['type'];
@@ -137,7 +140,7 @@ class MethodSchema
      *
      * @return array
      */
-    public function parameters()
+    public function parameters(): array
     {
         return array_keys($this->_parameters);
     }
@@ -170,6 +173,7 @@ class MethodSchema
         if (!isset($this->_parameters[$name])) {
             return null;
         }
+        
         if ($type !== null) {
             $this->_parameters[$name]['type'] = $type;
             $this->_typeMap[$name] = $type;
@@ -186,23 +190,27 @@ class MethodSchema
      * @param string $direction The direction to set the parameter to.
      * @return string|null Either the parameter direction or null.
      */
-    public function parameterDirection($name, $direction = null)
+    public function parameterDirection($name, $direction = null): ?string
     {
         if (!isset($this->_parameters[$name])) {
             return null;
         }
+        
         if ($direction !== null) {
-            $this->_parameters[$name]['in'] = strpos($direction, 'IN') !== false;
-            $this->_parameters[$name]['out'] = strpos($direction, 'OUT') !== false;
+            $this->_parameters[$name]['in'] = str_contains($direction, 'IN');
+            $this->_parameters[$name]['out'] = str_contains($direction, 'OUT');
         }
+        
         $result = null;
         if ($this->_parameters[$name]['in'] !== []) {
             $result = 'IN';
         }
+        
         if ($this->_parameters[$name]['in'] !== []) {
             if ($result !== null) {
                 $result .= '/';
             }
+            
             $result .= 'OUT';
         }
 

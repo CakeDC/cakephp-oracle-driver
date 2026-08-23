@@ -125,7 +125,7 @@ trait ConfigTrait
             return;
         }
 
-        if (strpos($key, '.') === false) {
+        if (!str_contains($key, '.')) {
             $this->_config[$key] = $value;
 
             return;
@@ -158,7 +158,7 @@ trait ConfigTrait
      */
     protected function _configDelete($key)
     {
-        if (strpos($key, '.') === false) {
+        if (!str_contains($key, '.')) {
             unset($this->_config[$key]);
 
             return;
@@ -198,7 +198,7 @@ trait ConfigTrait
             return $this->_config;
         }
 
-        if (strpos($key, '.') === false) {
+        if (!str_contains($key, '.')) {
             return $this->_config[$key] ?? null;
         }
 

@@ -36,7 +36,7 @@ class Request implements RequestInterface
             $this->isNew($options['markNew']);
         }
 
-        if (!empty($properties)) {
+        if ($properties !== []) {
             $this->set($properties, [
                 'setter' => $options['useSetters'],
             ]);

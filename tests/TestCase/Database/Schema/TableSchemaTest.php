@@ -71,20 +71,21 @@ class TableSchemaTest extends TestCase
      */
     protected ?array $_map = null;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $map = TypeFactory::getMap();
         $this->_map = is_array($map) ? $map : null;
         parent::setUp();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->getTableLocator()->clear();
         TypeFactory::clear();
         if ($this->_map !== null) {
             TypeFactory::setMap($this->_map);
         }
+
         parent::tearDown();
     }
 
@@ -93,7 +94,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testConstructWithColumns()
+    public function testConstructWithColumns(): void
     {
         $columns = [
             'id' => [
@@ -114,7 +115,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testAddColumn()
+    public function testAddColumn(): void
     {
         $table = new TableSchema('articles');
         $result = $table->addColumn('title', [
@@ -135,7 +136,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testHasColumn()
+    public function testHasColumn(): void
     {
         $schema = new TableSchema('articles', [
             'title' => 'string',
@@ -150,7 +151,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testRemoveColumn()
+    public function testRemoveColumn(): void
     {
         $table = new TableSchema('articles');
         $result = $table->addColumn('title', [
@@ -171,7 +172,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testIsNullable()
+    public function testIsNullable(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('title', [
@@ -193,7 +194,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testColumnType()
+    public function testColumnType(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('title', [
@@ -210,7 +211,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testSetColumnType()
+    public function testSetColumnType(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('title', [
@@ -228,7 +229,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testBaseColumnType()
+    public function testBaseColumnType(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('title', [
@@ -246,7 +247,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testBaseColumnTypeInherited()
+    public function testBaseColumnTypeInherited(): void
     {
         TypeFactory::map('foo', FooType::class);
         $table = new TableSchema('articles');
@@ -263,7 +264,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testAddColumnFiltersAttributes()
+    public function testAddColumnFiltersAttributes(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('title', [
@@ -319,7 +320,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testDefaultValues()
+    public function testDefaultValues(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('id', [
@@ -351,7 +352,7 @@ class TableSchemaTest extends TestCase
      * >
      * @return void
      */
-    public function testAddConstraint()
+    public function testAddConstraint(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('id', [
@@ -370,7 +371,7 @@ class TableSchemaTest extends TestCase
      * >
      * @return void
      */
-    public function testAddConstraintOverwriteUniqueIndex()
+    public function testAddConstraintOverwriteUniqueIndex(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('project_id', [
@@ -403,7 +404,7 @@ class TableSchemaTest extends TestCase
      *
      * @return array
      */
-    public static function addConstraintErrorProvider()
+    public static function addConstraintErrorProvider(): array
     {
         return [
             // No properties
@@ -425,7 +426,7 @@ class TableSchemaTest extends TestCase
      * @return void
      */
     #[DataProvider('addConstraintErrorProvider')]
-    public function testAddConstraintError($props)
+    public function testAddConstraintError(array $props): void
     {
         $this->expectException(DatabaseException::class);
         $table = new TableSchema('articles');
@@ -438,7 +439,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testAddIndex()
+    public function testAddIndex(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('title', [
@@ -457,7 +458,7 @@ class TableSchemaTest extends TestCase
      *
      * @return array
      */
-    public static function addIndexErrorProvider()
+    public static function addIndexErrorProvider(): array
     {
         return [
             // Empty
@@ -476,7 +477,7 @@ class TableSchemaTest extends TestCase
      * @return void
      */
     #[DataProvider('addIndexErrorProvider')]
-    public function testAddIndexError($props)
+    public function testAddIndexError(array $props): void
     {
         $this->expectException(DatabaseException::class);
         $table = new TableSchema('articles');
@@ -489,7 +490,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testAddIndexTypes()
+    public function testAddIndexTypes(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('id', 'integer')
@@ -515,7 +516,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testPrimaryKey()
+    public function testPrimaryKey(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('id', 'integer')
@@ -542,14 +543,14 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testOptions()
+    public function testOptions(): void
     {
         $table = new TableSchema('articles');
         $options = [
             'engine' => 'InnoDB',
         ];
         $return = $table->setOptions($options);
-        $this->assertInstanceOf('Cake\Database\Schema\TableSchema', $return);
+        $this->assertInstanceOf(\Cake\Database\Schema\TableSchema::class, $return);
         $this->assertEquals($options, $table->getOptions());
     }
 
@@ -559,14 +560,14 @@ class TableSchemaTest extends TestCase
      * @return void
      */
     #[Group('deprecated')]
-    public function testOptionsDeprecated()
+    public function testOptionsDeprecated(): void
     {
         $table = new TableSchema('articles');
         $options = [
             'engine' => 'InnoDB',
         ];
         $return = $table->setOptions($options);
-        $this->assertInstanceOf('Cake\Database\Schema\TableSchema', $return);
+        $this->assertInstanceOf(\Cake\Database\Schema\TableSchema::class, $return);
         $this->assertEquals($options, $table->getOptions());
     }
 
@@ -575,7 +576,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testAddConstraintForeignKey()
+    public function testAddConstraintForeignKey(): void
     {
         $table = new TableSchema('articles');
         $table->addColumn('author_id', 'integer')
@@ -594,7 +595,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testConstraintForeignKey()
+    public function testConstraintForeignKey(): void
     {
         $this->markTestSkipped('');
     }
@@ -604,7 +605,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testConstraintForeignKeyTwoColumns()
+    public function testConstraintForeignKeyTwoColumns(): void
     {
         $this->markTestSkipped('');
     }
@@ -614,7 +615,7 @@ class TableSchemaTest extends TestCase
      *
      * @return array
      */
-    public static function badForeignKeyProvider()
+    public static function badForeignKeyProvider(): array
     {
         return [
             'references is bad' => [[
@@ -644,7 +645,7 @@ class TableSchemaTest extends TestCase
      * @return void
      */
     #[DataProvider('badForeignKeyProvider')]
-    public function testAddConstraintForeignKeyBadData($data)
+    public function testAddConstraintForeignKeyBadData(array $data): void
     {
         $this->expectException(DatabaseException::class);
         $table = new TableSchema('articles');
@@ -657,7 +658,7 @@ class TableSchemaTest extends TestCase
      *
      * @return void
      */
-    public function testSetTemporary()
+    public function testSetTemporary(): void
     {
         $table = new TableSchema('articles');
         $this->assertFalse($table->isTemporary());
@@ -679,11 +680,12 @@ class TableSchemaTest extends TestCase
      * @param bool $optional
      * @return void
      */
-    public function assertQuotedQuery($pattern, $query, $optional = false)
+    public function assertQuotedQuery($pattern, string $query, $optional = false): void
     {
         if ($optional) {
             $optional = '?';
         }
+
         $pattern = str_replace('<', '[`"\[]' . $optional, $pattern);
         $pattern = str_replace('>', '[`"\]]' . $optional, $pattern);
         $this->assertMatchesRegularExpression('#' . $pattern . '#', $query);

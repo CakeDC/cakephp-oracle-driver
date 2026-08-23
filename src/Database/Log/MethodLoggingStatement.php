@@ -49,11 +49,11 @@ class MethodLoggingStatement extends MethodStatementDecorator
 
         try {
             $result = parent::execute($params);
-        } catch (Exception $e) {
-            $e->queryString = $this->queryString;
-            $method->error = $e;
+        } catch (Exception $exception) {
+            $exception->queryString = $this->queryString;
+            $method->error = $exception;
             $this->_log($method, $params, $t);
-            throw $e;
+            throw $exception;
         }
 
         $method->numRows = $this->rowCount();
@@ -94,9 +94,11 @@ class MethodLoggingStatement extends MethodStatementDecorator
         if ($type === null) {
             $type = 'string';
         }
+        
         if (!ctype_digit((string)$type)) {
             $value = $this->cast($value, $type)[0];
         }
+        
         $this->_compiledParams[$column] = $value;
     }
 
@@ -131,6 +133,7 @@ class MethodLoggingStatement extends MethodStatementDecorator
         if (!ctype_digit((string)$type)) {
             $value = $this->cast($value, $type)[0];
         }
+        
         $this->_compiledParams[$column] = $value;
     }
 }

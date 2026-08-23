@@ -72,6 +72,7 @@ class MethodPDOStatement extends MethodStatementDecorator
         if (!ctype_digit((string)$type)) {
             [$value, $type] = $this->cast($value, $type);
         }
+        
         $this->_statement->bindParam($column, $value, $type);
     }
 
@@ -83,9 +84,11 @@ class MethodPDOStatement extends MethodStatementDecorator
         if ($type === null) {
             $type = 'string';
         }
+        
         if (!ctype_digit((string)$type)) {
             [$value, $type] = $this->cast($value, $type);
         }
+        
         $this->_statement->bindValue($column, $value, $type);
     }
 
@@ -97,6 +100,7 @@ class MethodPDOStatement extends MethodStatementDecorator
         if ($mode === 'num' || $mode === PDO::FETCH_NUM) {
             return $this->_statement->fetch(PDO::FETCH_NUM);
         }
+        
         if ($mode === 'assoc' || $mode === PDO::FETCH_ASSOC) {
             return $this->_statement->fetch(PDO::FETCH_ASSOC);
         }
@@ -112,6 +116,7 @@ class MethodPDOStatement extends MethodStatementDecorator
         if ($mode === 'num' || $mode === PDO::FETCH_NUM) {
             return $this->_statement->fetchAll(PDO::FETCH_NUM);
         }
+        
         if ($mode === 'assoc' || $mode === PDO::FETCH_ASSOC) {
             return $this->_statement->fetchAll(PDO::FETCH_ASSOC);
         }

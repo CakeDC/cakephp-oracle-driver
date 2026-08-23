@@ -35,7 +35,7 @@ class OracleConnection extends Connection
      *
      * @var \CakeDC\OracleDriver\Database\Log\MethodLogger
      */
-    protected $_methodLogger = null;
+    protected $_methodLogger;
 
     /**
      * The methods collection object
@@ -50,7 +50,7 @@ class OracleConnection extends Connection
      * @param \Cake\Database\Connection $connection Connection object.
      * @return \CakeDC\OracleDriver\Database\OracleConnection
      */
-    public static function build(Connection $connection)
+    public static function build(Connection $connection): \CakeDC\OracleDriver\Database\OracleConnection
     {
         $config = $connection->config();
         $config['driver'] = $connection->getDriver();
@@ -66,7 +66,7 @@ class OracleConnection extends Connection
      */
     public function methodSchemaCollection(?MethodsCollection $collection = null)
     {
-        if ($collection !== null) {
+        if ($collection instanceof \CakeDC\OracleDriver\Database\Schema\MethodsCollection) {
             return $this->_schemaMethodsCollection = $collection;
         }
 
@@ -88,16 +88,16 @@ class OracleConnection extends Connection
      * @param array $options Method options used on method constructing.
      * @return \Cake\Database\StatementInterface
      */
-    public function prepareMethod($sql, $options = [])
+    public function prepareMethod($sql, $options = []): \CakeDC\OracleDriver\Database\Log\MethodLoggingStatement
     {
         if (!method_exists($this->getDriver(), 'isOci') || !$this->getDriver()->isOci()) {
             throw new CakeException('Method calls using PDO layer not supported');
         }
+        
         $options += ['bufferResult' => false];
         $statement = $this->getDriver()->prepareMethod($sql, $options);
-        $statement = $this->_getMethodLogger($statement);
         
-        return $statement;
+        return $this->_getMethodLogger($statement);
     }
 
     /**
@@ -107,7 +107,7 @@ class OracleConnection extends Connection
      * @param \Cake\Database\StatementInterface $statement the instance to be decorated
      * @return \Cake\Database\StatementInterface
      */
-    protected function _getMethodLogger(StatementInterface $statement)
+    protected function _getMethodLogger(StatementInterface $statement): \CakeDC\OracleDriver\Database\Log\MethodLoggingStatement
     {
         $log = new MethodLoggingStatement($statement, $this->getDriver());
         $log->logger($this->methodLogger());
@@ -124,20 +124,21 @@ class OracleConnection extends Connection
      */
     public function methodLogger(?MethodLogger $instance = null)
     {
-        if ($instance === null) {
+        if (!$instance instanceof \CakeDC\OracleDriver\Database\Log\MethodLogger) {
             if ($this->_methodLogger === null) {
                 $this->_methodLogger = new MethodLogger();
             }
 
             return $this->_methodLogger;
         }
+        
         $this->_methodLogger = $instance;
     }
 
     /**
      * @inheritDoc
      */
-    public function cacheMetadata($cache): void
+    public function cacheMetadata(string|bool $cache): void
     {
         $this->_schemaMethodsCollection = null;
         parent::cacheMetadata($cache);

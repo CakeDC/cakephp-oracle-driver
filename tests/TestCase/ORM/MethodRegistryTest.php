@@ -37,7 +37,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->_originalLocator = MethodRegistry::locator();
@@ -48,7 +48,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
         MethodRegistry::locator($this->_originalLocator);
@@ -59,7 +59,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return \CakeDC\OracleDriver\ORM\Locator\LocatorInterface
      */
-    protected function _setMockLocator()
+    protected function _setMockLocator(): \PHPUnit\Framework\MockObject\MockObject
     {
         $locator = $this->getMockBuilder(LocatorInterface::class)->getMock();
         MethodRegistry::locator($locator);
@@ -72,7 +72,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function testLocator()
+    public function testLocator(): void
     {
         $this->assertInstanceOf(LocatorInterface::class, MethodRegistry::locator());
 
@@ -86,7 +86,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function testLocatorDefault()
+    public function testLocatorDefault(): void
     {
         $locator = MethodRegistry::locator();
         $this->assertInstanceOf(MethodLocator::class, $locator);
@@ -97,7 +97,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function testConfig()
+    public function testConfig(): void
     {
         $locator = $this->_setMockLocator();
         $locator->expects($this->once())->method('config')->with('Test', []);
@@ -110,7 +110,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function testGet()
+    public function testGet(): void
     {
         $locator = $this->_setMockLocator();
         $locator->expects($this->once())->method('get')->with('Test', []);
@@ -123,7 +123,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function testSet()
+    public function testSet(): void
     {
         $method = $this->getMockBuilder(Method::class)->getMock();
 
@@ -138,7 +138,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function testRemove()
+    public function testRemove(): void
     {
         $locator = $this->_setMockLocator();
         $locator->expects($this->once())->method('remove')->with('Test');
@@ -151,7 +151,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return void
      */
-    public function testClear()
+    public function testClear(): void
     {
         $locator = $this->_setMockLocator();
         $locator->expects($this->once())->method('clear');
