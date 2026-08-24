@@ -14,6 +14,7 @@ namespace CakeDC\OracleDriver\Database\Statement;
 
 use Cake\Database\Statement\Statement;
 use CakeDC\OracleDriver\Database\Driver\OracleBase;
+use Generator;
 use PDO;
 
 /**
@@ -72,11 +73,15 @@ class OracleStatement extends Statement
      */
     public function fetch(string|int $mode = PDO::FETCH_NUM): mixed
     {
-        $row = parent::fetch($mode);
-        if (is_array($row)) {
-            foreach ($row as &$value) {
-                $value = $this->readLobValue($value);
-            }
+        $mode = $this->convertMode($mode);
+        $row = $this->statement->fetch($mode);
+        if ($row === false) {
+            return false;
+        }
+
+        $row = $this->hydrateLobRow($row);
+        foreach ($this->resultDecorators as $decorator) {
+            $row = $decorator($row);
         }
 
         return $row;
@@ -87,14 +92,58 @@ class OracleStatement extends Statement
      */
     public function fetchAll(string|int $mode = PDO::FETCH_NUM): array
     {
-        $rows = parent::fetchAll($mode);
-        foreach ($rows as &$row) {
-            foreach ($row as &$value) {
-                $value = $this->readLobValue($value);
-            }
+        $rows = [];
+        while (($row = $this->fetch($mode)) !== false) {
+            $rows[] = $row;
         }
 
         return $rows;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getIterator(): Generator
+    {
+        $this->statement->setFetchMode(PDO::FETCH_ASSOC);
+
+        foreach ($this->statement as $row) {
+            $row = $this->hydrateLobRow($row);
+            foreach ($this->resultDecorators as $decorator) {
+                $row = $decorator($row);
+            }
+
+            yield $row;
+        }
+
+        $this->closeCursor();
+    }
+
+    /**
+     * Copy CLOB/BLOB locators into PHP strings before the next PDO_OCI fetch
+     * reuses them.
+     *
+     * @param mixed $row Fetched row.
+     * @return mixed
+     */
+    protected function hydrateLobRow(mixed $row): mixed
+    {
+        if (is_array($row)) {
+            foreach ($row as &$value) {
+                $value = $this->readLobValue($value);
+            }
+            unset($value);
+
+            return $row;
+        }
+
+        if (is_object($row)) {
+            foreach (get_object_vars($row) as $key => $value) {
+                $row->{$key} = $this->readLobValue($value);
+            }
+        }
+
+        return $row;
     }
 
     /**
@@ -104,11 +153,20 @@ class OracleStatement extends Statement
     protected function readLobValue(mixed $value): mixed
     {
         if (is_resource($value)) {
-            return stream_get_contents($value);
+            $contents = stream_get_contents($value);
+
+            return $contents === false ? $value : $contents;
         }
 
         if (is_object($value) && method_exists($value, 'load')) {
-            return $value->load();
+            $loaded = $value->load();
+            if (is_string($loaded) || $loaded === null) {
+                return $loaded;
+            }
+        }
+
+        if (is_object($value) && method_exists($value, 'read') && method_exists($value, 'size')) {
+            return $value->read($value->size());
         }
 
         return $value;

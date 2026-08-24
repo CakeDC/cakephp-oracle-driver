@@ -193,6 +193,13 @@ abstract class OracleBase extends Driver
             throw new QueryException($queryString, $pdoException);
         }
 
+        if (!$this->isOci()) {
+            try {
+                $innerStatement->setAttribute(PDO::ATTR_PREFETCH, 1);
+            } catch (PDOException) {
+            }
+        }
+
         /** @var \CakeDC\OracleDriver\Database\Statement\OracleStatement $statement */
         $statement = new OracleStatement(
             $innerStatement,

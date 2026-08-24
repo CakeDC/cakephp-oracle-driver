@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Database\Driver;
 
 use PDO;
+use PDOException;
 
 class OraclePDO extends OracleBase
 {
@@ -21,7 +22,13 @@ class OraclePDO extends OracleBase
      */
     protected function createConnection(string $dsn, array $config): PDO
     {
-        return $this->createPdo('oci:dbname=' . $dsn, $config);
+        $pdo = $this->createPdo('oci:dbname=' . $dsn, $config);
+        try {
+            $pdo->setAttribute(PDO::ATTR_PREFETCH, 1);
+        } catch (PDOException) {
+        }
+
+        return $pdo;
     }
 
     /**
