@@ -29,7 +29,7 @@ class SimpleExpression implements ExpressionInterface
     /**
      * @var string
      */
-    public string $_returnType;
+    protected string $_returnType;
 
     /**
      * The name of the function to be constructed when generating the SQL string
@@ -63,7 +63,7 @@ class SimpleExpression implements ExpressionInterface
      * @param string $name The name of the function
      * @return $this|string
      */
-    public function name(?string $name = null)
+    public function name(?string $name = null): string|self
     {
         if ($name === null) {
             return $this->_name;
@@ -93,9 +93,10 @@ class SimpleExpression implements ExpressionInterface
      * hence there is nothing to traverse
      *
      * @param \Closure $callable The callable to traverse with.
-     * @return void
+     * @return static
      */
-    public function traverse(Closure $callable): void
+    public function traverse(Closure $callable): static
     {
+        return $this;
     }
 }

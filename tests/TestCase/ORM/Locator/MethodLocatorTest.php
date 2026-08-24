@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Test\TestCase\ORM\Locator;
 
 use Cake\Core\Configure;
-use Cake\Core\Plugin;
 use Cake\Datasource\ConnectionManager;
 use Cake\TestSuite\TestCase;
 use CakeDC\OracleDriver\ORM\Locator\MethodLocator;
@@ -22,19 +21,7 @@ use CakeDC\OracleDriver\ORM\Method;
 use RuntimeException;
 use TestApp\Model\Entity\Article;
 use TestPlugin\Model\Entity\Comment;
-
-/**
- * Used to test correct class is instantiated when using $this->_locator->get();
- */
-class MyUsersMethod extends Method
-{
-    /**
-     * Overrides default method name
-     *
-     * @var string|null
-     */
-    protected ?string $_method = 'users';
-}
+use TestPlugin\Plugin as TestPluginPlugin;
 
 /**
  * Test case for MethodLocator
@@ -90,7 +77,7 @@ class MethodLocatorTest extends TestCase
     public function testConfigPlugin(): void
     {
         $this->markTestSkipped('TestPlugin class not available in this test environment');
-        Plugin::getCollection()->add(new \TestPlugin\Plugin());
+        TestPluginPlugin::getCollection()->add(new TestPluginPlugin());
 
         $data = [
             'connection' => 'testing',

@@ -24,7 +24,7 @@ class MethodLogger
      */
     public function log(LoggedMethod $method): void
     {
-        if (!empty($method->params)) {
+        if ($method->params !== []) {
             $method->method = $this->_interpolate($method);
         }
 

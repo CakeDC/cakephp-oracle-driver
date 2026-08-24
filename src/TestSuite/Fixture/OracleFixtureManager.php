@@ -18,10 +18,10 @@ use Cake\Database\Connection;
 use Cake\Database\Driver;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Datasource\ConnectionManager;
-use CakeDC\OracleDriver\Database\Driver\OracleBase;
-use CakeDC\OracleDriver\Database\OracleConnection;
 use Cake\TestSuite\TestCase;
 use Cake\Utility\Inflector;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
+use CakeDC\OracleDriver\Database\OracleConnection;
 use PDOException;
 use ReflectionProperty;
 use UnexpectedValueException;
@@ -45,7 +45,7 @@ class OracleFixtureManager
      */
     public static function instance(): OracleFixtureManager
     {
-        if (self::$_instance === null) {
+        if (!self::$_instance instanceof OracleFixtureManager) {
             self::$_instance = new self();
         }
 
@@ -290,7 +290,7 @@ class OracleFixtureManager
         }
 
         $fixtures = $test->codeFixtures;
-        if (empty($fixtures) || !$this->_autoFixturesEnabled($test)) {
+        if (!$this->_autoFixturesEnabled($test)) {
             return;
         }
 
@@ -441,7 +441,7 @@ class OracleFixtureManager
     {
         if (isset($this->_fixtureMap[$name])) {
             $fixture = $this->_fixtureMap[$name];
-            if ($db === null) {
+            if (!$db instanceof ConnectionInterface) {
                 $db = ConnectionManager::get($fixture->connection());
             }
 

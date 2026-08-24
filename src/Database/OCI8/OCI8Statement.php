@@ -79,15 +79,40 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
      */
     protected array $_values = [];
 
-    protected $_fetchMode = PDO::ATTR_DEFAULT_FETCH_MODE;
+    /**
+     * The default fetch mode used when retrieving rows from the result set.
+     *
+     * @var int
+     */
+    protected int $_fetchMode = PDO::ATTR_DEFAULT_FETCH_MODE;
 
-    protected $_fetchClassName = '\stdClass';
+    /**
+     * Class name into which rows are fetched when using the FETCH_CLASS mode.
+     *
+     * @var string
+     */
+    protected string $_fetchClassName = '\stdClass';
 
-    protected $_fetchIntoObject;
+    /**
+     * Object instance rows are fetched into when using the FETCH_INTO mode.
+     *
+     * @var object|null
+     */
+    protected ?object $_fetchIntoObject = null;
 
-    protected $_fetchArguments = [];
+    /**
+     * Additional constructor arguments passed to the fetch mode class.
+     *
+     * @var array
+     */
+    protected array $_fetchArguments = [];
 
-    protected $_results = [];
+    /**
+     * Buffered result set used by the fetch methods.
+     *
+     * @var array
+     */
+    protected array $_results = [];
 
     /**
      * Creates a new OCI8Statement that uses the given connection handle and SQL statement.
@@ -124,7 +149,7 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
      * This comes at a cost, the whole sql statement has to be looped over.
      *
      * @param string $statement The SQL statement to convert.
-     * @return string
+     * @return array
      */
     public static function convertPositionalToNamedPlaceholders(string $statement): array
     {
@@ -310,7 +335,7 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
                     $rs = array_change_key_case($rs);
                 }
 
-                if ($this->_returnLobs && is_array($rs)) {
+                if ($this->_returnLobs) {
                     foreach ($rs as $field => $value) {
                         if (is_object($value)) {
                             $rs[$field] = $value->load();
@@ -330,7 +355,7 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
                     $rs = array_change_key_case($rs);
                 }
 
-                if ($this->_returnLobs && is_array($rs)) {
+                if ($this->_returnLobs) {
                     foreach ($rs as $field => $value) {
                         if (is_object($value)) {
                             $rs[$field] = $value->load();
@@ -346,7 +371,7 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
                     return false;
                 }
 
-                if ($this->_returnLobs && is_array($rs)) {
+                if ($this->_returnLobs) {
                     foreach ($rs as $field => $value) {
                         if (is_object($value)) {
                             $rs[$field] = $value->load();
@@ -358,7 +383,7 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
 
             case PDO::FETCH_COLUMN:
                 $rs = oci_fetch_row($this->_sth);
-                $columnNumber = (int)$this->_fetchColumnNumber;
+                $columnNumber = $this->_fetchColumnNumber;
                 if (is_array($rs) && array_key_exists($columnNumber, $rs)) {
                     $value = $rs[$columnNumber];
                     if (is_object($value)) {

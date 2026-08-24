@@ -18,7 +18,6 @@ use Cake\Database\Driver;
 use Cake\Database\Exception\DatabaseException;
 use Cake\Database\StatementInterface;
 use Cake\Database\TypeFactory;
-use Cake\Datasource\EntityInterface;
 use Cake\Datasource\ResultSetInterface;
 use Cake\ORM\Entity;
 use CakeDC\OracleDriver\ORM\Method;
@@ -48,7 +47,7 @@ class ResultSet implements ResultSetInterface
     /**
      * Last record fetched from the statement
      *
-     * @var array|object|false
+     * @var object|array|false
      */
     protected mixed $_current = false;
 
@@ -227,7 +226,7 @@ class ResultSet implements ResultSetInterface
             $this->_results[$this->_index] = $this->_current;
         }
 
-        if (!$valid && $this->_statement !== null) {
+        if (!$valid && $this->_statement instanceof StatementInterface) {
             $this->_statement->closeCursor();
         }
 
@@ -238,7 +237,7 @@ class ResultSet implements ResultSetInterface
      * Helper function to fetch the next result from the statement or
      * seeded results.
      *
-     * @return false|object|array
+     * @return object|array|false
      */
     protected function _fetchResult(): false|object|array
     {

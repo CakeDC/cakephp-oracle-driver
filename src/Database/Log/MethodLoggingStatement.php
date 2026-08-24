@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Log;
 
+use CakeDC\OracleDriver\Database\OCI8\OCI8Exception;
 use CakeDC\OracleDriver\Database\Statement\Method\MethodStatementDecorator;
 use Exception;
 
@@ -50,7 +51,10 @@ class MethodLoggingStatement extends MethodStatementDecorator
         try {
             $result = parent::execute($params);
         } catch (Exception $exception) {
-            $exception->queryString = $this->queryString;
+            if ($exception instanceof OCI8Exception) {
+                $exception->queryString = $this->queryString;
+            }
+
             $method->error = $exception;
             $this->_log($method, $params, $t);
             throw $exception;
@@ -124,7 +128,7 @@ class MethodLoggingStatement extends MethodStatementDecorator
      *
      * @param string|int $column Name or param position to be bound
      * @param mixed $value The value to bind to variable in query
-     * @param string|int|null $type PDO type or name of configured Type class
+     * @param string|int $type PDO type or name of configured Type class
      * @return void
      */
     public function bindParam(string|int $column, mixed &$value, string|int $type = 'string'): void

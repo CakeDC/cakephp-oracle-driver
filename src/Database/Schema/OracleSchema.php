@@ -28,7 +28,12 @@ class OracleSchema extends SchemaDialect
 
     protected array $_constraints = [];
 
-    protected $integerTypes = [
+    /**
+     * Default display lengths for the supported integer column types.
+     *
+     * @var array
+     */
+    protected array $integerTypes = [
         TableSchema::TYPE_INTEGER => 11,
         TableSchema::TYPE_SMALLINTEGER => 5,
         TableSchema::TYPE_TINYINTEGER => 5,
@@ -214,6 +219,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
     public function convertColumnDescription(TableSchema $schema, array $row): void
     {
         $row = array_change_key_case($row);
+        $field = [];
         switch ($row['type']) {
             case 'DATE':
                 $field = [
@@ -1116,7 +1122,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
     public function columnDefinitionSql(array $column): string
     {
         $name = $column['name'];
-        $table = $this->_driver->newTableSchema('placeholder');
+        $table = new TableSchema('placeholder');
         $table->addColumn($name, $column);
 
         return $this->columnSql($table, $name);
@@ -1386,10 +1392,10 @@ SQL;
 
     /**
      * @param string $name Sequence name.
-     * @param null $dropCommand Operation to execute.
+     * @param string|null $dropCommand Operation to execute.
      * @return string
      */
-    public function dropSequenceIfExists(string $name, null $dropCommand = null): string
+    public function dropSequenceIfExists(string $name, ?string $dropCommand = null): string
     {
         $name = strtoupper($name);
         if (empty($dropCommand)) {
@@ -1462,7 +1468,7 @@ END;';
      * Generates sequence name based on convention that sequence names based on table name with prefix "SEQ_"
      *
      * @param string $name Original table name.
-     * @return mixed
+     * @return string
      */
     protected function _getSequenceName(string $name): string
     {

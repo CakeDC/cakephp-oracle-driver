@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM;
 
 use ArrayAccess;
+use CakeDC\OracleDriver\Database\Statement\Method\MethodStatementDecorator;
 use JsonSerializable;
 
 /**
@@ -30,7 +31,7 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      * first argument is also an array, in which case will be treated as $options
      * @param array $options options to be used for setting the property. Allowed option
      * keys are `setter` and `guard`
-     * @return \CakeDC\OracleDriver\ORM\RequestInterface
+     * @return self
      */
     public function set(string|array $property, mixed $value = null, array $options = []): RequestInterface;
 
@@ -64,4 +65,12 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      * null otherwise
      */
     public function isNew(mixed $new = null): bool;
+
+    /**
+     * Binds all the stored values in this object to the passed statement.
+     *
+     * @param \CakeDC\OracleDriver\Database\Statement\Method\MethodStatementDecorator $statement The statement to add parameters to.
+     * @return void
+     */
+    public function attachTo(MethodStatementDecorator $statement): void;
 }

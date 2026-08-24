@@ -42,7 +42,12 @@ class OCI8Connection extends PDO
      */
     protected int $executeMode = OCI_COMMIT_ON_SUCCESS;
 
-    protected $_defaultConfig = [];
+    /**
+     * Default configuration options merged into the connection configuration.
+     *
+     * @var array
+     */
+    protected array $_defaultConfig = [];
 
     /**
      * Creates a Connection to an Oracle Database using oci8 extension.

@@ -36,7 +36,7 @@ class MethodTestFixture
      *
      * @var string
      */
-    public string $name;
+    public ?string $name = null;
 
     /**
      * The plain pl/sql code blocks to create object.
@@ -65,7 +65,7 @@ class MethodTestFixture
                 $message = sprintf(
                     'Invalid datasource name "%s" for "%s" fixture. Fixture datasource names must begin with "test".',
                     $connection,
-                    $this->name,
+                    (string)$this->name,
                 );
                 throw new CakeException($message);
             }
@@ -77,7 +77,7 @@ class MethodTestFixture
     /**
      * @inheritDoc
      */
-    public function connection()
+    public function connection(): string
     {
         return $this->connection;
     }
@@ -85,7 +85,7 @@ class MethodTestFixture
     /**
      * @inheritDoc
      */
-    public function name()
+    public function name(): ?string
     {
         return $this->name;
     }
@@ -118,7 +118,7 @@ class MethodTestFixture
         try {
             $queries = [];
             if ($this->create !== []) {
-                $queries = (array)$this->create;
+                $queries = $this->create;
             }
 
             foreach ($queries as $query) {
@@ -148,8 +148,8 @@ class MethodTestFixture
     {
         try {
             $sql = [];
-            if ($this->drop !== null) {
-                $sql = (array)$this->drop;
+            if ($this->drop !== []) {
+                $sql = $this->drop;
             }
 
             foreach ($sql as $query) {

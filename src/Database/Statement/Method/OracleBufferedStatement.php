@@ -22,7 +22,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
     /**
      * @var string
      */
-    public string $_fetchType;
+    protected string $_fetchType;
 
     /**
      * Records count
@@ -119,7 +119,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
      * {@inheritDoc}
      *
      * @param string $type The type to fetch.
-     * @return mixed
+     * @return array
      */
     public function fetchAll(string|int $type = 'num'): array
     {

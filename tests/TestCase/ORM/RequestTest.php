@@ -20,64 +20,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
- * Request subclass with pre-defined accessor stubs for PHPUnit onlyMethods() compatibility.
- *
- * PHPUnit 12 removes addMethods() which allowed mocking non-existent methods.
- * Defining the stubs here lets tests use onlyMethods() instead.
- */
-class RequestWithAccessors extends Request
-{
-    protected function _setName(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _getName(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _setStuff(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _getThings(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _setFoo(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _getBar(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _setBar(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _getVeryLongProperty(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    protected function _setVeryLongProperty(mixed $value): mixed
-    {
-        return $value;
-    }
-
-    public function clean(): void
-    {
-    }
-}
-
-/**
  * Request test case.
  */
 class RequestTest extends TestCase
@@ -206,7 +148,7 @@ class RequestTest extends TestCase
             ->getMock();
         $request->expects($this->exactly(2))
             ->method('set')
-            ->willReturnCallback(function (array $properties, array $options = []) use ($request) {
+            ->willReturnCallback(function (array $properties, array $options = []) use ($request): MockObject {
                 static $call = 0;
                 $call++;
                 if ($call === 1) {

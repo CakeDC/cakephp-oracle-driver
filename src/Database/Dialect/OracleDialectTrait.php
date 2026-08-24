@@ -27,6 +27,11 @@ use CakeDC\OracleDriver\Database\Schema\OracleSchema;
 trait OracleDialectTrait
 {
     /**
+     * @var \CakeDC\OracleDriver\Database\Schema\OracleSchema|null
+     */
+    protected ?OracleSchema $_oracleSchemaDialect = null;
+
+    /**
      * Distinct clause needs no transformation.
      *
      * @param \Cake\Database\Query\SelectQuery $query The query to be transformed
@@ -208,11 +213,11 @@ trait OracleDialectTrait
      */
     public function schemaDialect(): OracleSchema
     {
-        if (!isset($this->_schemaDialect)) {
-            $this->_schemaDialect = new OracleSchema($this);
+        if ($this->_oracleSchemaDialect === null) {
+            $this->_oracleSchemaDialect = new OracleSchema($this);
         }
 
-        return $this->_schemaDialect;
+        return $this->_oracleSchemaDialect;
     }
 
     /**

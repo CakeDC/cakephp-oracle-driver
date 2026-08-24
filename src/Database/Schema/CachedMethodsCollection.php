@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Database\Schema;
 
 use Cake\Cache\Cache;
-use Cake\Datasource\ConnectionInterface;
+use Cake\Database\Connection;
 
 /**
  * Extends the schema collection class to provide caching
@@ -31,10 +31,10 @@ class CachedMethodsCollection extends MethodsCollection
     /**
      * Constructor.
      *
-     * @param \Cake\Datasource\ConnectionInterface $connection The connection instance.
+     * @param \Cake\Database\Connection $connection The connection instance.
      * @param string|bool $cacheKey The cache key or boolean false to disable caching.
      */
-    public function __construct(ConnectionInterface $connection, string|bool $cacheKey = true)
+    public function __construct(Connection $connection, string|bool $cacheKey = true)
     {
         parent::__construct($connection);
         $this->cacheMetadata($cacheKey);

@@ -3,52 +3,12 @@ declare(strict_types=1);
 
 namespace CakeDC\OracleDriver\Test\TestCase\Database\Schema;
 
-use Cake\Database\Driver;
 use Cake\Database\Exception\DatabaseException;
 use Cake\Database\Schema\TableSchema;
-use Cake\Database\Type\BaseType;
 use Cake\Database\TypeFactory;
 use Cake\TestSuite\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-
-/**
- * Mock class for testing baseType inheritance
- */
-class FooType extends BaseType
-{
-    /**
-     * @inheritDoc
-     */
-    public function getBaseType(): ?string
-    {
-        return 'integer';
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function toDatabase(mixed $value, Driver $driver): mixed
-    {
-        return $value;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function toPHP(mixed $value, Driver $driver): mixed
-    {
-        return $value;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function marshal(mixed $value): mixed
-    {
-        return $value;
-    }
-}
 
 /**
  * Test case for Table

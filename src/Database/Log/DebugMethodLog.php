@@ -120,7 +120,7 @@ class DebugMethodLog extends MethodLogger
             $this->_logger->log($method);
         }
 
-        if (!empty($method->params)) {
+        if ($method->params !== []) {
             $method->method = $this->_interpolate($method);
         }
 

@@ -70,7 +70,7 @@ class MethodLocator implements LocatorInterface
      * @return array The config data.
      * @throws \RuntimeException When you attempt to configure an existing method instance.
      */
-    public function config(?string $alias = null, ?array $options = null): array
+    public function config(string|array|null $alias = null, ?array $options = null): array
     {
         if ($alias === null) {
             return $this->_config;

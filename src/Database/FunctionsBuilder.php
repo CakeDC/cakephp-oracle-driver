@@ -15,7 +15,12 @@ class FunctionsBuilder
 {
     use SingletonTrait;
 
-    protected $_defaultDateFormat = 'YYYY-MM-DD HH24:MI:SS';
+    /**
+     * Default date format used when casting date columns to strings.
+     *
+     * @var string
+     */
+    protected string $_defaultDateFormat = 'YYYY-MM-DD HH24:MI:SS';
 
     /**
      * Returns a new instance of a FunctionExpression. This is used for generating

@@ -21,9 +21,11 @@ class Oci8Statement extends Statement
      */
     public function closeCursor(): bool
     {
-        $this->_sth->closeCursor();
+        if (is_resource($this->_sth)) {
+            oci_free_statement($this->_sth);
+        }
 
-        return empty($this->_sth);
+        return true;
     }
 
     /**

@@ -1014,7 +1014,6 @@ class QueryTest extends TestCase
      */
     public function testStringExpression(): void
     {
-        $driver = $this->connection->getDriver();
         $collation = 'LATIN_AI';
 
         $query = $this->connection->selectQuery();

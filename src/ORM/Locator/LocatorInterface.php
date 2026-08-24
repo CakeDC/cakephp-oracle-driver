@@ -23,11 +23,11 @@ interface LocatorInterface
      * Stores a list of options to be used when instantiating an object
      * with a matching alias.
      *
-     * @param string|null $alias Name of the alias
+     * @param array|string|null $alias Name of the alias
      * @param array|null $options list of options for the alias
      * @return array The config data.
      */
-    public function config(?string $alias = null, ?array $options = null): array;
+    public function config(string|array|null $alias = null, ?array $options = null): array;
 
     /**
      * Get a method instance from the registry.

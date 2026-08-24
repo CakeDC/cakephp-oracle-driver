@@ -13,10 +13,10 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM;
 
 use Cake\Database\Driver;
-use Cake\Database\StatementInterface;
 use Cake\ORM\Entity;
 use Cake\Utility\Inflector;
 use CakeDC\OracleDriver\Database\Schema\MethodSchema;
+use CakeDC\OracleDriver\Database\Statement\Method\MethodStatementDecorator;
 use CakeDC\OracleDriver\Database\TypeConverterTrait;
 use CakeDC\OracleDriver\ORM\Method\ResultSet;
 use InvalidArgumentException;
@@ -396,10 +396,10 @@ trait RequestTrait
     /**
      * Binds all the stored values in this object to the passed statement.
      *
-     * @param \Cake\Database\StatementInterface $statement The statement to add parameters to.
+     * @param \CakeDC\OracleDriver\Database\Statement\Method\MethodStatementDecorator $statement The statement to add parameters to.
      * @return void
      */
-    public function attachTo(StatementInterface $statement): void
+    public function attachTo(MethodStatementDecorator $statement): void
     {
         $properties = $this->_properties;
         if (empty($properties)) {
@@ -413,19 +413,17 @@ trait RequestTrait
             }
 
             $paramName = $name === ':result' ? $name : ':' . $name;
-            if ($parameter !== null) {
-                $type = $parameter['type'];
-                [$value, $type] = $this->cast($this->_properties[$name], $type);
-                $this->_castedProperties[$name] = $value;
-                if ($parameter['in'] && $parameter['out']) {
-                    $this->_properties[$name] = $value;
-                }
+            $type = $parameter['type'];
+            [$value, $type] = $this->cast($this->_properties[$name], $type);
+            $this->_castedProperties[$name] = $value;
+            if ($parameter['in'] && $parameter['out']) {
+                $this->_properties[$name] = $value;
+            }
 
-                if ($parameter['out']) {
-                    $statement->bindParam($paramName, $this->_properties[$name], $type);
-                } else {
-                    $statement->bindValue($paramName, $this->_castedProperties[$name], $type);
-                }
+            if ($parameter['out']) {
+                $statement->bindParam($paramName, $this->_properties[$name], $type);
+            } else {
+                $statement->bindValue($paramName, $this->_castedProperties[$name], $type);
             }
         }
     }

@@ -21,7 +21,12 @@ class MethodOracleStatement extends MethodStatementDecorator
 {
     public string $queryString;
 
-    public $paramMap;
+    /**
+     * Map of positional parameters to their named placeholder equivalents.
+     *
+     * @var array
+     */
+    public array $paramMap = [];
 
     /**
      * @inheritDoc
@@ -39,6 +44,8 @@ class MethodOracleStatement extends MethodStatementDecorator
         if ($property === 'queryString') {
             return empty($this->queryString) ? $this->_statement->queryString : $this->queryString;
         }
+
+        return $this->_statement->{$property};
     }
 
     /**

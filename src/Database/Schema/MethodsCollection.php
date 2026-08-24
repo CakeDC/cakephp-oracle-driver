@@ -14,6 +14,7 @@ namespace CakeDC\OracleDriver\Database\Schema;
 
 use Cake\Database\Connection;
 use Cake\Database\Exception\DatabaseException;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
 use PDOException;
 
 /**
@@ -26,6 +27,8 @@ class MethodsCollection
 {
     /**
      * Connection object
+     *
+     * @var \Cake\Database\Connection
      */
     protected Connection $_connection;
 
@@ -43,8 +46,13 @@ class MethodsCollection
      */
     public function __construct(Connection $connection)
     {
+        $driver = $connection->getDriver();
+        if (!$driver instanceof OracleBase) {
+            throw new DatabaseException('Methods collection requires an OracleBase driver');
+        }
+
         $this->_connection = $connection;
-        $this->_dialect = $connection->getDriver()->schemaDialect();
+        $this->_dialect = $driver->schemaDialect();
     }
 
     /**

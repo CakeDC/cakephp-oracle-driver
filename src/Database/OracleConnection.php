@@ -49,7 +49,7 @@ class OracleConnection extends Connection
      * Builds oracle connection based on generic cakephp connection class.
      *
      * @param \Cake\Database\Connection $connection Connection object.
-     * @return \CakeDC\OracleDriver\Database\OracleConnection
+     * @return self
      */
     public static function build(Connection $connection): OracleConnection
     {
@@ -71,7 +71,7 @@ class OracleConnection extends Connection
             return $this->_schemaMethodsCollection = $collection;
         }
 
-        if ($this->_schemaMethodsCollection !== null) {
+        if ($this->_schemaMethodsCollection instanceof MethodsCollection) {
             return $this->_schemaMethodsCollection;
         }
 
@@ -131,7 +131,7 @@ class OracleConnection extends Connection
     public function methodLogger(?MethodLogger $instance = null): object
     {
         if (!$instance instanceof MethodLogger) {
-            if ($this->_methodLogger === null) {
+            if (!$this->_methodLogger instanceof MethodLogger) {
                 $this->_methodLogger = new MethodLogger();
             }
 

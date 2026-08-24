@@ -85,10 +85,8 @@
         "analyse": [
             "@stan"
         ],
-        "cs-check": "vendor/bin/phpcs --standard=vendor/cakephp/cakephp-codesniffer/CakePHP src/ tests/",
-        "cs-fix": "vendor/bin/phpcbf -p --standard=vendor/cakephp/cakephp-codesniffer/CakePHP src/ tests/",
-        "new-cs-check": "phpcs -p --standard=phpcs.xml src/ tests/",
-        "new-cs-fix": "phpcbf --standard=phpcs.xml src/ tests/",
+        "cs-check": "phpcs -p --standard=phpcs.xml src/ tests/",
+        "cs-fix": "phpcbf --standard=phpcs.xml src/ tests/",
         "test": "php tests/run-database-tests.php",
         "test:database": "vendor/bin/phpunit --testsuite=Database",
         "test:orm": "vendor/bin/phpunit --testsuite=ORM",

@@ -13,15 +13,17 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM;
 
 use Cake\Core\App;
-use Cake\Datasource\ConnectionInterface;
 use Cake\Datasource\ConnectionManager;
 use Cake\Utility\Inflector;
 use CakeDC\OracleDriver\Database\OracleConnection;
 use CakeDC\OracleDriver\Database\Schema\MethodSchema;
 use CakeDC\OracleDriver\ORM\Exception\MissingRequestException;
+use CakeDC\OracleDriver\ORM\Locator\LocatorAwareTrait;
 
 class Method
 {
+    use LocatorAwareTrait;
+
     /**
      * Name of the method as it can be found in the database
      *
@@ -32,9 +34,9 @@ class Method
     /**
      * Connection instance
      *
-     * @var \Cake\Datasource\ConnectionInterface|null
+     * @var \CakeDC\OracleDriver\Database\OracleConnection|null
      */
-    protected ?ConnectionInterface $_connection = null;
+    protected ?OracleConnection $_connection = null;
 
     /**
      * The schema object containing a description of this method fields
@@ -96,7 +98,7 @@ class Method
      * Sets the database method name.
      *
      * @param string $method the new method name
-     * @return \CakeDC\OracleDriver\ORM\Method
+     * @return self
      */
     public function setMethod(string $method): Method
     {
@@ -141,7 +143,7 @@ class Method
      */
     public function getSchema(): MethodSchema
     {
-        if ($this->_schema === null) {
+        if (!$this->_schema instanceof MethodSchema) {
             $method = $this->getConnection()
                            ->methodSchemaCollection()
                            ->describe($this->getMethod());
@@ -336,7 +338,7 @@ class Method
         return [
             'method' => $this->getMethod(),
             'defaultConnection' => static::defaultConnectionName(),
-            'connectionName' => $conn ? $conn->configName() : null,
+            'connectionName' => $conn->configName(),
         ];
     }
 

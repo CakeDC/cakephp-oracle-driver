@@ -82,7 +82,7 @@ class MethodRegistry
             static::$_locator = $locator;
         }
 
-        if (static::$_locator === null) {
+        if (!static::$_locator instanceof LocatorInterface) {
             static::$_locator = new static::$_defaultLocatorClass();
         }
 
