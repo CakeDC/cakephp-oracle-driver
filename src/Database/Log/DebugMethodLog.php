@@ -26,35 +26,35 @@ class DebugMethodLog extends MethodLogger
      *
      * @var array
      */
-    protected $_queries = [];
+    protected array $_queries = [];
 
     /**
      * Decorated logger.
      *
-     * @var \CakeDC\OracleDriver\Database\Log\LoggedMethod
+     * @var \CakeDC\OracleDriver\Database\Log\MethodLogger
      */
-    protected $_logger;
+    protected ?MethodLogger $_logger = null;
 
     /**
      * Name of the connection being logged.
      *
      * @var string
      */
-    protected $_connectionName;
+    protected string $_connectionName;
 
     /**
      * Total time (ms) of all queries
      *
      * @var int
      */
-    protected $_totalTime = 0;
+    protected int $_totalTime = 0;
 
     /**
      * Total rows of all queries
      *
      * @var int
      */
-    protected $_totalRows = 0;
+    protected int $_totalRows = 0;
 
     /**
      * Constructor
@@ -62,7 +62,7 @@ class DebugMethodLog extends MethodLogger
      * @param \CakeDC\OracleDriver\Database\Log\MethodLogger $logger The logger to decorate and spy on.
      * @param string $name The name of the connection being logged.
      */
-    public function __construct($logger, $name)
+    public function __construct(?MethodLogger $logger, string $name)
     {
         $this->_logger = $logger;
         $this->_connectionName = $name;
@@ -71,9 +71,9 @@ class DebugMethodLog extends MethodLogger
     /**
      * Get the stored logs.
      *
-     * @return array
+     * @return string
      */
-    public function name()
+    public function name(): string
     {
         return $this->_connectionName;
     }
@@ -83,7 +83,7 @@ class DebugMethodLog extends MethodLogger
      *
      * @return array
      */
-    public function queries()
+    public function queries(): array
     {
         return $this->_queries;
     }
@@ -93,7 +93,7 @@ class DebugMethodLog extends MethodLogger
      *
      * @return int
      */
-    public function totalTime()
+    public function totalTime(): int
     {
         return $this->_totalTime;
     }
@@ -103,7 +103,7 @@ class DebugMethodLog extends MethodLogger
      *
      * @return int
      */
-    public function totalRows()
+    public function totalRows(): int
     {
         return $this->_totalRows;
     }
