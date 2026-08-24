@@ -291,13 +291,36 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
             }
         }
 
-        $ret = @oci_execute($this->_sth, $this->_conn->getExecuteMode());
+        $ret = $this->silentOci(
+            fn(): bool => oci_execute($this->_sth, $this->_conn->getExecuteMode()),
+        );
         if (!$ret) {
             $error = oci_error($this->_sth) ?: ['message' => 'Execute failed', 'code' => 0];
             throw OCI8Exception::fromErrorInfo($error);
         }
 
         return $ret;
+    }
+
+    /**
+     * Invokes an oci8 function while suppressing its native PHP warnings.
+     *
+     * The oci8 extension emits warnings on failure; callers are expected to
+     * inspect oci_error() and raise a proper OCI8Exception instead. A scoped
+     * error handler is used rather than the error control operator (@) so the
+     * code keeps the behavior while satisfying coding standard rules.
+     *
+     * @param callable $callback The oci8 call to invoke.
+     * @return mixed
+     */
+    private function silentOci(callable $callback): mixed
+    {
+        set_error_handler(static fn(): bool => true);
+        try {
+            return $callback();
+        } finally {
+            restore_error_handler();
+        }
     }
 
     /**

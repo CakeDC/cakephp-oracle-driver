@@ -59,7 +59,7 @@ jobs:
       - name: Wait for Oracle to be ready
         run: |
           for i in $(seq 1 60); do
-            if (echo > /dev/tcp/oracle/1521) >/dev/null 2>&1; then
+            if (echo > /dev/tcp/127.0.0.1/1521) >/dev/null 2>&1; then
               echo "Oracle port is open"
               break
             fi
@@ -73,7 +73,7 @@ jobs:
       - name: Run Oracle test suite
         run: php tests/run-database-tests.php
         env:
-          db_dsn: "oracle://app_user:AppUserTest123@FREEPDB1?className=CakeDC\\OracleDriver\\Database\\OracleConnection&driver=CakeDC\\OracleDriver\\Database\\Driver\\OracleOCI&host=oracle&port=1521&database=FREEPDB1&server_version=23&autoincrement=1&persistent=0"
+          db_dsn: "oracle://app_user:AppUserTest123@FREEPDB1?className=CakeDC\\OracleDriver\\Database\\OracleConnection&driver=CakeDC\\OracleDriver\\Database\\Driver\\OracleOCI&host=127.0.0.1&port=1521&database=FREEPDB1&server_version=23&autoincrement=1&persistent=0"
           FIXTURE_SCHEMA_METADATA: "./tests/schema.php"
           ORACLE_RECREATE_SCHEMA: "1"
 

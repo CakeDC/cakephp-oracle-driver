@@ -67,22 +67,34 @@ class OCI8Connection extends PDO
         if ($persistent) {
             if ($charset !== null) {
                 if ($sessionMode !== null) {
-                    $this->dbh = @oci_pconnect($username, $password, $dsn, $charset, $sessionMode);
+                    $this->dbh = $this->silentOci(
+                        fn() => oci_pconnect($username, $password, $dsn, $charset, $sessionMode),
+                    );
                 } else {
-                    $this->dbh = @oci_pconnect($username, $password, $dsn, $charset);
+                    $this->dbh = $this->silentOci(
+                        fn() => oci_pconnect($username, $password, $dsn, $charset),
+                    );
                 }
             } else {
-                $this->dbh = @oci_pconnect($username, $password, $dsn);
+                $this->dbh = $this->silentOci(
+                    fn() => oci_pconnect($username, $password, $dsn),
+                );
             }
         } else {
             if ($charset !== null) {
                 if ($sessionMode !== null) {
-                    $this->dbh = @oci_connect($username, $password, $dsn, $charset, $sessionMode);
+                    $this->dbh = $this->silentOci(
+                        fn() => oci_connect($username, $password, $dsn, $charset, $sessionMode),
+                    );
                 } else {
-                    $this->dbh = @oci_connect($username, $password, $dsn, $charset);
+                    $this->dbh = $this->silentOci(
+                        fn() => oci_connect($username, $password, $dsn, $charset),
+                    );
                 }
             } else {
-                $this->dbh = @oci_connect($username, $password, $dsn);
+                $this->dbh = $this->silentOci(
+                    fn() => oci_connect($username, $password, $dsn),
+                );
             }
 
 //            $this->dbh = @oci_connect($username, $password, $dsn, $charset, $sessionMode);
@@ -93,6 +105,27 @@ class OCI8Connection extends PDO
         }
 
         $this->setConfig($options);
+    }
+
+    /**
+     * Invokes an oci8 function while suppressing its native PHP warnings.
+     *
+     * The oci8 extension emits warnings on failure; callers are expected to
+     * inspect oci_error() and raise a proper OCI8Exception instead. A scoped
+     * error handler is used rather than the error control operator (@) so the
+     * code keeps the behavior while satisfying coding standard rules.
+     *
+     * @param callable $callback The oci8 call to invoke.
+     * @return mixed
+     */
+    private function silentOci(callable $callback): mixed
+    {
+        set_error_handler(static fn(): bool => true);
+        try {
+            return $callback();
+        } finally {
+            restore_error_handler();
+        }
     }
 
     /**

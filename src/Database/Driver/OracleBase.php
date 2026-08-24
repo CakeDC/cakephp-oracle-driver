@@ -467,7 +467,7 @@ abstract class OracleBase extends Driver
             return implode(
                 '.',
                 array_map(
-                    fn (string $part): string => $this->_upperIdentifier($part),
+                    $this->_upperIdentifier(...),
                     explode('.', $identifier),
                 ),
             );
