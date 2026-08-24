@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\BindingKeyTest as CakeBindingKeyTest;
 
 /**
  * Tests BindingKey class
- *
  */
 class BindingKeyTest extends CakeBindingKeyTest
 {

@@ -24,7 +24,7 @@ trait LocatorAwareTrait
      *
      * @var \CakeDC\OracleDriver\ORM\Locator\LocatorInterface
      */
-    protected $_methodLocator;
+    protected LocatorInterface $_methodLocator;
 
     /**
      * Sets the method locator.
@@ -33,12 +33,12 @@ trait LocatorAwareTrait
      * @param \CakeDC\OracleDriver\ORM\Locator\LocatorInterface|null $methodLocator LocatorInterface instance.
      * @return \CakeDC\OracleDriver\ORM\Locator\LocatorInterface
      */
-    public function methodLocator(?LocatorInterface $methodLocator = null)
+    public function methodLocator(?LocatorInterface $methodLocator = null): LocatorInterface
     {
-        if ($methodLocator instanceof \CakeDC\OracleDriver\ORM\Locator\LocatorInterface) {
+        if ($methodLocator instanceof LocatorInterface) {
             $this->_methodLocator = $methodLocator;
         }
-        
+
         if (!$this->_methodLocator) {
             $this->_methodLocator = MethodRegistry::locator();
         }

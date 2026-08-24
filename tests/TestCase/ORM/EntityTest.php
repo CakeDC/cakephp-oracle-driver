@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\EntityTest as CakeEntityTest;
 
 /**
  * Tests Entity class
- *
  */
 class EntityTest extends CakeEntityTest
 {

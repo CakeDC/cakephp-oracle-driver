@@ -21,7 +21,6 @@ use Cake\Test\TestCase\ORM\Behavior\CounterCacheBehaviorTest as CakeCounterCache
 
 /**
  * Tests CounterCacheBehavior class
- *
  */
 class CounterCacheBehaviorTest extends CakeCounterCacheBehaviorTest
 {

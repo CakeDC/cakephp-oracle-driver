@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Statement\Method;
 
+use Cake\Database\Driver;
 use PDO;
 use PDOStatement as Statement;
 
@@ -32,7 +33,7 @@ class MethodPDOStatement extends MethodStatementDecorator
      * @param \PDOStatement|null $statement Original statement to be decorated.
      * @param \Cake\Database\Driver|null $driver Driver instance.
      */
-    public function __construct(?Statement $statement = null, $driver = null)
+    public function __construct(?Statement $statement = null, ?Driver $driver = null)
     {
         $this->_statement = $statement;
         $this->_driver = $driver;
@@ -72,35 +73,35 @@ class MethodPDOStatement extends MethodStatementDecorator
         if (!ctype_digit((string)$type)) {
             [$value, $type] = $this->cast($value, $type);
         }
-        
+
         $this->_statement->bindParam($column, $value, $type);
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function bindValue(string|int $column, mixed $value, string|int|null $type = 'string'): void
     {
         if ($type === null) {
             $type = 'string';
         }
-        
+
         if (!ctype_digit((string)$type)) {
             [$value, $type] = $this->cast($value, $type);
         }
-        
+
         $this->_statement->bindValue($column, $value, $type);
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function fetch(string|int $mode = PDO::FETCH_NUM): mixed
     {
         if ($mode === 'num' || $mode === PDO::FETCH_NUM) {
             return $this->_statement->fetch(PDO::FETCH_NUM);
         }
-        
+
         if ($mode === 'assoc' || $mode === PDO::FETCH_ASSOC) {
             return $this->_statement->fetch(PDO::FETCH_ASSOC);
         }
@@ -109,14 +110,14 @@ class MethodPDOStatement extends MethodStatementDecorator
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function fetchAll(string|int $mode = PDO::FETCH_NUM): array
     {
         if ($mode === 'num' || $mode === PDO::FETCH_NUM) {
             return $this->_statement->fetchAll(PDO::FETCH_NUM);
         }
-        
+
         if ($mode === 'assoc' || $mode === PDO::FETCH_ASSOC) {
             return $this->_statement->fetchAll(PDO::FETCH_ASSOC);
         }

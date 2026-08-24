@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\MarshallerTest as CakeMarshallerTest;
 
 /**
  * Tests Marshaller class
- *
  */
 class MarshallerTest extends CakeMarshallerTest
 {

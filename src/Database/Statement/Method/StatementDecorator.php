@@ -12,11 +12,12 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Statement\Method;
 
-use CakeDC\OracleDriver\Database\TypeConverterTrait;
 use Cake\Database\Driver;
 use Cake\Database\StatementInterface;
+use CakeDC\OracleDriver\Database\TypeConverterTrait;
 use Countable;
 use IteratorAggregate;
+use PDO;
 use Traversable;
 
 /**
@@ -116,7 +117,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
     /**
      * @inheritDoc
      */
-    public function fetch(string|int $mode = \PDO::FETCH_NUM): mixed
+    public function fetch(string|int $mode = PDO::FETCH_NUM): mixed
     {
         return $this->_statement->fetch($mode);
     }
@@ -126,7 +127,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
      */
     public function fetchAssoc(): array
     {
-        $result = $this->fetch(\PDO::FETCH_ASSOC);
+        $result = $this->fetch(PDO::FETCH_ASSOC);
 
         return $result ?: [];
     }
@@ -136,7 +137,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
      */
     public function fetchColumn(int $position): mixed
     {
-        $result = $this->fetch(\PDO::FETCH_NUM);
+        $result = $this->fetch(PDO::FETCH_NUM);
         if (is_array($result) && isset($result[$position])) {
             return $result[$position];
         }
@@ -147,7 +148,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
     /**
      * @inheritDoc
      */
-    public function fetchAll(string|int $mode = \PDO::FETCH_NUM): array
+    public function fetchAll(string|int $mode = PDO::FETCH_NUM): array
     {
         return $this->_statement->fetchAll($mode);
     }
@@ -187,7 +188,7 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
     public function lastInsertId(?string $table = null, ?string $column = null): string|int
     {
         if ($column && $this->columnCount()) {
-            $row = $this->fetch(\PDO::FETCH_ASSOC);
+            $row = $this->fetch(PDO::FETCH_ASSOC);
             if (is_array($row) && isset($row[$column])) {
                 return $row[$column];
             }

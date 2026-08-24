@@ -119,11 +119,11 @@ class DebugMethodLog extends MethodLogger
         if ($this->_logger) {
             $this->_logger->log($method);
         }
-        
+
         if (!empty($method->params)) {
             $method->method = $this->_interpolate($method);
         }
-        
+
         $this->_totalTime += $method->took;
         $this->_totalRows += $method->numRows;
 

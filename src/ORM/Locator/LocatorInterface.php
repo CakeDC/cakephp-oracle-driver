@@ -27,7 +27,7 @@ interface LocatorInterface
      * @param array|null $options list of options for the alias
      * @return array The config data.
      */
-    public function config($alias = null, $options = null);
+    public function config(?string $alias = null, ?array $options = null): array;
 
     /**
      * Get a method instance from the registry.
@@ -36,7 +36,7 @@ interface LocatorInterface
      * @param array $options The options you want to build the method with.
      * @return \CakeDC\OracleDriver\ORM\Method
      */
-    public function get($alias, array $options = []);
+    public function get(string $alias, array $options = []): Method;
 
     /**
      * Check to see if an instance exists in the registry.
@@ -44,7 +44,7 @@ interface LocatorInterface
      * @param string $alias The alias to check for.
      * @return bool
      */
-    public function exists($alias);
+    public function exists(string $alias): bool;
 
     /**
      * Set an instance.
@@ -53,14 +53,14 @@ interface LocatorInterface
      * @param \CakeDC\OracleDriver\ORM\Method $object The method to set.
      * @return \CakeDC\OracleDriver\ORM\Method
      */
-    public function set($alias, Method $object);
+    public function set(string $alias, Method $object): Method;
 
     /**
      * Clears the registry of configuration and instances.
      *
      * @return void
      */
-    public function clear();
+    public function clear(): void;
 
     /**
      * Removes an instance from the registry.
@@ -68,5 +68,5 @@ interface LocatorInterface
      * @param string $alias The alias to remove.
      * @return void
      */
-    public function remove($alias);
+    public function remove(string $alias): void;
 }

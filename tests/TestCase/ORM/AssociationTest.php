@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\AssociationTest as CakeAssociationTest;
 
 /**
  * Tests Association class
- *
  */
 class AssociationTest extends CakeAssociationTest
 {

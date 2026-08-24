@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Test\TestCase\Database\Schema;
 
 use Cake\Database\Driver;
+use Cake\Database\Exception\DatabaseException;
 use Cake\Database\Schema\TableSchema;
 use Cake\Database\Type\BaseType;
 use Cake\Database\TypeFactory;
-use Cake\Database\Exception\DatabaseException;
 use Cake\TestSuite\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -350,6 +350,7 @@ class TableSchemaTest extends TestCase
     /**
      * Test adding an constraint.
      * >
+     *
      * @return void
      */
     public function testAddConstraint(): void
@@ -369,6 +370,7 @@ class TableSchemaTest extends TestCase
     /**
      * Test adding an constraint with an overlapping unique index
      * >
+     *
      * @return void
      */
     public function testAddConstraintOverwriteUniqueIndex(): void
@@ -507,7 +509,7 @@ class TableSchemaTest extends TestCase
 
         $this->assertEquals(
             ['author_idx', 'texty'],
-            $table->indexes()
+            $table->indexes(),
         );
     }
 
@@ -550,7 +552,7 @@ class TableSchemaTest extends TestCase
             'engine' => 'InnoDB',
         ];
         $return = $table->setOptions($options);
-        $this->assertInstanceOf(\Cake\Database\Schema\TableSchema::class, $return);
+        $this->assertInstanceOf(TableSchema::class, $return);
         $this->assertEquals($options, $table->getOptions());
     }
 
@@ -567,7 +569,7 @@ class TableSchemaTest extends TestCase
             'engine' => 'InnoDB',
         ];
         $return = $table->setOptions($options);
-        $this->assertInstanceOf(\Cake\Database\Schema\TableSchema::class, $return);
+        $this->assertInstanceOf(TableSchema::class, $return);
         $this->assertEquals($options, $table->getOptions());
     }
 

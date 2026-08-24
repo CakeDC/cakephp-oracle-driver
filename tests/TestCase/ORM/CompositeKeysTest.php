@@ -53,7 +53,7 @@ class CompositeKeysTest extends CakeCompositeKeysTest
     {
         $this->skipIf(
             $this->connection->getDriver() instanceof OracleBase,
-            'Oracle does not support the requirements of this test or test not ready yet.'
+            'Oracle does not support the requirements of this test or test not ready yet.',
         );
     }
 }

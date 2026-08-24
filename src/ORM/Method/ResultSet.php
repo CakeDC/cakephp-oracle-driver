@@ -12,15 +12,20 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\ORM\Method;
 
+use ArrayAccess;
 use Cake\Collection\CollectionTrait;
+use Cake\Database\Driver;
 use Cake\Database\Exception\DatabaseException;
+use Cake\Database\StatementInterface;
+use Cake\Database\TypeFactory;
 use Cake\Datasource\EntityInterface;
 use Cake\Datasource\ResultSetInterface;
+use Cake\ORM\Entity;
+use CakeDC\OracleDriver\ORM\Method;
 use SplFixedArray;
 
 /**
  * Represents the results obtained after executing a query for a specific cursor returned by method call.
- *
  */
 class ResultSet implements ResultSetInterface
 {
@@ -31,56 +36,56 @@ class ResultSet implements ResultSetInterface
      *
      * @var \Cake\Database\StatementInterface
      */
-    protected $_statement;
+    protected StatementInterface $_statement;
 
     /**
      * Points to the next record number that should be fetched
      *
      * @var int
      */
-    protected $_index = 0;
+    protected int $_index = 0;
 
     /**
      * Last record fetched from the statement
      *
      * @var array
      */
-    protected $_current;
+    protected array $_current;
 
     /**
      * Results that have been fetched or hydrated into the results.
      *
-     * @var array|\ArrayAccess
+     * @var \ArrayAccess|array
      */
-    protected $_results = [];
+    protected array|ArrayAccess $_results = [];
 
     /**
      * Whether to hydrate results into objects or not
      *
      * @var bool
      */
-    protected $_hydrate = true;
+    protected bool $_hydrate = true;
 
     /**
      * The fully namespaced name of the class to use for hydrating results
      *
      * @var string
      */
-    protected $_entityClass;
+    protected string $_entityClass;
 
     /**
      * Whether or not to buffer results fetched from the statement
      *
      * @var bool
      */
-    protected $_useBuffering = false;
+    protected bool $_useBuffering = false;
 
     /**
      * Holds the count of records in this result set
      *
      * @var int
      */
-    protected $_count;
+    protected int $_count;
 
     /**
      * Type cache for type converters.
@@ -94,7 +99,7 @@ class ResultSet implements ResultSetInterface
      *
      * @var array
      */
-    protected $_schema = [];
+    protected array $_schema = [];
 
     /**
      * The Database driver object.
@@ -103,7 +108,7 @@ class ResultSet implements ResultSetInterface
      *
      * @var \Cake\Database\Driver
      */
-    protected $_driver;
+    protected Driver $_driver;
 
     /**
      * Constructor
@@ -113,10 +118,10 @@ class ResultSet implements ResultSetInterface
      * @param array $options Additional resultset options that setup result entity.
      * @internal param \Cake\ORM\Query $query Query from where results come
      */
-    public function __construct($repository, $statement, array $options = [])
+    public function __construct(Method $repository, StatementInterface $statement, array $options = [])
     {
         $options += [
-            'entityClass' => \Cake\ORM\Entity::class,
+            'entityClass' => Entity::class,
             'hydrate' => true,
             'useBuffering' => false,
             'schema' => [],
@@ -140,9 +145,9 @@ class ResultSet implements ResultSetInterface
      *
      * Part of Iterator interface.
      *
-     * @return array|object
+     * @return object|array
      */
-    public function current()
+    public function current(): array|object
     {
         return $this->_current;
     }
@@ -154,7 +159,7 @@ class ResultSet implements ResultSetInterface
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->_index;
     }
@@ -200,7 +205,7 @@ class ResultSet implements ResultSetInterface
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         if ($this->_useBuffering) {
             $valid = $this->_index < $this->_count;
@@ -209,7 +214,7 @@ class ResultSet implements ResultSetInterface
 
                 return true;
             }
-            
+
             if (!$valid) {
                 return $valid;
             }
@@ -221,7 +226,7 @@ class ResultSet implements ResultSetInterface
         if ($valid && $this->_useBuffering) {
             $this->_results[$this->_index] = $this->_current;
         }
-        
+
         if (!$valid && $this->_statement !== null) {
             $this->_statement->closeCursor();
         }
@@ -271,7 +276,7 @@ class ResultSet implements ResultSetInterface
      *
      * This method will also close the underlying statement cursor.
      *
-     * @return array|object
+     * @return object|array
      */
     public function first(): mixed
     {
@@ -308,7 +313,7 @@ class ResultSet implements ResultSetInterface
      * @param string $serialized Serialized object
      * @return void
      */
-    public function unserialize($serialized): void
+    public function unserialize(string $serialized): void
     {
         $this->_results = unserialize($serialized);
         $this->_useBuffering = true;
@@ -327,7 +332,7 @@ class ResultSet implements ResultSetInterface
         if ($this->_count !== null) {
             return $this->_count;
         }
-        
+
         if ($this->_statement) {
             return $this->_count = $this->_statement->rowCount();
         }
@@ -358,18 +363,18 @@ class ResultSet implements ResultSetInterface
      * @param array $fields The fields whitelist to use for fields in the schema.
      * @return array
      */
-    protected function _getTypes($fields): array
+    protected function _getTypes(array $fields): array
     {
         $types = [];
         $schema = $this->_schema;
-        $map = array_keys(\Cake\Database\TypeFactory::map() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
+        $map = array_keys(TypeFactory::map() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
         $typeMap = array_combine(
             $map,
-            array_map(['Cake\Database\Type', 'build'], $map)
+            array_map(['Cake\Database\Type', 'build'], $map),
         );
 
         foreach (['string', 'text'] as $t) {
-            if ($typeMap[$t] instanceof \Cake\Database\TypeFactory) {
+            if ($typeMap[$t] instanceof TypeFactory) {
                 unset($typeMap[$t]);
             }
         }
@@ -390,7 +395,7 @@ class ResultSet implements ResultSetInterface
      *
      * @return array
      */
-    public function __debugInfo()
+    public function __debugInfo(): array
     {
         return [
             'items' => $this->toArray(),

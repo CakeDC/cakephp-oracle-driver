@@ -14,6 +14,7 @@ namespace CakeDC\OracleDriver\Database\OCI8;
 
 use Cake\Core\InstanceConfigTrait;
 use PDO;
+use UnexpectedValueException;
 
 /**
  * OCI8 implementation of the Connection interface.
@@ -27,7 +28,7 @@ class OCI8Connection extends PDO
      *
      * @var bool
      */
-    protected $_inTransaction = false;
+    protected bool $_inTransaction = false;
 
     /**
      * Database connection.
@@ -39,7 +40,7 @@ class OCI8Connection extends PDO
     /**
      * @var int
      */
-    protected $executeMode = OCI_COMMIT_ON_SUCCESS;
+    protected int $executeMode = OCI_COMMIT_ON_SUCCESS;
 
     protected $_defaultConfig = [];
 
@@ -50,10 +51,9 @@ class OCI8Connection extends PDO
      * @param string $username Oracle username.
      * @param string $password Oracle user's password.
      * @param array $options Additional connection settings.
-     *
      * @throws \CakeDC\OracleDriver\Database\OCI8\OCI8Exception
      */
-    public function __construct($dsn, $username, $password, $options)
+    public function __construct(string $dsn, string $username, string $password, array $options)
     {
         $persistent = !empty($options['persistent']);
         $charset = !empty($options['charset']) ? $options['charset'] : null;
@@ -110,14 +110,14 @@ class OCI8Connection extends PDO
     {
         $versionData = oci_server_version($this->dbh);
         if (!preg_match('/\s+(\d+\.\d+\.\d+\.\d+\.\d+)\s+/', $versionData, $version)) {
-            throw new \UnexpectedValueException(__('Unexpected database version string "{0}" that not parsed.', $versionData));
+            throw new UnexpectedValueException(__('Unexpected database version string "{0}" that not parsed.', $versionData));
         }
 
         return $version[1];
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function prepare(string $query, array $options = []): OCI8Statement|false
     {
@@ -125,7 +125,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): OCI8Statement|false
     {
@@ -144,7 +144,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function quote(string $string, int $type = PDO::PARAM_STR): string|false
     {
@@ -154,7 +154,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function exec(string $statement): int|false
     {
@@ -173,7 +173,7 @@ class OCI8Connection extends PDO
      *
      * @return int
      */
-    public function getExecuteMode()
+    public function getExecuteMode(): int
     {
         return $this->executeMode;
     }
@@ -190,7 +190,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function inTransaction(): bool
     {
@@ -198,7 +198,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function beginTransaction(): bool
     {
@@ -208,7 +208,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function commit(): bool
     {
@@ -223,7 +223,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function rollBack(): bool
     {
@@ -238,7 +238,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function errorCode(): ?string
     {
@@ -253,7 +253,7 @@ class OCI8Connection extends PDO
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function errorInfo(): array
     {

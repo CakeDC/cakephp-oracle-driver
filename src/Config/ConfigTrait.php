@@ -25,7 +25,7 @@ trait ConfigTrait
      *
      * @var bool
      */
-    protected $_configInitialized = false;
+    protected bool $_configInitialized = false;
 
     /**
      * ### Usage
@@ -66,13 +66,13 @@ trait ConfigTrait
      * $this->config(['one' => 'value', 'another' => 'value']);
      * ```
      *
-     * @param string|array|null $key The key to get/set, or a complete array of configs.
+     * @param array|string|null $key The key to get/set, or a complete array of configs.
      * @param mixed|null $value The value to set.
      * @param bool $merge Whether to recursively merge or overwrite existing config, defaults to true.
      * @return mixed Config value being read, or the object itself on write operations.
      * @throws \Cake\Core\Exception\Exception When trying to set a key that is invalid.
      */
-    public function config($key = null, $value = null, $merge = true)
+    public function config(string|array|null $key = null, mixed $value = null, bool $merge = true): mixed
     {
         if (!$this->_configInitialized) {
             $this->_config += $this->_baseConfig;
@@ -91,14 +91,14 @@ trait ConfigTrait
     /**
      * Write a config variable
      *
-     * @param string|array $key Key to write to.
+     * @param array|string $key Key to write to.
      * @param mixed $value Value to write.
-     * @param bool|string $merge True to merge recursively, 'shallow' for simple merge,
+     * @param string|bool $merge True to merge recursively, 'shallow' for simple merge,
      *   false to overwrite, defaults to false.
      * @return void
      * @throws \Cake\Core\Exception\Exception if attempting to clobber existing config
      */
-    protected function _configWrite($key, $value, $merge = false)
+    protected function _configWrite(string|array $key, mixed $value, bool|string $merge = false): void
     {
         if (is_string($key) && $value === null) {
             $this->_configDelete($key);
@@ -156,7 +156,7 @@ trait ConfigTrait
      * @return void
      * @throws \Cake\Core\Exception\Exception if attempting to clobber existing config
      */
-    protected function _configDelete($key)
+    protected function _configDelete(string $key): void
     {
         if (!str_contains($key, '.')) {
             unset($this->_config[$key]);
@@ -192,7 +192,7 @@ trait ConfigTrait
      * @param string|null $key Key to read.
      * @return mixed
      */
-    protected function _configRead($key)
+    protected function _configRead(?string $key): mixed
     {
         if ($key === null) {
             return $this->_config;
@@ -238,11 +238,11 @@ trait ConfigTrait
      * $this->config(['one' => 'value', 'another' => 'value']);
      * ```
      *
-     * @param string|array $key The key to set, or a complete array of configs.
+     * @param array|string $key The key to set, or a complete array of configs.
      * @param mixed|null $value The value to set.
      * @return $this The object itself.
      */
-    public function configShallow($key, $value = null)
+    public function configShallow(string|array $key, mixed $value = null)
     {
         if (!$this->_configInitialized) {
             $this->_config += $this->_baseConfig;

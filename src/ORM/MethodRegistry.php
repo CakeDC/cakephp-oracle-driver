@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM;
 
 use CakeDC\OracleDriver\ORM\Locator\LocatorInterface;
+use CakeDC\OracleDriver\ORM\Locator\MethodLocator;
 
 /**
  * Provides a registry/factory for Method objects.
@@ -39,7 +40,6 @@ use CakeDC\OracleDriver\ORM\Locator\LocatorInterface;
  * ```
  * $method = MethodRegistry::get('Procedure', $config);
  * ```
- *
  */
 class MethodRegistry
 {
@@ -48,14 +48,14 @@ class MethodRegistry
      *
      * @var \Cake\ORM\Locator\LocatorInterface
      */
-    protected static $_locator;
+    protected static \Cake\ORM\Locator\LocatorInterface $_locator;
 
     /**
      * Default LocatorInterface implementation class.
      *
      * @var string
      */
-    protected static $_defaultLocatorClass = \CakeDC\OracleDriver\ORM\Locator\MethodLocator::class;
+    protected static string $_defaultLocatorClass = MethodLocator::class;
 
     /**
      * Stores a list of options to be used when instantiating an object
@@ -65,7 +65,7 @@ class MethodRegistry
      * @param array|null $options list of options for the alias
      * @return array The config data.
      */
-    public static function config($alias = null, $options = null)
+    public static function config(?string $alias = null, ?array $options = null): array
     {
         return static::locator()->config($alias, $options);
     }
@@ -76,9 +76,9 @@ class MethodRegistry
      * @param \CakeDC\OracleDriver\ORM\Locator\LocatorInterface $locator Instance of a locator to use.
      * @return \CakeDC\OracleDriver\ORM\Locator\LocatorInterface
      */
-    public static function locator(?LocatorInterface $locator = null)
+    public static function locator(?LocatorInterface $locator = null): LocatorInterface
     {
-        if ($locator instanceof \CakeDC\OracleDriver\ORM\Locator\LocatorInterface) {
+        if ($locator instanceof LocatorInterface) {
             static::$_locator = $locator;
         }
 
@@ -96,7 +96,7 @@ class MethodRegistry
      * @param array $options The options you want to build the method with.
      * @return \CakeDC\OracleDriver\ORM\Method
      */
-    public static function get($alias, array $options = [])
+    public static function get(string $alias, array $options = []): Method
     {
         return static::locator()->get($alias, $options);
     }
@@ -107,7 +107,7 @@ class MethodRegistry
      * @param string $alias The alias to check for.
      * @return bool
      */
-    public static function exists($alias)
+    public static function exists(string $alias): bool
     {
         return static::locator()->exists($alias);
     }
@@ -119,7 +119,7 @@ class MethodRegistry
      * @param \CakeDC\OracleDriver\ORM\Method $object The method to set.
      * @return \CakeDC\OracleDriver\ORM\Method
      */
-    public static function set($alias, Method $object)
+    public static function set(string $alias, Method $object): Method
     {
         return static::locator()->set($alias, $object);
     }
@@ -130,7 +130,7 @@ class MethodRegistry
      * @param string $alias The alias to remove.
      * @return void
      */
-    public static function remove($alias): void
+    public static function remove(string $alias): void
     {
         static::locator()->remove($alias);
     }
@@ -152,7 +152,7 @@ class MethodRegistry
      * @param array $arguments Method arguments.
      * @return mixed
      */
-    public static function __callStatic(string $name, array $arguments)
+    public static function __callStatic(string $name, array $arguments): mixed
     {
         return call_user_func_array([static::locator(), $name], $arguments);
     }

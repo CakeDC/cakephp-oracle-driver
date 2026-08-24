@@ -21,7 +21,6 @@ use DebugKit\DebugPanel;
 
 /**
  * Provides debug information on the Method logs and provides links to an ajax explain interface.
- *
  */
 class MethodLogPanel extends DebugPanel
 {
@@ -32,7 +31,7 @@ class MethodLogPanel extends DebugPanel
      *
      * @var array
      */
-    protected $_loggers = [];
+    protected array $_loggers = [];
 
     /**
      * Initialize hook - configures logger.
@@ -50,11 +49,11 @@ class MethodLogPanel extends DebugPanel
             if (!$connection instanceof OracleConnection) {
                 continue;
             }
-            
+
             if ($connection->configName() === 'debug_kit') {
                 continue;
             }
-            
+
             $logger = null;
             if ($connection->isQueryLoggingEnabled()) {
                 $logger = $connection->methodLogger();
@@ -63,7 +62,7 @@ class MethodLogPanel extends DebugPanel
             if ($logger instanceof DebugMethodLog) {
                 continue;
             }
-            
+
             $logger = new DebugMethodLog($logger, $name);
 
             $connection->enableQueryLogging(true);
@@ -77,7 +76,7 @@ class MethodLogPanel extends DebugPanel
      *
      * @return array
      */
-    public function data()
+    public function data(): array
     {
         return [
             'methods' => array_map(fn($method) => $method->method(), MethodRegistry::genericInstances()),
@@ -90,7 +89,7 @@ class MethodLogPanel extends DebugPanel
      *
      * @return string
      */
-    public function summary()
+    public function summary(): string
     {
         $count = 0;
         $time = 0;
@@ -98,7 +97,7 @@ class MethodLogPanel extends DebugPanel
             $count += count($logger->queries());
             $time += $logger->totalTime();
         }
-        
+
         if (!$count) {
             return '0';
         }

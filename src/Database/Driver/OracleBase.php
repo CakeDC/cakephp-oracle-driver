@@ -22,7 +22,6 @@ use Cake\Http\Exception\NotImplementedException;
 use CakeDC\OracleDriver\Database\Dialect\OracleDialectTrait;
 use CakeDC\OracleDriver\Database\Oracle12Compiler;
 use CakeDC\OracleDriver\Database\OracleCompiler;
-use CakeDC\OracleDriver\Database\OCI8\OCI8Exception;
 use CakeDC\OracleDriver\Database\Statement\OracleStatement;
 use PDO;
 use PDOException;
@@ -84,7 +83,7 @@ abstract class OracleBase extends Driver
                 ? $config['server_version'] + 0
                 : $config['server_version'];
         }
-        
+
         parent::__construct($config);
         $this->_autoincrement = !empty($config['autoincrement']);
     }
@@ -104,10 +103,10 @@ abstract class OracleBase extends Driver
      */
     public function connect(): void
     {
-        if ($this->pdo instanceof \PDO) {
+        if ($this->pdo instanceof PDO) {
             return;
         }
-        
+
         $config = $this->_config;
 
         $config['init'][] = "ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS' NLS_TIMESTAMP_FORMAT='YYYY-MM-DD HH24:MI:SS' NLS_TIMESTAMP_TZ_FORMAT='YYYY-MM-DD HH24:MI:SS'";
@@ -297,7 +296,7 @@ abstract class OracleBase extends Driver
      * Reads CURRVAL for a sequence in the current session.
      *
      * @param string $sequenceName Sequence name.
-     * @return int|string|null
+     * @return string|int|null
      */
     protected function fetchSequenceCurrval(string $sequenceName): int|string|null
     {
@@ -307,7 +306,7 @@ abstract class OracleBase extends Driver
             if ($result !== false && isset($result[0])) {
                 return $result[0];
             }
-        } catch (PDOException|OCI8Exception|Throwable) {
+        } catch (Throwable) {
         }
 
         return null;
@@ -318,7 +317,7 @@ abstract class OracleBase extends Driver
      *
      * @param string|null $table Table name.
      * @param string|null $column Column name.
-     * @return int|string|null
+     * @return string|int|null
      */
     protected function fetchLastInsertIdFromMax(?string $table, ?string $column): int|string|null
     {
@@ -333,10 +332,10 @@ abstract class OracleBase extends Driver
         try {
             $statement = $this->getPdo()->query("SELECT MAX({$quotedColumn}) FROM {$quotedTable}");
             $result = $statement->fetch(PDO::FETCH_NUM);
-            if ($result !== false && isset($result[0]) && $result[0] !== null) {
+            if ($result !== false && isset($result[0])) {
                 return $result[0];
             }
-        } catch (PDOException|OCI8Exception|Throwable) {
+        } catch (Throwable) {
         }
 
         return null;
@@ -347,7 +346,7 @@ abstract class OracleBase extends Driver
      *
      * @param string|null $table Table name.
      * @param string|null $column Column name
-     * @return int|string
+     * @return string|int
      */
     protected function _autoincrementSequenceId(?string $table, ?string $column): int|string
     {
@@ -364,7 +363,7 @@ abstract class OracleBase extends Driver
                     $sql .= ' AND column_name = :p_column';
                     $params[':p_column'] = $columnName;
                 }
-                
+
                 $seqStatement = $this->getPdo()->prepare($sql);
                 $seqStatement->execute($params);
                 $result = $seqStatement->fetch(PDO::FETCH_NUM);
@@ -374,7 +373,7 @@ abstract class OracleBase extends Driver
                         return $currval;
                     }
                 }
-            } catch (PDOException|OCI8Exception|Throwable) {
+            } catch (Throwable) {
             }
         }
 
@@ -382,7 +381,7 @@ abstract class OracleBase extends Driver
         if ($this->isAutoQuotingEnabled()) {
             $sequenceCandidates[] = 'seq_' . $tableName;
         }
-        
+
         $sequenceCandidates[] = 'SEQ_' . strtoupper($tableName);
 
         foreach ($sequenceCandidates as $sequenceName) {
@@ -405,7 +404,7 @@ abstract class OracleBase extends Driver
      */
     public function isConnected(): bool
     {
-        if (!$this->pdo instanceof \PDO) {
+        if (!$this->pdo instanceof PDO) {
             return false;
         }
 

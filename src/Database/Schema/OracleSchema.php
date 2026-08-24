@@ -56,8 +56,8 @@ class OracleSchema extends SchemaDialect
             $ownerCondition = 'AND OWNER = :ownerParam';
         }
 
-        $objectNameField = $this->_transformFieldCase("OBJECT_NAME");
-        $procedureName = $this->_transformFieldCase("PROCEDURE_NAME");
+        $objectNameField = $this->_transformFieldCase('OBJECT_NAME');
+        $procedureName = $this->_transformFieldCase('PROCEDURE_NAME');
         $objectCondition = '';
         if (!empty($config['objectName'])) {
             $objectName = $config['objectName'];
@@ -104,9 +104,9 @@ class OracleSchema extends SchemaDialect
             }
         }
 
-        $procedureName = $this->_transformFieldCase("PROCEDURE_NAME");
+        $procedureName = $this->_transformFieldCase('PROCEDURE_NAME');
         $sql = "SELECT $objectNameField as object, $procedureName as name, OBJECT_TYPE FROM $table
-WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY object, name";
+WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY object, name';
 
         return [
             $sql,
@@ -115,7 +115,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function listTablesSql(array $config): array
     {
@@ -123,7 +123,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function listTablesWithoutViewsSql(array $config): array
     {
@@ -137,8 +137,8 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             $params = [':ownerParam' => strtoupper($config['schema'])];
         }
 
-        $tableName = $this->_transformFieldCase("TABLE_NAME");
-        $sql = "SELECT $tableName as name FROM $table " . ($useOwner ? 'WHERE owner = :ownerParam' : '') . " ORDER BY name";
+        $tableName = $this->_transformFieldCase('TABLE_NAME');
+        $sql = "SELECT $tableName as name FROM $table " . ($useOwner ? 'WHERE owner = :ownerParam' : '') . ' ORDER BY name';
 
         return [
             $sql,
@@ -147,7 +147,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function describeColumnSql(string $tableName, array $config): array
     {
@@ -208,7 +208,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function convertColumnDescription(TableSchema $schema, array $row): void
     {
@@ -309,7 +309,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $config The connection configuration.
      * @return array An array of (sql, params) to execute.
      */
-    public function describeParametersSql($objectName, $config): array
+    public function describeParametersSql(string $objectName, array $config): array
     {
         $items = explode('.', $objectName);
         $itemsCount = count($items);
@@ -378,7 +378,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $row The row data from `describeParametersSql`.
      * @return void
      */
-    public function convertParametersDescription(MethodSchema $method, $row): void
+    public function convertParametersDescription(MethodSchema $method, array $row): void
     {
         $row = array_change_key_case($row);
         switch ($row['type']) {
@@ -471,7 +471,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function describeIndexSql(string $tableName, array $config): array
     {
@@ -527,7 +527,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function convertIndexDescription(TableSchema $schema, array $row): void
     {
@@ -573,7 +573,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param string $columns comma separated column list.
      * @return array
      */
-    protected function _convertColumnList($columns): array
+    protected function _convertColumnList(string $columns): array
     {
         $columns = explode(', ', $columns);
         foreach ($columns as &$column) {
@@ -584,7 +584,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function describeForeignKeySql(string $tableName, array $config): array
     {
@@ -691,7 +691,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function convertForeignKeyDescription(TableSchema $schema, array $row): void
     {
@@ -891,7 +891,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected function _convertOnClause(string $clause): string
     {
@@ -936,7 +936,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function columnSql(TableSchema $schema, string $name): string
     {
@@ -1033,7 +1033,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function addConstraintSql(TableSchema $schema): array
     {
@@ -1052,7 +1052,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function dropConstraintSql(TableSchema $schema): array
     {
@@ -1072,7 +1072,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function indexSql(TableSchema $schema, string $name): string
     {
@@ -1086,12 +1086,12 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
             'CREATE INDEX %s ON %s (%s)',
             $this->quoteIfAutoQuote($name),
             $this->quoteIfAutoQuote($schema->name()),
-            implode(', ', $columns)
+            implode(', ', $columns),
         );
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function constraintSql(TableSchema $schema, string $name): string
     {
@@ -1128,7 +1128,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $data Key data.
      * @return string
      */
-    protected function _keySql($prefix, array $data): string
+    protected function _keySql(string $prefix, array $data): string
     {
         $columns = array_map(
             $this->quoteIfAutoQuote(...),
@@ -1149,13 +1149,13 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function createTableSql(
         TableSchema $schema,
         array $columns,
         array $constraints,
-        array $indexes
+        array $indexes,
     ): array {
         $content = array_merge($columns, $constraints);
         $content = implode(",\n", array_filter($content));
@@ -1180,7 +1180,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
                     'COMMENT ON COLUMN %s.%s IS %s',
                     $tableName,
                     $this->quoteIfAutoQuote($column),
-                    $this->_driver->schemaValue($columnData['comment'])
+                    $this->_driver->schemaValue($columnData['comment']),
                 );
             }
         }
@@ -1195,7 +1195,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function truncateTableSql(TableSchema $schema): array
     {
@@ -1320,7 +1320,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param array $constraints Constraints list.
      * @return bool
      */
-    protected function _isSingleKey(TableSchema $table, array $constraints)
+    protected function _isSingleKey(TableSchema $table, array $constraints): bool
     {
         if (count($constraints) !== 1) {
             return false;
@@ -1343,7 +1343,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param string $sequenceName Sequence name.
      * @return string
      */
-    public function getCreateSequenceSql($sequenceName): string
+    public function getCreateSequenceSql(string $sequenceName): string
     {
         return 'CREATE SEQUENCE ' . $sequenceName . ' START WITH 1' . ' MINVALUE 1' . ' INCREMENT BY 1' . ' CACHE 20';
     }
@@ -1354,19 +1354,17 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . " ORDER BY
      * @param string $sequenceName Sequence name.
      * @return string
      */
-    public function getDropSequenceSql($sequenceName): string
+    public function getDropSequenceSql(string $sequenceName): string
     {
         return 'DROP SEQUENCE ' . $sequenceName;
     }
 
     /**
-     *
-     *
      * @param string $name Sequence name.
      * @param string $createCommand Operation to execute.
      * @return string
      */
-    public function createSequenceIfNotExists($name, $createCommand = null): string
+    public function createSequenceIfNotExists(string $name, ?string $createCommand = null): string
     {
         $name = strtoupper($name);
         if (empty($createCommand)) {
@@ -1386,13 +1384,11 @@ SQL;
     }
 
     /**
-     *
-     *
      * @param string $name Sequence name.
      * @param null $dropCommand Operation to execute.
      * @return string
      */
-    public function dropSequenceIfExists($name, $dropCommand = null): string
+    public function dropSequenceIfExists(string $name, null $dropCommand = null): string
     {
         $name = strtoupper($name);
         if (empty($dropCommand)) {
@@ -1419,7 +1415,7 @@ SQL;
      * @param int $start Start index for autoincrement field.
      * @return array
      */
-    public function getCreateAutoincrementSql(string $name, $tableName, $start = 1): array
+    public function getCreateAutoincrementSql(string $name, string $tableName, int $start = 1): array
     {
         if ($this->useAutoincrement()) {
             return [];
@@ -1467,7 +1463,7 @@ END;';
      * @param string $name Original table name.
      * @return mixed
      */
-    protected function _getSequenceName($name): string
+    protected function _getSequenceName(string $name): string
     {
         $name = 'seq_' . $name;
 
@@ -1480,7 +1476,7 @@ END;';
      * @param string $value Binding value.
      * @return mixed
      */
-    protected function _transformValueCase($value)
+    protected function _transformValueCase(string $value): mixed
     {
         $case = $this->_driver->config()['case'] ?? null;
         if ($case == 'lower') {
@@ -1496,7 +1492,7 @@ END;';
      * @param string $field Field name.
      * @return string
      */
-    protected function _transformFieldCase($field)
+    protected function _transformFieldCase(string $field): string
     {
         $case = $this->_driver->config()['case'] ?? null;
         if ($case == 'lower') {
@@ -1510,7 +1506,6 @@ END;';
      * Check for integer type.
      *
      * @param string $type Field type.
-     *
      * @return bool
      */
     private function __isInteger(string $type): bool

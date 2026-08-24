@@ -12,10 +12,10 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 
-use Cake\I18n\DateTime;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\Expression\QueryExpression;
 use Cake\Datasource\ConnectionManager;
+use Cake\I18n\DateTime;
 use Cake\ORM\Query\SelectQuery;
 use Cake\Test\TestCase\ORM\Query\QueryRegressionTest as CakeQueryRegressionTest;
 use TestApp\Model\Table\ArticlesTable;
@@ -127,7 +127,7 @@ class QueryRegressionTest extends CakeQueryRegressionTest
                                 ->selectQuery(1.23456),
                             2,
                         ],
-                        [null, 'integer']
+                        [null, 'integer'],
                     )
                     ->setReturnType('float'),
             ]);

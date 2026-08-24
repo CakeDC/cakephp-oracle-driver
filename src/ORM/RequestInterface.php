@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM;
 
 use ArrayAccess;
+use Cake\Datasource\EntityInterface;
 use JsonSerializable;
 
 /**
@@ -24,7 +25,7 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
     /**
      * Sets one or multiple properties to the specified value
      *
-     * @param string|array $property the name of property to set or a list of
+     * @param array|string $property the name of property to set or a list of
      * properties with their respective values
      * @param mixed $value The value to set to the property or an array if the
      * first argument is also an array, in which case will be treated as $options
@@ -32,7 +33,7 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      * keys are `setter` and `guard`
      * @return \Cake\Datasource\EntityInterface
      */
-    public function set($property, $value = null, array $options = []);
+    public function set(string|array $property, mixed $value = null, array $options = []): EntityInterface;
 
     /**
      * Returns the value of a property by name
@@ -40,7 +41,7 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      * @param string $property the name of the property to retrieve
      * @return mixed
      */
-    public function &get($property);
+    public function &get(string $property): mixed;
 
     /**
      * Returns an array with all the properties that have been set
@@ -48,7 +49,7 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      *
      * @return array
      */
-    public function toArray();
+    public function toArray(): array;
 
     /**
      * Returns whether or not this entity has already been persisted.
@@ -63,5 +64,5 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      * @return bool If it is known whether the entity was already persisted
      * null otherwise
      */
-    public function isNew($new = null);
+    public function isNew(?bool $new = null): bool;
 }

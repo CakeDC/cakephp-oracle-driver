@@ -16,14 +16,12 @@ namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 use Cake\Database\Driver\Sqlite;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\Expression\QueryExpression;
-use CakeDC\OracleDriver\Database\Driver\OracleBase;
 use Cake\ORM\Query\SelectQuery;
 use Cake\Test\TestCase\ORM\Query\SelectQueryTest as CakeSelectQueryTest;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Tests Query class
- *
  */
 class QueryTest extends CakeSelectQueryTest
 {
@@ -178,7 +176,7 @@ class QueryTest extends CakeSelectQueryTest
         $table = $this->getTableLocator()->get('authors');
         $table->hasMany('articles');
         $table->articles->deleteAll(['author_id' => 4]);
-        
+
         $orderFn = (fn($q) => $q->orderBy(['id']));
         $results = $table->find()
              ->select(['total_articles' => 'count(articles.id)'])

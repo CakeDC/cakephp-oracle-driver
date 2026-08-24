@@ -3,3 +3,6 @@
 /phpunit.xml
 /pmip
 composer.lock
+build
+tmp
+

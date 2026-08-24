@@ -13,13 +13,12 @@ declare(strict_types=1);
 
 namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 
+use Cake\Datasource\ConnectionManager;
 use Cake\Test\TestCase\ORM\RulesCheckerIntegrationTest as CakeRulesCheckerIntegrationTest;
 use CakeDC\OracleDriver\Database\Driver\OracleBase;
-use Cake\Datasource\ConnectionManager;
 
 /**
  * Tests RulesCheckerIntegration class
- *
  */
 class RulesCheckerIntegrationTest extends CakeRulesCheckerIntegrationTest
 {

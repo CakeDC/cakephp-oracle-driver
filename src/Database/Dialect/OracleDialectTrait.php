@@ -92,7 +92,7 @@ trait OracleDialectTrait
         if ($offset) {
             $outer2->where(["$field > " . (int)$offset]);
         }
-        
+
         if ($limit) {
             $value = (int)$offset + (int)$limit;
             $outer2->where(["$field <= $value"]);
@@ -157,7 +157,7 @@ trait OracleDialectTrait
                 $expression
                     ->setName('')
                     ->setConjunction('-')
-                    ->iterateParts(function ($p): \Cake\Database\Expression\FunctionExpression {
+                    ->iterateParts(function ($p): FunctionExpression {
                         if (is_string($p)) {
                             $p = ['value' => [$p => 'literal'], 'type' => null];
                         } else {

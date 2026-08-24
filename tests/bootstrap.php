@@ -1,6 +1,18 @@
 <?php
 declare(strict_types=1);
 
+use Cake\Cache\Cache;
+use Cake\Chronos\Chronos;
+use Cake\Core\Configure;
+use Cake\Database\Schema\TableSchema;
+use Cake\Datasource\ConnectionManager;
+use Cake\Datasource\FactoryLocator;
+use Cake\ORM\Locator\TableLocator;
+use Cake\Utility\Security;
+use CakeDC\OracleDriver\Test\App\Application;
+use CakeDC\OracleDriver\Test\App\Controller\AppController;
+use CakeDC\OracleDriver\TestSuite\Fixture\OracleTruncateStrategy;
+
 $findRoot = function (): string {
     $root = dirname(__DIR__);
     if (is_dir($root . '/vendor/cakephp/cakephp')) {
@@ -51,7 +63,7 @@ _define('TEST_APP', CORE_TESTS . 'test_app' . DS);
 require_once ROOT . '/vendor/autoload.php';
 require_once CORE_PATH . 'config/bootstrap.php';
 
-Cake\Core\Configure::write('App', [
+Configure::write('App', [
     'namespace' => 'CakeDC\\OracleDriver\\Test\\App',
     'encoding' => 'UTF-8',
     'base' => false,
@@ -67,7 +79,7 @@ Cake\Core\Configure::write('App', [
         'plugins' => [dirname(APP) . DS . 'plugins' . DS],
     ],
 ]);
-Cake\Core\Configure::write('debug', true);
+Configure::write('debug', true);
 
 foreach (['cache/models', 'cache/persistent', 'cache/views', 'logs'] as $dir) {
     if (!is_dir(TMP . $dir)) {
@@ -103,40 +115,40 @@ $cache = [
     ],
 ];
 
-Cake\Cache\Cache::setConfig($cache);
-Cake\Core\Configure::write('Session', [
+Cache::setConfig($cache);
+Configure::write('Session', [
     'defaults' => 'php',
 ]);
 
-Cake\Chronos\Chronos::setTestNow(Cake\Chronos\Chronos::now());
-Cake\Utility\Security::setSalt('oracle-driver-test-salt-value');
-Cake\Datasource\FactoryLocator::add('Table', new Cake\ORM\Locator\TableLocator());
+Chronos::setTestNow(Chronos::now());
+Security::setSalt('oracle-driver-test-salt-value');
+FactoryLocator::add('Table', new TableLocator());
 
 if (!getenv('db_dsn')) {
     putenv('db_dsn=sqlite:///:memory:');
 }
 
-Cake\Datasource\ConnectionManager::setConfig('test', [
+ConnectionManager::setConfig('test', [
     'url' => getenv('db_dsn'),
     'timezone' => 'UTC',
 ]);
 
-class_alias(\CakeDC\OracleDriver\Test\App\Controller\AppController::class, 'App\Controller\AppController');
+class_alias(AppController::class, 'App\Controller\AppController');
 
-$application = new \CakeDC\OracleDriver\Test\App\Application(CONFIG);
+$application = new Application(CONFIG);
 $application->bootstrap();
 $application->pluginBootstrap();
 
-Cake\Core\Configure::write(
+Configure::write(
     'TestSuite.fixtureStrategy',
-    CakeDC\OracleDriver\TestSuite\Fixture\OracleTruncateStrategy::class,
+    OracleTruncateStrategy::class,
 );
 
 if (getenv('FIXTURE_SCHEMA_METADATA')) {
     $schemaFile = ROOT . '/' . ltrim((string)getenv('FIXTURE_SCHEMA_METADATA'), './');
     $tables = include $schemaFile;
     /** @var \Cake\Database\Connection $connection */
-    $connection = Cake\Datasource\ConnectionManager::get('test');
+    $connection = ConnectionManager::get('test');
     $connection->getDriver()->enableAutoQuoting(true);
     $driver = $connection->getDriver();
     $recreateSchema = filter_var(
@@ -164,7 +176,8 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
                     $driver->quoteIdentifier('SEQ_' . strtoupper($tableName)),
                 ));
             } catch (Throwable $sequenceDropException) {
-                if (!str_contains($sequenceDropException->getMessage(), 'ORA-02289')
+                if (
+                    !str_contains($sequenceDropException->getMessage(), 'ORA-02289')
                     && !str_contains($sequenceDropException->getMessage(), 'ORA-00942')
                 ) {
                     throw $sequenceDropException;
@@ -175,7 +188,7 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
 
     foreach ($tables as $tableName => $table) {
         $name = $table['table'] ?? $tableName;
-        $schema = new Cake\Database\Schema\TableSchema($name, $table['columns']);
+        $schema = new TableSchema($name, $table['columns']);
         if (isset($table['indexes'])) {
             foreach ($table['indexes'] as $key => $index) {
                 $schema->addIndex($key, $index);

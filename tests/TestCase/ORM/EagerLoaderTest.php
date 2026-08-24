@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\EagerLoaderTest as CakeEagerLoaderTest;
 
 /**
  * Tests EagerLoader class
- *
  */
 class EagerLoaderTest extends CakeEagerLoaderTest
 {

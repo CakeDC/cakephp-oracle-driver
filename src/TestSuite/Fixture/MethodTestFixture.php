@@ -29,28 +29,28 @@ class MethodTestFixture
      *
      * @var string
      */
-    public $connection = 'test';
+    public string $connection = 'test';
 
     /**
      * Name
      *
      * @var string
      */
-    public $name;
+    public string $name;
 
     /**
      * The plain pl/sql code blocks to create object.
      *
      * @var array
      */
-    public $create = [];
+    public array $create = [];
 
     /**
      * The plain pl/sql code blocks to drop object.
      *
      * @var array
      */
-    public $drop = [];
+    public array $drop = [];
 
     /**
      * Instantiate the fixture.
@@ -65,17 +65,17 @@ class MethodTestFixture
                 $message = sprintf(
                     'Invalid datasource name "%s" for "%s" fixture. Fixture datasource names must begin with "test".',
                     $connection,
-                    $this->name
+                    $this->name,
                 );
                 throw new CakeException($message);
             }
         }
-        
+
         $this->init();
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function connection()
     {
@@ -83,7 +83,7 @@ class MethodTestFixture
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function name()
     {
@@ -105,13 +105,13 @@ class MethodTestFixture
             if (isset($matches[1])) {
                 $method = $matches[1];
             }
-            
+
             $this->name = Inflector::tableize($method);
         }
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function create(ConnectionInterface $db): bool
     {
@@ -120,7 +120,7 @@ class MethodTestFixture
             if ($this->create !== []) {
                 $queries = (array)$this->create;
             }
-            
+
             foreach ($queries as $query) {
                 $statement = $db->getDriver()->prepare($query);
                 $statement->execute();
@@ -130,7 +130,7 @@ class MethodTestFixture
             $msg = sprintf(
                 'Fixture creation for "%s" failed "%s"',
                 $this->name,
-                $exception->getMessage()
+                $exception->getMessage(),
             );
             Log::error($msg);
             trigger_error($msg, E_USER_WARNING);
@@ -142,7 +142,7 @@ class MethodTestFixture
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function drop(ConnectionInterface $db): bool
     {
@@ -151,7 +151,7 @@ class MethodTestFixture
             if ($this->drop !== null) {
                 $sql = (array)$this->drop;
             }
-            
+
             foreach ($sql as $query) {
                 $statement = $db->getDriver()->prepare($query);
                 $statement->execute();
@@ -165,7 +165,7 @@ class MethodTestFixture
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function insert(ConnectionInterface $db): bool
     {
@@ -173,7 +173,7 @@ class MethodTestFixture
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function createConstraints(ConnectionInterface $db): bool
     {
@@ -181,7 +181,7 @@ class MethodTestFixture
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function dropConstraints(ConnectionInterface $db): bool
     {
@@ -189,7 +189,7 @@ class MethodTestFixture
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function truncate(ConnectionInterface $db): bool
     {

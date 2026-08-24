@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\AssociationCollectionTest as CakeAssociationCollectio
 
 /**
  * Tests AssociationCollection class
- *
  */
 class AssociationCollectionTest extends CakeAssociationCollectionTest
 {

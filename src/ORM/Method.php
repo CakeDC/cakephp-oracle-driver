@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM;
 
 use Cake\Core\App;
+use Cake\Datasource\ConnectionInterface;
 use Cake\Datasource\ConnectionManager;
 use Cake\Utility\Inflector;
 use CakeDC\OracleDriver\Database\OracleConnection;
@@ -26,28 +27,28 @@ class Method
      *
      * @var string
      */
-    protected $_method;
+    protected string $_method;
 
     /**
      * Connection instance
      *
      * @var \Cake\Datasource\ConnectionInterface
      */
-    protected $_connection;
+    protected ConnectionInterface $_connection;
 
     /**
      * The schema object containing a description of this method fields
      *
      * @var \CakeDC\OracleDriver\Database\Schema\MethodSchema
      */
-    protected $_schema;
+    protected MethodSchema $_schema;
 
     /**
      * The request class name for the method.
      *
      * @var string
      */
-    protected $_requestClass;
+    protected string $_requestClass;
 
     /**
      * Method constructor.
@@ -59,19 +60,19 @@ class Method
         if (!empty($config['method'])) {
             $this->setMethod($config['method']);
         }
-        
+
         if (!empty($config['connection'])) {
             $this->setConnection($config['connection']);
         }
-        
+
         if (!empty($config['schema'])) {
             $this->setSchema($config['schema']);
         }
-        
+
         if (!empty($config['requestClass'])) {
             $this->requestClass($config['requestClass']);
         }
-        
+
         $this->initialize($config);
     }
 
@@ -80,7 +81,7 @@ class Method
      *
      * @return string
      */
-    public function getMethod()
+    public function getMethod(): string
     {
         if ($this->_method === null) {
             $method = namespaceSplit(static::class);
@@ -97,7 +98,7 @@ class Method
      * @param string $method the new method name
      * @return string
      */
-    public function setMethod($method)
+    public function setMethod(string $method): string
     {
         $this->_method = $method;
 
@@ -158,10 +159,10 @@ class Method
      *
      * If an array is passed, a new \CakeDC\OracleDriver\Database\Schema\MethodSchema will be constructed out of it and used as the schema for this method.
      *
-     * @param array|\CakeDC\OracleDriver\Database\Schema\MethodSchema|null $schema New schema to be used for this table
+     * @param \CakeDC\OracleDriver\Database\Schema\MethodSchema|array|null $schema New schema to be used for this table
      * @return $this
      */
-    public function setSchema($schema)
+    public function setSchema(array|MethodSchema|null $schema)
     {
         if (is_array($schema)) {
             $schema = new MethodSchema($this->getMethod(), $schema);
@@ -203,10 +204,10 @@ class Method
      * @throws \CakeDC\OracleDriver\ORM\Exception\MissingRequestException when the request class cannot be found
      * @return string
      */
-    public function requestClass($name = null)
+    public function requestClass(?string $name = null): string
     {
         if ($name === null && !$this->_requestClass) {
-            $default = \CakeDC\OracleDriver\ORM\Request::class;
+            $default = Request::class;
             $self = static::class;
             $parts = explode('\\', $self);
 
@@ -251,7 +252,7 @@ class Method
      * @param array $config Configuration options passed to the constructor
      * @return void
      */
-    public function initialize(array $config)
+    public function initialize(array $config): void
     {
     }
 
@@ -261,7 +262,7 @@ class Method
      * @param array $data Parameters data.
      * @return \CakeDC\OracleDriver\ORM\Request
      */
-    public function newRequest($data = null): object
+    public function newRequest(?array $data = null): object
     {
         $class = $this->requestClass();
         $request = new $class([], [
@@ -280,7 +281,7 @@ class Method
      * @param \CakeDC\OracleDriver\ORM\RequestInterface $request Request object instance.
      * @return mixed
      */
-    public function execute(RequestInterface $request)
+    public function execute(RequestInterface $request): mixed
     {
         $query = $this->_generateSql();
         $statement = $this->getConnection()->prepareMethod($query);
@@ -296,7 +297,6 @@ class Method
      * Generate query sql.
      *
      * @todo move it into builder class
-     *
      * @return string
      */
     protected function _generateSql(): string
@@ -305,7 +305,7 @@ class Method
         if ($this->getSchema()->isFunction() !== null) {
             $query = ':result := ';
         }
-        
+
         $parameters = $this->getSchema()->parameters();
         $query .= $this->getMethod() . '(';
         $names = [];
@@ -313,10 +313,10 @@ class Method
             if ($name === ':result') {
                 continue;
             }
-            
+
             $names[] = $name . ' => :' . $name;
         }
-        
+
         $query .= implode(',', $names);
         $query .= ');';
 
@@ -329,7 +329,7 @@ class Method
      *
      * @return array
      */
-    public function __debugInfo()
+    public function __debugInfo(): array
     {
         $conn = $this->getConnection();
 

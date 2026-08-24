@@ -15,7 +15,9 @@ namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 
 use Cake\TestSuite\TestCase;
 use CakeDC\OracleDriver\ORM\Request;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Request subclass with pre-defined accessor stubs for PHPUnit onlyMethods() compatibility.
@@ -25,25 +27,54 @@ use PHPUnit\Framework\Attributes\DataProvider;
  */
 class RequestWithAccessors extends Request
 {
-    protected function _setName(mixed $value): mixed { return $value; }
-    
-    protected function _getName(mixed $value): mixed { return $value; }
-    
-    protected function _setStuff(mixed $value): mixed { return $value; }
-    
-    protected function _getThings(mixed $value): mixed { return $value; }
-    
-    protected function _setFoo(mixed $value): mixed { return $value; }
-    
-    protected function _getBar(mixed $value): mixed { return $value; }
-    
-    protected function _setBar(mixed $value): mixed { return $value; }
-    
-    protected function _getVeryLongProperty(mixed $value): mixed { return $value; }
-    
-    protected function _setVeryLongProperty(mixed $value): mixed { return $value; }
-    
-    public function clean(): void {}
+    protected function _setName(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _getName(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _setStuff(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _getThings(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _setFoo(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _getBar(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _setBar(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _getVeryLongProperty(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    protected function _setVeryLongProperty(mixed $value): mixed
+    {
+        return $value;
+    }
+
+    public function clean(): void
+    {
+    }
 }
 
 /**
@@ -451,7 +482,7 @@ class RequestTest extends TestCase
 
                     return 'worked';
                 }
-                
+
                 $this->assertSame('bar', $property);
 
                 return 'worked too';
@@ -474,7 +505,7 @@ class RequestTest extends TestCase
 
         $request->expects($this->exactly(2))
             ->method('set')
-            ->willReturnCallback(function (string $property, mixed $value) use ($request): \PHPUnit\Framework\MockObject\MockObject {
+            ->willReturnCallback(function (string $property, mixed $value) use ($request): MockObject {
                 static $call = 0;
                 $call++;
                 if ($call === 1) {
@@ -529,7 +560,7 @@ class RequestTest extends TestCase
 
         $request->set('foo', 1);
         $request->get('bar');
-        
+
         $request2->set('bar', 1);
     }
 
@@ -660,7 +691,7 @@ class RequestTest extends TestCase
     {
         $request = new Request(['foo' => 'bar'], ['markClean' => true]);
         $request->somethingElse = 'value';
-        
+
         $result = $request->__debugInfo();
         $expected = [
             'foo' => 'bar',
@@ -700,7 +731,7 @@ class RequestTest extends TestCase
     #[DataProvider('emptyNamesProvider')]
     public function testEmptyProperties(string|bool|null $property): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $request = new Request();
         $request->get($property);
     }
@@ -713,7 +744,7 @@ class RequestTest extends TestCase
     #[DataProvider('emptyNamesProvider')]
     public function testSetEmptyPropertyName(string|bool|null $property): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $request = new Request();
         $request->set($property, 'bar');
     }

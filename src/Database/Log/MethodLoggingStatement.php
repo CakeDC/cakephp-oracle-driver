@@ -25,14 +25,14 @@ class MethodLoggingStatement extends MethodStatementDecorator
      *
      * @var \CakeDC\OracleDriver\Database\Log\MethodLogger
      */
-    protected $_logger;
+    protected MethodLogger $_logger;
 
     /**
      * Holds bound params
      *
      * @var array
      */
-    protected $_compiledParams = [];
+    protected array $_compiledParams = [];
 
     /**
      * Wrapper for the execute function to calculate time spent
@@ -71,7 +71,7 @@ class MethodLoggingStatement extends MethodStatementDecorator
      * @param float $startTime The microtime when the method was executed.
      * @return void
      */
-    protected function _log($method, $params, $startTime)
+    protected function _log(LoggedMethod $method, array $params, float $startTime): void
     {
         $method->took = round((microtime(true) - $startTime) * 1000, 0);
         $method->params = $params ?: $this->_compiledParams;
@@ -94,11 +94,11 @@ class MethodLoggingStatement extends MethodStatementDecorator
         if ($type === null) {
             $type = 'string';
         }
-        
+
         if (!ctype_digit((string)$type)) {
             $value = $this->cast($value, $type)[0];
         }
-        
+
         $this->_compiledParams[$column] = $value;
     }
 
@@ -109,7 +109,7 @@ class MethodLoggingStatement extends MethodStatementDecorator
      * @param object|null $instance Logger object instance.
      * @return object Logger instance
      */
-    public function logger($instance = null)
+    public function logger(?object $instance = null): object
     {
         if ($instance === null) {
             return $this->_logger;
@@ -133,7 +133,7 @@ class MethodLoggingStatement extends MethodStatementDecorator
         if (!ctype_digit((string)$type)) {
             $value = $this->cast($value, $type)[0];
         }
-        
+
         $this->_compiledParams[$column] = $value;
     }
 }

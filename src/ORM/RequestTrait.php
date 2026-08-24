@@ -12,9 +12,12 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\ORM;
 
-use CakeDC\OracleDriver\Database\TypeConverterTrait;
+use Cake\Database\Driver;
+use Cake\Database\StatementInterface;
+use Cake\ORM\Entity;
 use Cake\Utility\Inflector;
 use CakeDC\OracleDriver\Database\Schema\MethodSchema;
+use CakeDC\OracleDriver\Database\TypeConverterTrait;
 use CakeDC\OracleDriver\ORM\Method\ResultSet;
 use InvalidArgumentException;
 
@@ -30,42 +33,42 @@ trait RequestTrait
      *
      * @var array
      */
-    protected static $_accessors = [];
+    protected static array $_accessors = [];
 
     /**
      * Holds all properties and their values for this request
      *
      * @var array
      */
-    protected $_properties = [];
+    protected array $_properties = [];
 
     /**
      * Holds all properties and their values for this request after conversion from PHP to database format.
      *
      * @var array
      */
-    protected $_castedProperties = [];
+    protected array $_castedProperties = [];
 
     /**
      * Holds the name of the class for the instance object
      *
      * @var string
      */
-    protected $_className;
+    protected string $_className;
 
     /**
      * Holds the repository of the method class for the instance object
      *
      * @var \CakeDC\OracleDriver\ORM\Method
      */
-    protected $_repository;
+    protected Method $_repository;
 
     /**
      * Holds the driver for type casting
      *
      * @var \Cake\Database\Driver
      */
-    protected $_driver;
+    protected Driver $_driver;
 
     /**
      * Indicates whether or not this request is yet to be called.
@@ -73,7 +76,7 @@ trait RequestTrait
      *
      * @var bool
      */
-    protected $_new = true;
+    protected bool $_new = true;
 
     /**
      * Magic getter to access properties that have been set in this request
@@ -81,7 +84,7 @@ trait RequestTrait
      * @param string $property Name of the property to access
      * @return mixed
      */
-    public function &__get($property)
+    public function &__get(string $property): mixed
     {
         return $this->get($property);
     }
@@ -93,7 +96,7 @@ trait RequestTrait
      * @param mixed $value The value to set to the property
      * @return void
      */
-    public function __set($property, $value)
+    public function __set(string $property, mixed $value): void
     {
         $this->set($property, $value);
     }
@@ -105,7 +108,7 @@ trait RequestTrait
      * @return mixed
      * @throws \InvalidArgumentException if an empty property name is passed
      */
-    public function &get($property)
+    public function &get(string $property): mixed
     {
         if (!strlen((string)$property)) {
             throw new InvalidArgumentException('Cannot get an empty property');
@@ -133,7 +136,7 @@ trait RequestTrait
      * @param string $method the method to check for existence
      * @return bool true if method exists
      */
-    protected function _methodExists($method): bool
+    protected function _methodExists(string $method): bool
     {
         if (empty(static::$_accessors[$this->_className])) {
             static::$_accessors[$this->_className] = array_flip(get_class_methods($this));
@@ -172,7 +175,7 @@ trait RequestTrait
      * $request->set(['name' => 'Andrew', 'id' => 1], ['setter' => false]);
      * ```
      *
-     * @param string|array $property the name of property to set or a list of
+     * @param array|string $property the name of property to set or a list of
 
      * properties with their respective values
      * @param mixed $value The value to set to the property or an array if the
@@ -184,7 +187,7 @@ trait RequestTrait
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function set($property, $value = null, array $options = [])
+    public function set(string|array $property, mixed $value = null, array $options = [])
     {
         $isString = is_string($property);
         if ($isString && $property !== '') {
@@ -196,7 +199,7 @@ trait RequestTrait
         if (!is_array($property)) {
             throw new InvalidArgumentException('Cannot set an empty property');
         }
-        
+
         $options += ['setter' => true];
 
         foreach ($property as $p => $value) {
@@ -209,7 +212,7 @@ trait RequestTrait
             if ($this->_methodExists($setter)) {
                 $value = $this->{$setter}($value);
             }
-            
+
             $this->_properties[$p] = $value;
         }
 
@@ -224,7 +227,7 @@ trait RequestTrait
      * @return bool
      * @see \Cake\ORM\Request::has()
      */
-    public function __isset($property)
+    public function __isset(string $property): bool
     {
         return $this->has($property);
     }
@@ -245,10 +248,10 @@ trait RequestTrait
      * When checking multiple properties. All properties must not be null
      * in order for true to be returned.
      *
-     * @param string|array $property The property or properties to check.
+     * @param array|string $property The property or properties to check.
      * @return bool
      */
-    public function has($property): bool
+    public function has(string|array $property): bool
     {
         foreach ((array)$property as $prop) {
             if ($this->get($prop) === null) {
@@ -265,7 +268,7 @@ trait RequestTrait
      * @param string $property The property to unset
      * @return void
      */
-    public function __unset($property)
+    public function __unset(string $property): void
     {
         $this->unsetProperty($property);
     }
@@ -280,10 +283,10 @@ trait RequestTrait
      * $request->unsetProperty(['name', 'last_name']);
      * ```
      *
-     * @param string|array $property The property to unset.
+     * @param array|string $property The property to unset.
      * @return $this
      */
-    public function unsetProperty($property)
+    public function unsetProperty(string|array $property)
     {
         $property = (array)$property;
         foreach ($property as $p) {
@@ -396,19 +399,19 @@ trait RequestTrait
      * @param \Cake\Database\StatementInterface $statement The statement to add parameters to.
      * @return void
      */
-    public function attachTo($statement): void
+    public function attachTo(StatementInterface $statement): void
     {
         $properties = $this->_properties;
         if (empty($properties)) {
             return;
         }
-        
+
         foreach ($properties as $name => $value) {
             $parameter = $this->_repository->getSchema()->parameter($name);
             if ($parameter === null) {
                 continue;
             }
-            
+
             $paramName = $name === ':result' ? $name : ':' . $name;
             if ($parameter !== null) {
                 $type = $parameter['type'];
@@ -417,7 +420,7 @@ trait RequestTrait
                 if ($parameter['in'] && $parameter['out']) {
                     $this->_properties[$name] = $value;
                 }
-                
+
                 if ($parameter['out']) {
                     $statement->bindParam($paramName, $this->_properties[$name], $type);
                 } else {
@@ -434,22 +437,22 @@ trait RequestTrait
      * @param array $options Cursor ResultSet configuration options.
      * @return \CakeDC\OracleDriver\ORM\Method\ResultSet
      */
-    public function fetchCursor($name, $options = []): \CakeDC\OracleDriver\ORM\Method\ResultSet
+    public function fetchCursor(string $name, array $options = []): ResultSet
     {
-        $options += ['entityClass' => \Cake\ORM\Entity::class];
+        $options += ['entityClass' => Entity::class];
         if ($this->isNew()) {
             throw new InvalidArgumentException('Cannot fetch cursor on not executed request');
         }
-        
+
         $parameter = $this->_repository->getSchema()->parameter($name);
         if (empty($parameter)) {
             throw new InvalidArgumentException('Cannot fetch cursor for not declared parameter');
         }
-        
+
         if ($parameter['type'] !== 'cursor') {
             throw new InvalidArgumentException('Cannot fetch cursor for parameter that have wrong type');
         }
-        
+
         $property = $this->get($name);
         $statement = $this->_repository->getConnection()->prepareMethod($property);
         $statement->queryString = __('fetch {0} cursor', $name);
@@ -469,7 +472,7 @@ trait RequestTrait
      * @param bool|null $new true if it is known this request was called
      * @return bool Whether or not the request has been called.
      */
-    public function isNew($new = null)
+    public function isNew(?bool $new = null): bool
     {
         if ($new === null) {
             return $this->_new;
@@ -494,7 +497,7 @@ trait RequestTrait
             if ($parameter['in']) {
                 $this->set($name, null); // @todo default ???
             }
-            
+
             if ($parameter['out']) {
                 $this->set($name, null);
             }
@@ -507,7 +510,7 @@ trait RequestTrait
      *
      * @return mixed
      */
-    public function result()
+    public function result(): mixed
     {
         if ($this->isNew() || !$this->_repository->getSchema()->isFunction()) {
             return null;
@@ -521,7 +524,7 @@ trait RequestTrait
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return json_encode($this, JSON_PRETTY_PRINT);
     }
@@ -532,7 +535,7 @@ trait RequestTrait
      *
      * @return array
      */
-    public function __debugInfo()
+    public function __debugInfo(): array
     {
         return $this->_properties + [
             '[new]' => $this->isNew(),

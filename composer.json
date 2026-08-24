@@ -47,6 +47,7 @@
         "cakephp/cakephp-codesniffer": "^5.0",
         "mockery/mockery": "^1.6",
         "phpstan/phpstan": "^2.2",
+        "cakephp/debug_kit": "^5.0",
         "phpunit/phpunit": "^11.5 | ^12.0",
         "rector/rector": "^2.5"
     },
@@ -83,8 +84,10 @@
         "analyse": [
             "@stan"
         ],
-        "cs-check": "phpcs -p --standard=phpcs.xml src/ tests/",
-        "cs-fix": "phpcbf --standard=phpcs.xml src/ tests/",
+        "cs-check": "vendor/bin/phpcs --standard=vendor/cakephp/cakephp-codesniffer/CakePHP src/ tests/",
+        "cs-fix": "vendor/bin/phpcbf -p --standard=vendor/cakephp/cakephp-codesniffer/CakePHP src/ tests/",
+        "new-cs-check": "phpcs -p --standard=phpcs.xml src/ tests/",
+        "new-cs-fix": "phpcbf --standard=phpcs.xml src/ tests/",
         "test": "php tests/run-database-tests.php",
         "test:database": "vendor/bin/phpunit --testsuite=Database",
         "test:orm": "vendor/bin/phpunit --testsuite=ORM",

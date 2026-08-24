@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 
-use Cake\Datasource\ConnectionManager;
 use Cake\Database\Expression\FunctionExpression;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\Expression\QueryExpression;
+use Cake\Datasource\ConnectionManager;
 use Cake\ORM\Entity;
 use Cake\ORM\Exception\PersistenceFailedException;
 use Cake\ORM\Table;
@@ -26,7 +26,6 @@ use TestApp\Model\Entity\ProtectedEntity;
 
 /**
  * Tests Table class
- *
  */
 class TableTest extends CakeTableTest
 {
@@ -58,7 +57,7 @@ class TableTest extends CakeTableTest
             'connection' => $this->connection,
         ]);
         $table->setDisplayField('username');
-        
+
         $query = $table
             ->find('list')
             ->enableHydration(false)
@@ -115,7 +114,7 @@ class TableTest extends CakeTableTest
             'connection' => $this->connection,
         ]);
         $table->setDisplayField('username');
-        
+
         $query = $table->find('list', keyField: 'id', valueField: 'username')
                        ->orderBy('id');
         $expected = [
@@ -158,7 +157,7 @@ class TableTest extends CakeTableTest
                 'table' => 'articles',
                 'alias' => 'Articles',
                 'connection' => $this->connection,
-                'entityClass' => \Cake\ORM\Entity::class,
+                'entityClass' => Entity::class,
             ]);
 
         $articles->hasMany('Comments', ['saveStrategy' => 'replace']);
@@ -179,7 +178,7 @@ class TableTest extends CakeTableTest
         ], ['associated' => ['Comments']]);
 
         $article = $articles->save($article, ['associated' => ['Comments']]);
-        
+
         $commentId = $article->comments[0]->id;
         $sizeComments = count($article->comments);
         $articleId = $article->id;
@@ -217,7 +216,7 @@ class TableTest extends CakeTableTest
     {
         $articles = $this->getTableLocator()->get('Articles');
         $articles->setEntityClass(ProtectedEntity::class);
-        
+
         $validator = new Validator();
         $validator->notBlank('title')->requirePresence('title', 'create');
         $validator->notBlank('body')->requirePresence('body', 'create');
@@ -226,7 +225,7 @@ class TableTest extends CakeTableTest
         $this->expectException(PersistenceFailedException::class);
         $this->expectExceptionMessage(
             'Entity findOrCreate failure. ' .
-            'Found the following errors (body._required: "This field is required").'
+            'Found the following errors (body._required: "This field is required").',
         );
 
         $articles->findOrCreate(['title' => 'test']);

@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\BehaviorRegistryTest as CakeBehaviorRegistryTest;
 
 /**
  * Tests BehaviorRegistry class
- *
  */
 class BehaviorRegistryTest extends CakeBehaviorRegistryTest
 {

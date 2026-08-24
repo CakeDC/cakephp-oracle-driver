@@ -15,6 +15,7 @@ namespace CakeDC\OracleDriver\Database;
 use Cake\Core\Exception\CakeException;
 use Cake\Database\Connection;
 use Cake\Database\StatementInterface;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
 use CakeDC\OracleDriver\Database\Log\MethodLogger;
 use CakeDC\OracleDriver\Database\Log\MethodLoggingStatement;
 use CakeDC\OracleDriver\Database\Schema\CachedMethodsCollection;
@@ -28,21 +29,21 @@ class OracleConnection extends Connection
      *
      * @var \CakeDC\OracleDriver\Database\Driver\OracleBase
      */
-    protected $_driver;
+    protected OracleBase $_driver;
 
     /**
      * Logger object instance.
      *
      * @var \CakeDC\OracleDriver\Database\Log\MethodLogger
      */
-    protected $_methodLogger;
+    protected MethodLogger $_methodLogger;
 
     /**
      * The methods collection object
      *
      * @var \CakeDC\OracleDriver\Database\Schema\MethodsCollection
      */
-    protected $_schemaMethodsCollection;
+    protected MethodsCollection $_schemaMethodsCollection;
 
     /**
      * Builds oracle connection based on generic cakephp connection class.
@@ -50,7 +51,7 @@ class OracleConnection extends Connection
      * @param \Cake\Database\Connection $connection Connection object.
      * @return \CakeDC\OracleDriver\Database\OracleConnection
      */
-    public static function build(Connection $connection): \CakeDC\OracleDriver\Database\OracleConnection
+    public static function build(Connection $connection): OracleConnection
     {
         $config = $connection->config();
         $config['driver'] = $connection->getDriver();
@@ -64,9 +65,9 @@ class OracleConnection extends Connection
      * @param \CakeDC\OracleDriver\Database\Schema\MethodsCollection|null $collection The schema collection object
      * @return \CakeDC\OracleDriver\Database\Schema\MethodsCollection
      */
-    public function methodSchemaCollection(?MethodsCollection $collection = null)
+    public function methodSchemaCollection(?MethodsCollection $collection = null): MethodsCollection
     {
-        if ($collection instanceof \CakeDC\OracleDriver\Database\Schema\MethodsCollection) {
+        if ($collection instanceof MethodsCollection) {
             return $this->_schemaMethodsCollection = $collection;
         }
 
@@ -88,15 +89,15 @@ class OracleConnection extends Connection
      * @param array $options Method options used on method constructing.
      * @return \Cake\Database\StatementInterface
      */
-    public function prepareMethod($sql, $options = []): \CakeDC\OracleDriver\Database\Log\MethodLoggingStatement
+    public function prepareMethod(string $sql, array $options = []): MethodLoggingStatement
     {
         if (!method_exists($this->getDriver(), 'isOci') || !$this->getDriver()->isOci()) {
             throw new CakeException('Method calls using PDO layer not supported');
         }
-        
+
         $options += ['bufferResult' => false];
         $statement = $this->getDriver()->prepareMethod($sql, $options);
-        
+
         return $this->_getMethodLogger($statement);
     }
 
@@ -107,7 +108,7 @@ class OracleConnection extends Connection
      * @param \Cake\Database\StatementInterface $statement the instance to be decorated
      * @return \Cake\Database\StatementInterface
      */
-    protected function _getMethodLogger(StatementInterface $statement): \CakeDC\OracleDriver\Database\Log\MethodLoggingStatement
+    protected function _getMethodLogger(StatementInterface $statement): MethodLoggingStatement
     {
         $log = new MethodLoggingStatement($statement, $this->getDriver());
         $log->logger($this->methodLogger());
@@ -122,16 +123,16 @@ class OracleConnection extends Connection
      * @param \CakeDC\OracleDriver\Database\Log\MethodLogger $instance logger object instance
      * @return object logger instance
      */
-    public function methodLogger(?MethodLogger $instance = null)
+    public function methodLogger(?MethodLogger $instance = null): object
     {
-        if (!$instance instanceof \CakeDC\OracleDriver\Database\Log\MethodLogger) {
+        if (!$instance instanceof MethodLogger) {
             if ($this->_methodLogger === null) {
                 $this->_methodLogger = new MethodLogger();
             }
 
             return $this->_methodLogger;
         }
-        
+
         $this->_methodLogger = $instance;
     }
 

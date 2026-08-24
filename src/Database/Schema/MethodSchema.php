@@ -29,28 +29,28 @@ class MethodSchema
      *
      * @var string
      */
-    protected $_method;
+    protected string $_method;
 
     /**
      * The type of method
      *
      * @var bool
      */
-    protected $_isFunction;
+    protected bool $_isFunction;
 
     /**
      * Parameters in the method.
      *
      * @var array
      */
-    protected $_parameters = [];
+    protected array $_parameters = [];
 
     /**
      * A map with columns to types
      *
      * @var array
      */
-    protected $_typeMap = [];
+    protected array $_typeMap = [];
 
     /**
      * The valid keys that can be used in a column
@@ -58,7 +58,7 @@ class MethodSchema
      *
      * @var array
      */
-    protected static $_columnParameters = [
+    protected static array $_columnParameters = [
         'type' => null,
         'in' => null,
         'out' => null,
@@ -69,7 +69,7 @@ class MethodSchema
      *
      * @var array
      */
-    protected static $_columnExtras = [
+    protected static array $_columnExtras = [
     ];
 
     /**
@@ -78,7 +78,7 @@ class MethodSchema
      * @param string $method The method name.
      * @param array $parameters The list of columns for the schema.
      */
-    public function __construct($method, array $parameters = [])
+    public function __construct(string $method, array $parameters = [])
     {
         $this->_method = $method;
         foreach ($parameters as $parameter => $definition) {
@@ -91,7 +91,7 @@ class MethodSchema
      *
      * @return string
      */
-    public function name()
+    public function name(): string
     {
         return $this->_method;
     }
@@ -112,22 +112,22 @@ class MethodSchema
      * @param array $attrs The attributes for the column.
      * @return $this
      */
-    public function addParameter($name, $attrs)
+    public function addParameter(string $name, array $attrs)
     {
         $attrs += ['function' => null];
         if (is_string($attrs)) {
             $attrs = ['type' => $attrs];
         }
-        
+
         $valid = static::$_columnParameters;
         if (isset(static::$_columnExtras[$attrs['type']])) {
             $valid += static::$_columnExtras[$attrs['type']];
         }
-        
+
         if ($attrs['function'] === true) {
             $this->_isFunction = true;
         }
-        
+
         $attrs = array_intersect_key($attrs, $valid);
         $this->_parameters[$name] = $attrs + $valid;
         $this->_typeMap[$name] = $this->_parameters[$name]['type'];
@@ -151,7 +151,7 @@ class MethodSchema
      * @param string $name The parameter name.
      * @return array|null Parameter data or null.
      */
-    public function parameter($name)
+    public function parameter(string $name): ?array
     {
         if (!isset($this->_parameters[$name])) {
             return null;
@@ -168,12 +168,12 @@ class MethodSchema
      * @param string $type The type to set the column to.
      * @return string|null Either the column type or null.
      */
-    public function parameterType($name, $type = null)
+    public function parameterType(string $name, ?string $type = null): ?string
     {
         if (!isset($this->_parameters[$name])) {
             return null;
         }
-        
+
         if ($type !== null) {
             $this->_parameters[$name]['type'] = $type;
             $this->_typeMap[$name] = $type;
@@ -190,27 +190,27 @@ class MethodSchema
      * @param string $direction The direction to set the parameter to.
      * @return string|null Either the parameter direction or null.
      */
-    public function parameterDirection($name, $direction = null): ?string
+    public function parameterDirection(string $name, ?string $direction = null): ?string
     {
         if (!isset($this->_parameters[$name])) {
             return null;
         }
-        
+
         if ($direction !== null) {
             $this->_parameters[$name]['in'] = str_contains($direction, 'IN');
             $this->_parameters[$name]['out'] = str_contains($direction, 'OUT');
         }
-        
+
         $result = null;
         if ($this->_parameters[$name]['in'] !== []) {
             $result = 'IN';
         }
-        
+
         if ($this->_parameters[$name]['in'] !== []) {
             if ($result !== null) {
                 $result .= '/';
             }
-            
+
             $result .= 'OUT';
         }
 
@@ -223,7 +223,7 @@ class MethodSchema
      *
      * @return array
      */
-    public function typeMap()
+    public function typeMap(): array
     {
         return $this->_typeMap;
     }
@@ -233,7 +233,7 @@ class MethodSchema
      *
      * @return array
      */
-    public function isFunction()
+    public function isFunction(): array
     {
         return $this->_isFunction;
     }

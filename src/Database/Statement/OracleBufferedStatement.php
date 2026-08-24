@@ -17,7 +17,6 @@ use CakeDC\OracleDriver\Database\Driver\OracleOCI;
 
 /**
  * Statement class meant to be used by an Oracle driver
- *
  */
 class OracleBufferedStatement extends BufferedStatement
 {
@@ -35,7 +34,7 @@ class OracleBufferedStatement extends BufferedStatement
         if ($this->_allFetched) {
             return $this->buffer;
         }
-        
+
         while (!$this->_allFetched) {
             $this->fetch($type);
         }
@@ -44,7 +43,7 @@ class OracleBufferedStatement extends BufferedStatement
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function fetch($type = self::FETCH_TYPE_NUM)
     {
@@ -53,7 +52,7 @@ class OracleBufferedStatement extends BufferedStatement
             if (isset($this->buffer[$this->index])) {
                 $row = $this->buffer[$this->index];
             }
-            
+
             $this->index += 1;
 
             if ($row && $type === static::FETCH_TYPE_NUM) {
@@ -62,7 +61,7 @@ class OracleBufferedStatement extends BufferedStatement
 
             return $row;
         }
-        
+
         $record = $this->statement->fetch($type);
 
         if ($record === false) {
@@ -79,7 +78,7 @@ class OracleBufferedStatement extends BufferedStatement
                 }
             }
         }
-        
+
         $this->buffer[] = $record;
 
         return $record;

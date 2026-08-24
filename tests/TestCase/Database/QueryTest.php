@@ -14,17 +14,20 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Test\TestCase\Database;
 
 use Cake\Database\Driver\Postgres;
+use Cake\Database\Driver\Sqlserver;
+use Cake\Database\Exception\DatabaseException;
 use Cake\Database\Expression\IdentifierExpression;
+use Cake\Database\Expression\StringExpression;
 use Cake\Database\TypeMap;
 use Cake\Database\ValueBinder;
-use Cake\Database\Exception\DatabaseException;
-use Cake\Database\Expression\StringExpression;
 use Cake\Datasource\ConnectionManager;
 use Cake\Test\TestCase\Database\QueryAssertsTrait;
-use PHPUnit\Framework\Attributes\Group;
 use Cake\TestSuite\Fixture\FixtureHelper;
 use Cake\TestSuite\TestCase;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
 use CakeDC\OracleDriver\Database\FunctionsBuilder;
+use DateTime;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests Query class
@@ -34,9 +37,9 @@ class QueryTest extends TestCase
     use QueryAssertsTrait;
 
     public const ARTICLE_COUNT = 3;
-    
+
     public const AUTHOR_COUNT = 4;
-    
+
     public const COMMENT_COUNT = 6;
 
     protected array $fixtures = [
@@ -107,11 +110,11 @@ class QueryTest extends TestCase
             ->execute();
         $this->assertEquals(
             ['text' => 'Third Article Body', 'author_id' => 1, 'name' => 'nate'],
-            $result->fetch('assoc')
+            $result->fetch('assoc'),
         );
         $this->assertEquals(
             ['text' => 'Third Article Body', 'author_id' => 1, 'name' => 'mariano'],
-            $result->fetch('assoc')
+            $result->fetch('assoc'),
         );
     }
 
@@ -252,7 +255,7 @@ class QueryTest extends TestCase
         $this->loadFixtures('Comments');
         $query = $this->connection->selectQuery();
         $result = $query->select(
-            fn($q): array => ['total' => $q->func()->count('*')]
+            fn($q): array => ['total' => $q->func()->count('*')],
         )
             ->from('comments')
             ->execute();
@@ -298,8 +301,8 @@ class QueryTest extends TestCase
         $date1 = date('U');
         $this->assertWithinRange(
             $date1,
-            (new \DateTime($d))->format('U'),
-            1
+            (new DateTime($d))->format('U'),
+            1,
         );
 
         $query = $this->connection->selectQuery();
@@ -309,8 +312,8 @@ class QueryTest extends TestCase
             ->execute();
         $this->assertWithinRange(
             date('U'),
-            (new \DateTime($result->fetchAll('assoc')[0]['d']))->format('U'),
-            1
+            (new DateTime($result->fetchAll('assoc')[0]['d']))->format('U'),
+            1,
         );
 
         $query = $this->connection->selectQuery();
@@ -444,8 +447,8 @@ class QueryTest extends TestCase
         $results = $query->select(['id', 'comment'])
             ->from('comments')
             ->where(["$createdField BETWEEN :foo AND :bar"])
-            ->bind(':foo', new \DateTime('2007-03-18 10:50:00'), 'datetime')
-            ->bind(':bar', new \DateTime('2007-03-18 10:52:00'), 'datetime')
+            ->bind(':foo', new DateTime('2007-03-18 10:50:00'), 'datetime')
+            ->bind(':bar', new DateTime('2007-03-18 10:52:00'), 'datetime')
             ->execute();
         $expected = [['id' => '4', 'comment' => 'Fourth Comment for First Article']];
         $this->assertEquals($expected, $results->fetchAll('assoc'));
@@ -476,13 +479,13 @@ class QueryTest extends TestCase
         $result = $query->execute();
 
         //PDO_SQLSRV returns -1 for successful inserts when using INSERT ... OUTPUT
-        if (!$this->connection->getDriver() instanceof \Cake\Database\Driver\Sqlserver) {
+        if (!$this->connection->getDriver() instanceof Sqlserver) {
             $this->assertSame(1, $result->rowCount());
         }
-        
+
         $result->closeCursor();
 
-        $rows = ($this->connection->selectQuery())->select('*')
+        $rows = $this->connection->selectQuery()->select('*')
             ->from('articles')
             ->where(['author_id' => 99])
             ->execute()->fetchAll('assoc');
@@ -508,13 +511,13 @@ class QueryTest extends TestCase
         $result = $query->execute();
 
         //PDO_SQLSRV returns -1 for successful inserts when using INSERT ... OUTPUT
-        if (!$this->connection->getDriver() instanceof \Cake\Database\Driver\Sqlserver) {
+        if (!$this->connection->getDriver() instanceof Sqlserver) {
             $this->assertSame(1, $result->rowCount());
         }
-        
+
         $result->closeCursor();
 
-        $rows = ($this->connection->selectQuery())->select('*')
+        $rows = $this->connection->selectQuery()->select('*')
             ->from('articles')
             ->where(['author_id' => 100])
             ->execute()->fetchAll('assoc');
@@ -548,7 +551,7 @@ class QueryTest extends TestCase
     public function testUnion(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
-        $union = ($this->connection->selectQuery())->select(['id', 'title'])->from(['a' => 'articles']);
+        $union = $this->connection->selectQuery()->select(['id', 'title'])->from(['a' => 'articles']);
         $query = $this->connection->selectQuery();
         $result = $query->select(['id', FunctionsBuilder::toChar(new IdentifierExpression('comment'))])
             ->from(['c' => 'comments'])
@@ -558,7 +561,7 @@ class QueryTest extends TestCase
         $this->assertCount(self::COMMENT_COUNT + self::ARTICLE_COUNT, $rows);
 
         $union->select(['foo' => 'id', 'bar' => 'title']);
-        $union = ($this->connection->selectQuery())
+        $union = $this->connection->selectQuery()
             ->select(['id', 'name', 'other' => 'id', 'nameish' => 'name'])
             ->from(['b' => 'authors'])
             ->where(['id ' => 1]);
@@ -569,7 +572,7 @@ class QueryTest extends TestCase
         $this->assertCount(self::COMMENT_COUNT + self::AUTHOR_COUNT, $rows2);
         $this->assertNotEquals($rows, $rows2);
 
-        $union = ($this->connection->selectQuery())
+        $union = $this->connection->selectQuery()
             ->select(['id', 'title'])
             ->from(['c' => 'articles']);
         $query->select(['id', FunctionsBuilder::toChar(new IdentifierExpression('comment'))], true)->union($union, true);
@@ -587,8 +590,8 @@ class QueryTest extends TestCase
     public function testUnionOrderBy(): void
     {
         $this->skipIf(
-            ($this->connection->getDriver() instanceof \CakeDC\OracleDriver\Database\Driver\OracleBase),
-            'Driver does not support ORDER BY in UNIONed queries.'
+            ($this->connection->getDriver() instanceof OracleBase),
+            'Driver does not support ORDER BY in UNIONed queries.',
         );
     }
 
@@ -600,7 +603,7 @@ class QueryTest extends TestCase
     public function testUnionAll(): void
     {
         $this->loadFixtures('Authors', 'Articles', 'Comments');
-        $union = ($this->connection->selectQuery())->select(['id', 'title'])->from(['a' => 'articles']);
+        $union = $this->connection->selectQuery()->select(['id', 'title'])->from(['a' => 'articles']);
         $query = $this->connection->selectQuery();
         $result = $query->select(['id', FunctionsBuilder::toChar(new IdentifierExpression('comment'))])
             ->from(['c' => 'comments'])
@@ -610,7 +613,7 @@ class QueryTest extends TestCase
         $this->assertCount(self::ARTICLE_COUNT + self::COMMENT_COUNT, $rows);
 
         $union->select(['foo' => 'id', 'bar' => 'title']);
-        $union = ($this->connection->selectQuery())
+        $union = $this->connection->selectQuery()
             ->select(['id', 'name', 'other' => 'id', 'nameish' => 'name'])
             ->from(['b' => 'authors'])
             ->where(['id ' => 1]);
@@ -654,7 +657,7 @@ class QueryTest extends TestCase
         $result->closeCursor();
 
         $query = $this->connection->selectQuery();
-        $time = new \DateTime('2007-03-18 10:45:23');
+        $time = new DateTime('2007-03-18 10:45:23');
         $types = ['created' => 'datetime'];
         $result = $query
             ->select(['title', 'name' => 'c.comment'])
@@ -697,7 +700,7 @@ class QueryTest extends TestCase
                 ['id' => '6', 'ids_added' => '4'],
                 ['id' => '2', 'ids_added' => '5'],
             ],
-            $rows
+            $rows,
         );
     }
 
@@ -781,7 +784,7 @@ class QueryTest extends TestCase
         $this->assertQuotedQuery(
             'SELECT <id> FROM <articles> ORDER BY <id> ASC',
             $sql,
-            !$this->autoQuote
+            !$this->autoQuote,
         );
 
         $query = $this->connection->selectQuery();
@@ -821,7 +824,7 @@ class QueryTest extends TestCase
         $this->assertQuotedQuery(
             'SELECT <id> FROM <articles> ORDER BY <id> DESC',
             $sql,
-            !$this->autoQuote
+            !$this->autoQuote,
         );
 
         $query = $this->connection->selectQuery();
@@ -863,12 +866,12 @@ class QueryTest extends TestCase
                 $subquery->expr()->addCase(
                     [$subquery->expr()->add(['a.published' => 'N'])],
                     [1, 0],
-                    ['integer', 'integer']
-                )
+                    ['integer', 'integer'],
+                ),
             )
             ->from(['a' => 'articles'])
             ->where([
-                $subquery->expr()->equalFields('a.id', 'articles.id')
+                $subquery->expr()->equalFields('a.id', 'articles.id'),
             ]);
 
         $query
@@ -887,7 +890,7 @@ class QueryTest extends TestCase
                 'WHERE <a>\.<id> = \(<articles>\.<id>\)' .
             '\) DESC, <id> ASC',
             $query->sql(),
-            !$this->autoQuote
+            !$this->autoQuote,
         );
         $this->assertEquals(
             [
@@ -901,7 +904,7 @@ class QueryTest extends TestCase
                     'id' => 2,
                 ],
             ],
-            $query->execute()->fetchAll('assoc')
+            $query->execute()->fetchAll('assoc'),
         );
     }
 
@@ -958,7 +961,7 @@ class QueryTest extends TestCase
                 'SELECT count\(\*\) FROM <articles> <b> WHERE \(<b>\.<id> = \(<articles>\.<id>\) AND <b>\.<published> = :c2\)' .
             '\) DESC, <id> ASC',
             $query->sql(),
-            !$this->autoQuote
+            !$this->autoQuote,
         );
 
         $this->assertSame(
@@ -979,7 +982,7 @@ class QueryTest extends TestCase
                     'computedB' => 0,
                 ],
             ],
-            $query->execute()->fetchAll('assoc')
+            $query->execute()->fetchAll('assoc'),
         );
 
         $this->assertSame(
@@ -1000,7 +1003,7 @@ class QueryTest extends TestCase
                     'placeholder' => 'c2',
                 ],
             ],
-            $query->getValueBinder()->bindings()
+            $query->getValueBinder()->bindings(),
         );
     }
 
@@ -1023,7 +1026,6 @@ class QueryTest extends TestCase
         $this->assertSame('testString', $statement->fetchColumn(0));
         $statement->closeCursor();
     }
-
 
     /**
      * Test insert() with no into()
@@ -1049,7 +1051,7 @@ class QueryTest extends TestCase
         $driver = $this->connection->getDriver();
         $collation = 'LATIN_AI';
 
-        $query = ($this->connection->selectQuery())
+        $query = $this->connection->selectQuery()
             ->select(['test_string' => new IdentifierExpression('title', $collation)])
             ->from('articles')
             ->where(['id' => 1]);
@@ -1060,7 +1062,7 @@ class QueryTest extends TestCase
         } else {
             $expected = "SELECT \(<title> COLLATE {$collation}\) AS <test_string>";
         }
-        
+
         $this->assertRegExpSql($expected, $query->sql(new ValueBinder()), !$this->autoQuote);
 
         $statement = $query->execute();

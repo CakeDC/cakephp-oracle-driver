@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\TableUuidTest as CakeTableUuidTest;
 
 /**
  * Tests TableUuid class
- *
  */
 class TableUuidTest extends CakeTableUuidTest
 {

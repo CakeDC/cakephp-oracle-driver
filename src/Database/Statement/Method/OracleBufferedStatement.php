@@ -12,43 +12,45 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Statement\Method;
 
+use Cake\Database\Driver;
+
 /**
  * Statement class meant to be used by an Oracle driver
- *
  */
 class OracleBufferedStatement extends MethodStatementDecorator
 {
     /**
      * @var string
      */
-    public $_fetchType;
+    public string $_fetchType;
 
     /**
      * Records count
      *
      * @var int
      */
-    protected $_count = 0;
+    protected int $_count = 0;
 
     /**
      * Array of results
      *
      * @var array
      */
-    protected $_records = [];
+    protected array $_records = [];
 
     /**
      * If true, all rows were fetched
      *
      * @var bool
      */
-    protected $_allFetched = true;
+    protected bool $_allFetched = true;
 
     /**
      * Current record pointer
+     *
      * @var int
      */
-    protected $_counter = 0;
+    protected int $_counter = 0;
 
     /**
      * Constructor
@@ -56,7 +58,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
      * @param \Cake\Database\StatementInterface|null $statement Statement implementation such as PDOStatement
      * @param \Cake\Database\Driver|null $driver Driver instance
      */
-    public function __construct(mixed $statement = null, ?\Cake\Database\Driver $driver = null)
+    public function __construct(mixed $statement = null, ?Driver $driver = null)
     {
         parent::__construct($statement, $driver);
         $this->_reset();
@@ -134,7 +136,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function rowCount(): int
     {
@@ -142,7 +144,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
             $counter = $this->_counter;
             while ($this->fetch('assoc')) {
             }
-            
+
             $this->_counter = $counter;
         }
 
@@ -164,7 +166,7 @@ class OracleBufferedStatement extends MethodStatementDecorator
      *
      * @return void
      */
-    protected function _reset()
+    protected function _reset(): void
     {
         $this->_count = 0;
         $this->_counter = 0;

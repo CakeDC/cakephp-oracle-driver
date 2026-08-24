@@ -16,7 +16,6 @@ use Cake\Core\Exception\CakeException;
 
 /**
  * Exception raised when a Table could not be found.
- *
  */
 class MissingMethodClassException extends CakeException
 {

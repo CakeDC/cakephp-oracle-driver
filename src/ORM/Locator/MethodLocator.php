@@ -18,7 +18,6 @@ use Cake\Utility\Inflector;
 use CakeDC\OracleDriver\Database\OracleConnection;
 use CakeDC\OracleDriver\ORM\Method;
 use RuntimeException;
-
 use function Cake\Core\pluginSplit;
 
 /**
@@ -31,14 +30,14 @@ class MethodLocator implements LocatorInterface
      *
      * @var array
      */
-    protected $_config = [];
+    protected array $_config = [];
 
     /**
      * Instances that belong to the registry.
      *
      * @var array
      */
-    protected $_instances = [];
+    protected array $_instances = [];
 
     /**
      * Contains a list of Method objects that were created out of the
@@ -46,14 +45,14 @@ class MethodLocator implements LocatorInterface
      *
      * @var array
      */
-    protected $_fallbacked = [];
+    protected array $_fallbacked = [];
 
     /**
      * Contains a list of options that were passed to get() method.
      *
      * @var array
      */
-    protected $_options = [];
+    protected array $_options = [];
 
     /**
      * Stores a list of options to be used when instantiating an object
@@ -71,24 +70,24 @@ class MethodLocator implements LocatorInterface
      * @return array The config data.
      * @throws \RuntimeException When you attempt to configure an existing method instance.
      */
-    public function config($alias = null, $options = null)
+    public function config(?string $alias = null, ?array $options = null): array
     {
         if ($alias === null) {
             return $this->_config;
         }
-        
+
         if (!is_string($alias)) {
             return $this->_config = $alias;
         }
-        
+
         if ($options === null) {
             return $this->_config[$alias] ?? [];
         }
-        
+
         if (isset($this->_instances[$alias])) {
             throw new RuntimeException(sprintf(
                 'You cannot configure "%s", it has already been constructed.',
-                $alias
+                $alias,
             ));
         }
 
@@ -129,13 +128,13 @@ class MethodLocator implements LocatorInterface
      * @return \CakeDC\OracleDriver\ORM\Method
      * @throws \RuntimeException When you try to configure an alias that already exists.
      */
-    public function get($alias, array $options = [])
+    public function get(string $alias, array $options = []): Method
     {
         if (isset($this->_instances[$alias])) {
             if ($options !== [] && $this->_options[$alias] !== $options) {
                 throw new RuntimeException(sprintf(
                     'You cannot configure "%s", it already exists in the registry.',
-                    $alias
+                    $alias,
                 ));
             }
 
@@ -163,15 +162,15 @@ class MethodLocator implements LocatorInterface
                 [, $method] = pluginSplit($options['className']);
                 $options['method'] = Inflector::underscore($method);
             }
-            
-            $options['className'] = \CakeDC\OracleDriver\ORM\Method::class;
+
+            $options['className'] = Method::class;
         }
 
         if (empty($options['connection'])) {
             $connectionName = $options['className']::defaultConnectionName();
             $options['connection'] = ConnectionManager::get($connectionName);
         }
-        
+
         if (!($options['connection'] instanceof OracleConnection)) {
             $options['connection'] = OracleConnection::build($options['connection']);
         }
@@ -179,7 +178,7 @@ class MethodLocator implements LocatorInterface
         $options['registryAlias'] = $alias;
         $this->_instances[$alias] = $this->_create($options);
 
-        if ($options['className'] === \CakeDC\OracleDriver\ORM\Method::class) {
+        if ($options['className'] === Method::class) {
             $this->_fallbacked[$alias] = $this->_instances[$alias];
         }
 
@@ -208,13 +207,13 @@ class MethodLocator implements LocatorInterface
      * @param array $options The alias to check for.
      * @return \CakeDC\OracleDriver\ORM\Method
      */
-    protected function _create(array $options)
+    protected function _create(array $options): Method
     {
         return new $options['className']($options);
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function exists($alias): bool
     {
@@ -222,7 +221,7 @@ class MethodLocator implements LocatorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function set($alias, Method $object)
     {
@@ -230,7 +229,7 @@ class MethodLocator implements LocatorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function clear(): void
     {
@@ -247,20 +246,20 @@ class MethodLocator implements LocatorInterface
      *
      * @return array
      */
-    public function genericInstances()
+    public function genericInstances(): array
     {
         return $this->_fallbacked;
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function remove($alias): void
     {
         unset(
             $this->_instances[$alias],
             $this->_config[$alias],
-            $this->_fallbacked[$alias]
+            $this->_fallbacked[$alias],
         );
     }
 }

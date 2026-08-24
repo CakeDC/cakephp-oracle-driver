@@ -19,7 +19,6 @@ use CakeDC\OracleDriver\TestSuite\TestCase;
 
 /**
  * Tests Method class
- *
  */
 class MethodTest extends TestCase
 {
@@ -36,7 +35,7 @@ class MethodTest extends TestCase
 
         $this->skipIf(
             $method->getConnection()->getDriver() instanceof OraclePDO,
-            'OraclePDO does not support the requirements of this test.'
+            'OraclePDO does not support the requirements of this test.',
         );
 
         $request = $method->newRequest(['A' => 5, 'B' => 10]);
@@ -58,7 +57,7 @@ class MethodTest extends TestCase
 
         $this->skipIf(
             $method->getConnection()->getDriver() instanceof OraclePDO,
-            'OraclePDO does not support the requirements of this test.'
+            'OraclePDO does not support the requirements of this test.',
         );
 
         $request = $method->newRequest(['A' => 5]);

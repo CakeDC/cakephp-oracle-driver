@@ -13,14 +13,14 @@ trait SingletonTrait
      *
      * @var mixed
      */
-    protected static $_instance;
+    protected static mixed $_instance;
 
     /**
      * Returns object instance.
      *
      * @return object instance.
      */
-    final public static function getInstance()
+    final public static function getInstance(): object
     {
         return static::$_instance ?? static::$_instance = new static();
     }
@@ -38,7 +38,7 @@ trait SingletonTrait
      *
      * @return void
      */
-    protected function init()
+    protected function init(): void
     {
     }
 
@@ -47,7 +47,7 @@ trait SingletonTrait
      *
      * @return void
      */
-    public function __wakeup()
+    public function __wakeup(): void
     {
     }
 

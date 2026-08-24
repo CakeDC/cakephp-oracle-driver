@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\TableRegistryTest as CakeTableRegistryTest;
 
 /**
  * Tests TableRegistry class
- *
  */
 class TableRegistryTest extends CakeTableRegistryTest
 {

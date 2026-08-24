@@ -29,14 +29,14 @@ class SimpleExpression implements ExpressionInterface
     /**
      * @var string
      */
-    public $_returnType;
-    
+    public string $_returnType;
+
     /**
      * The name of the function to be constructed when generating the SQL string
      *
      * @var string
      */
-    protected $_name;
+    protected string $_name;
 
     /**
      * Constructor. Takes a name for the function to be invoked.
@@ -50,7 +50,7 @@ class SimpleExpression implements ExpressionInterface
      * @param string $name the name of the function to be constructed
      * @param string $returnType The return type of this expression
      */
-    public function __construct($name, $returnType = 'string')
+    public function __construct(string $name, string $returnType = 'string')
     {
         $this->_name = $name;
         $this->_returnType = $returnType;
@@ -61,14 +61,14 @@ class SimpleExpression implements ExpressionInterface
      * if no value is passed it will return current name
      *
      * @param string $name The name of the function
-     * @return string|$this
+     * @return $this|string
      */
-    public function name($name = null)
+    public function name(?string $name = null)
     {
         if ($name === null) {
             return $this->_name;
         }
-        
+
         $this->_name = $name;
 
         return $this;

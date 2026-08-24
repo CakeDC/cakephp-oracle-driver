@@ -9,6 +9,7 @@ use PHPUnit\Framework\Test;
 use PHPUnit\Framework\TestListener;
 use PHPUnit\Framework\TestSuite;
 use PHPUnit\Framework\Warning;
+use Throwable;
 
 class DbMode implements TestListener
 {
@@ -17,7 +18,7 @@ class DbMode implements TestListener
      *
      * @var \PHPUnit\Framework\TestSuite
      */
-    protected $_first;
+    protected TestSuite $_first;
 
     /**
      * Iterates the tests inside a test suite and creates the required fixtures as
@@ -31,7 +32,7 @@ class DbMode implements TestListener
         if (empty($this->_first)) {
             $this->_first = $suite;
         }
-        
+
         ConnectionManager::get('test')->getDriver()->enableAutoQuoting(true);
     }
 
@@ -54,7 +55,7 @@ class DbMode implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addError(Test $test, \Throwable $e, $time): void
+    public function addError(Test $test, Throwable $e, float $time): void
     {
     }
 
@@ -66,7 +67,7 @@ class DbMode implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addWarning(Test $test, Warning $e, $time): void
+    public function addWarning(Test $test, Warning $e, float $time): void
     {
     }
 
@@ -78,7 +79,7 @@ class DbMode implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addFailure(Test $test, AssertionFailedError $e, $time): void
+    public function addFailure(Test $test, AssertionFailedError $e, float $time): void
     {
     }
 
@@ -90,7 +91,7 @@ class DbMode implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addIncompleteTest(Test $test, \Throwable $e, $time): void
+    public function addIncompleteTest(Test $test, Throwable $e, float $time): void
     {
     }
 
@@ -102,7 +103,7 @@ class DbMode implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addSkippedTest(Test $test, \Throwable $e, $time): void
+    public function addSkippedTest(Test $test, Throwable $e, float $time): void
     {
     }
 
@@ -124,7 +125,7 @@ class DbMode implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function endTest(Test $test, $time): void
+    public function endTest(Test $test, float $time): void
     {
     }
 
@@ -136,7 +137,7 @@ class DbMode implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addRiskyTest(Test $test, \Throwable $e, $time): void
+    public function addRiskyTest(Test $test, Throwable $e, float $time): void
     {
     }
 }

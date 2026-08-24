@@ -12,18 +12,23 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\OCI8;
 
+use ArrayIterator;
+use Iterator;
+use IteratorAggregate;
 use PDO;
+use PDOStatement;
+use ReflectionClass;
 
 /**
  * The OCI8 implementation of the Statement interface.
  */
-class OCI8Statement extends \PDOStatement implements \IteratorAggregate
+class OCI8Statement extends PDOStatement implements IteratorAggregate
 {
     /**
      * @var bool
      */
 
-    protected $_returnLobs = true;
+    protected bool $_returnLobs = true;
 
     /**
      * @var resource
@@ -35,17 +40,17 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      */
     protected $_sth;
 
-    protected \CakeDC\OracleDriver\Database\OCI8\OCI8Connection $_conn;
+    protected OCI8Connection $_conn;
 
     /**
      * @var string
      */
-    protected static $_PARAM = ':param';
+    protected static string $_PARAM = ':param';
 
     /**
      * @var array
      */
-    protected static $fetchModeMap = [
+    protected static array $fetchModeMap = [
         PDO::FETCH_BOTH => OCI_BOTH,
         PDO::FETCH_ASSOC => OCI_ASSOC,
         PDO::FETCH_NUM => OCI_NUM,
@@ -57,22 +62,22 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      *
      * @var int
      */
-    protected $_fetchColumnNumber = 0;
+    protected int $_fetchColumnNumber = 0;
 
     /**
      * @var int
      */
-    protected $_defaultFetchMode = PDO::ATTR_DEFAULT_FETCH_MODE;
+    protected int $_defaultFetchMode = PDO::ATTR_DEFAULT_FETCH_MODE;
 
     /**
      * @var array
      */
-    protected $_paramMap = [];
+    protected array $_paramMap = [];
 
     /**
      * @var array
      */
-    protected $_values = [];
+    protected array $_values = [];
 
     protected $_fetchMode = PDO::ATTR_DEFAULT_FETCH_MODE;
 
@@ -88,7 +93,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      * Creates a new OCI8Statement that uses the given connection handle and SQL statement.
      *
      * @param resource $dbh The connection handle.
-     * @param string|resource $statement The SQL statement.
+     * @param resource|string $statement The SQL statement.
      * @param \CakeDC\OracleDriver\Database\OCI8\OCI8Connection $conn OCI connection.
      */
     public function __construct($dbh, $statement, OCI8Connection $conn)
@@ -119,10 +124,9 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
      * This comes at a cost, the whole sql statement has to be looped over.
      *
      * @param string $statement The SQL statement to convert.
-     *
      * @return string
      */
-    public static function convertPositionalToNamedPlaceholders($statement): array
+    public static function convertPositionalToNamedPlaceholders(string $statement): array
     {
         $count = 1;
         $inLiteral = false;
@@ -145,7 +149,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
@@ -155,14 +159,14 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function bindParam(
         string|int $column,
         mixed &$variable,
         int $type = PDO::PARAM_STR,
         int $maxLength = 0,
-        mixed $driverOptions = null
+        mixed $driverOptions = null,
     ): bool {
         $column = $this->_paramMap[$column] ?? $column;
 
@@ -170,7 +174,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
         // where $type = ['ociType' => "REAL_OCI_TYPE", 'plsql_type' => 'VARRAY', 'php_type' => 'string']
         // this way we could choose correct type and correct binding function like oci_bind_array_by_name
 
-        if ($type === \PDO::PARAM_STMT) {
+        if ($type === PDO::PARAM_STMT) {
             $variable = oci_new_cursor($this->_dbh);
 
             return oci_bind_by_name($this->_sth, $column, $variable, -1, OCI_B_CURSOR);
@@ -191,7 +195,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function closeCursor(): bool
     {
@@ -199,7 +203,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function __destruct()
     {
@@ -209,7 +213,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function columnCount(): int
     {
@@ -217,7 +221,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function errorCode(): ?string
     {
@@ -230,7 +234,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function errorInfo(): array
     {
@@ -247,7 +251,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function execute(?array $params = null): bool
     {
@@ -272,22 +276,22 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
-    public function getIterator(): \Iterator
+    public function getIterator(): Iterator
     {
         $data = $this->fetchAll();
 
-        return new \ArrayIterator($data);
+        return new ArrayIterator($data);
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function fetch(
         int $mode = PDO::FETCH_DEFAULT,
         int $cursorOrientation = PDO::FETCH_ORI_NEXT,
-        int $cursorOffset = 0
+        int $cursorOffset = 0,
     ): mixed {
         $toLowercase = ($this->getAttribute(PDO::ATTR_CASE) == PDO::CASE_LOWER);
         $nullToString = ($this->getAttribute(PDO::ATTR_ORACLE_NULLS) == PDO::NULL_TO_STRING);
@@ -395,7 +399,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
                     }
 
                     if ($arguments) {
-                        $reflectionClass = new \ReflectionClass($className);
+                        $reflectionClass = new ReflectionClass($className);
                         $object = $reflectionClass->newInstanceArgs($arguments);
                     } else {
                         $object = new $className();
@@ -421,7 +425,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
     {
@@ -448,7 +452,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function fetchColumn(int $column = 0): mixed
     {
@@ -462,7 +466,7 @@ class OCI8Statement extends \PDOStatement implements \IteratorAggregate
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function rowCount(): int
     {

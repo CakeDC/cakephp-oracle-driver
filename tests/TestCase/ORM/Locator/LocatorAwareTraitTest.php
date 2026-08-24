@@ -14,11 +14,11 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Test\TestCase\ORM\Locator;
 
 use Cake\TestSuite\TestCase;
+use CakeDC\OracleDriver\ORM\Locator\LocatorAwareTrait;
 use CakeDC\OracleDriver\ORM\MethodRegistry;
 
 /**
  * LocatorAwareTrait test case
- *
  */
 class LocatorAwareTraitTest extends TestCase
 {
@@ -34,7 +34,7 @@ class LocatorAwareTraitTest extends TestCase
         parent::setUp();
 
         $this->subject = new class {
-            use \CakeDC\OracleDriver\ORM\Locator\LocatorAwareTrait;
+            use LocatorAwareTrait;
         };
     }
 

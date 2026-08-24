@@ -17,7 +17,6 @@ use Cake\Test\TestCase\ORM\Behavior\TreeBehaviorTest as CakeTreeBehaviorTest;
 
 /**
  * Tests TreeBehavior class
- *
  */
 class TreeBehaviorTest extends CakeTreeBehaviorTest
 {

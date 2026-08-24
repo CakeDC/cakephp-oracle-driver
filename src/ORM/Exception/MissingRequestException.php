@@ -16,7 +16,6 @@ use Cake\Core\Exception\CakeException;
 
 /**
  * Exception raised when an Request could not be found.
- *
  */
 class MissingRequestException extends CakeException
 {

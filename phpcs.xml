@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="Oracle">
     <description>PSR-12 / CakePHP coding standard for Oracle Driver.</description>
-    <exclude-pattern>./tests/test_app/*</exclude-pattern>
     <rule ref="./vendor/cakephp/cakephp-codesniffer/CakePHP">
         <exclude name="CakePHP.Commenting.FunctionComment.MissingParamComment"/>
         <exclude name="CakePHP.Classes.ReturnTypeHint.InvalidSelf"/>

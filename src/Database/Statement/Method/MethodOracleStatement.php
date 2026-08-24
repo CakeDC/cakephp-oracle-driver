@@ -12,6 +12,8 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Statement\Method;
 
+use PDO;
+
 /**
  * Statement class meant to be used by an Oracle driver
  */
@@ -22,7 +24,7 @@ class MethodOracleStatement extends MethodStatementDecorator
     public $paramMap;
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function execute(?array $params = null): bool
     {
@@ -30,7 +32,7 @@ class MethodOracleStatement extends MethodStatementDecorator
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function __get(string $property): mixed
     {
@@ -40,7 +42,7 @@ class MethodOracleStatement extends MethodStatementDecorator
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function bind(array $params, array $types): void
     {
@@ -57,17 +59,17 @@ class MethodOracleStatement extends MethodStatementDecorator
             if (isset($types[$index])) {
                 $type = $types[$index];
             }
-            
+
             if ($annonymousParams) {
                 $index += $offset;
             }
-            
+
             $this->bindValue($index, $value, $type);
         }
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function bindValue(string|int $column, mixed $value, string|int|null $type = 'string'): void
     {
@@ -79,9 +81,9 @@ class MethodOracleStatement extends MethodStatementDecorator
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function fetch(string|int $mode = \PDO::FETCH_NUM): mixed
+    public function fetch(string|int $mode = PDO::FETCH_NUM): mixed
     {
         $result = $this->_statement->fetch($mode);
         if (is_array($result)) {
@@ -96,9 +98,9 @@ class MethodOracleStatement extends MethodStatementDecorator
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
-    public function fetchAll(string|int $mode = \PDO::FETCH_NUM): array
+    public function fetchAll(string|int $mode = PDO::FETCH_NUM): array
     {
         return $this->_statement->fetchAll($mode);
     }

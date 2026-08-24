@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Driver;
 
+use Cake\Database\StatementInterface;
 use CakeDC\OracleDriver\Database\OCI8\OCI8Connection;
 use CakeDC\OracleDriver\Database\Statement\Method\MethodOracleStatement;
 use CakeDC\OracleDriver\Database\Statement\Method\MethodPDOStatement;
@@ -64,7 +65,7 @@ class OracleOCI extends OracleBase
      * @param array<string, mixed> $options Statement options.
      * @return \Cake\Database\StatementInterface
      */
-    public function prepareMethod(string $queryString, array $options = []): \Cake\Database\StatementInterface
+    public function prepareMethod(string $queryString, array $options = []): StatementInterface
     {
         $this->connect();
         $innerStatement = $this->getPdo()->prepare($queryString);
@@ -72,7 +73,7 @@ class OracleOCI extends OracleBase
         if (!empty($options['bufferResult'])) {
             $statement = new MethodOracleStatement($statement, $this);
         }
-        
+
         $statement->queryString = $queryString;
 
         return $statement;

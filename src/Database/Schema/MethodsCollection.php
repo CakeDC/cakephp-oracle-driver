@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Database\Schema;
 
 use Cake\Database\Exception\DatabaseException;
+use Cake\Database\Schema\BaseSchema;
 use Cake\Datasource\ConnectionInterface;
 use PDOException;
 
@@ -27,14 +28,14 @@ class MethodsCollection
     /**
      * Connection object
      */
-    protected \Cake\Datasource\ConnectionInterface $_connection;
+    protected ConnectionInterface $_connection;
 
     /**
      * Schema dialect instance.
      *
      * @var \Cake\Database\Schema\BaseSchema
      */
-    protected $_dialect;
+    protected BaseSchema $_dialect;
 
     /**
      * Constructor.
@@ -61,7 +62,7 @@ class MethodsCollection
         while ($row = $statement->fetch()) {
             $result[] = $row[0];
         }
-        
+
         $statement->closeCursor();
 
         return $result;
@@ -73,7 +74,7 @@ class MethodsCollection
      * @param string $name Method name.
      * @return array The list of methods in the connected database/schema.
      */
-    public function getMethod($name): array
+    public function getMethod(string $name): array
     {
         $config = $this->_connection->config();
         $config['objectName'] = $name;
@@ -83,7 +84,7 @@ class MethodsCollection
         while ($row = $statement->fetch()) {
             $result[] = $row[0];
         }
-        
+
         $statement->closeCursor();
 
         return $result;
@@ -105,14 +106,14 @@ class MethodsCollection
      * @return \CakeDC\OracleDriver\Database\Schema\MethodSchema Object with method metadata.
      * @throws \Cake\Database\Exception when method cannot be described.
      */
-    public function describe(string $name, array $options = []): \CakeDC\OracleDriver\Database\Schema\MethodSchema
+    public function describe(string $name, array $options = []): MethodSchema
     {
         $config = $this->_connection->config();
         $methods = $this->getMethod($name);
         if ($methods === []) {
             throw new DatabaseException(sprintf('Cannot describe %s. Method not found.', $name));
         }
-        
+
         $method = new MethodSchema($name);
 
         $this->_reflect($method, $name, $config);
@@ -129,23 +130,23 @@ class MethodsCollection
      * @return void
      * @throws \Cake\Database\Exception on query failure.
      */
-    protected function _reflect($method, $name, $config)
+    protected function _reflect(MethodSchema $method, string $name, array $config): void
     {
         [$sql, $params] = $this->_dialect->describeParametersSql($name, $config);
         if (empty($sql)) {
             return;
         }
-        
+
         try {
             $statement = $this->_connection->execute($sql, $params);
         } catch (PDOException $pdoException) {
             throw new DatabaseException($pdoException->getMessage(), 500, $pdoException);
         }
-        
+
         foreach ($statement->fetchAll('assoc') as $row) {
             $this->_dialect->convertParametersDescription($method, $row);
         }
-        
+
         $statement->closeCursor();
     }
 }

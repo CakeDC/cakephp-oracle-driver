@@ -18,6 +18,7 @@ use PHPUnit\Framework\Test;
 use PHPUnit\Framework\TestListener;
 use PHPUnit\Framework\TestSuite;
 use PHPUnit\Framework\Warning;
+use Throwable;
 
 /**
  * Test listener used to inject a fixture manager in all tests that
@@ -28,14 +29,14 @@ class OracleFixtureInjector implements TestListener
     /**
      * The instance of the fixture manager to use
      */
-    protected \CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager $_fixtureManager;
+    protected OracleFixtureManager $_fixtureManager;
 
     /**
      * Holds a reference to the container test suite
      *
      * @var \PHPUnit\Framework\TestSuite
      */
-    protected $_first;
+    protected TestSuite $_first;
 
     /**
      * Constructor. Save internally the reference to the passed fixture manager
@@ -47,7 +48,7 @@ class OracleFixtureInjector implements TestListener
         if (isset($_SERVER['argv'])) {
             $manager->setDebug(in_array('--debug', $_SERVER['argv']));
         }
-        
+
         $this->_fixtureManager = $manager;
         $this->_fixtureManager->shutDown();
     }
@@ -88,7 +89,7 @@ class OracleFixtureInjector implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addError(Test $test, \Throwable $e, $time): void
+    public function addError(Test $test, Throwable $e, float $time): void
     {
     }
 
@@ -100,7 +101,7 @@ class OracleFixtureInjector implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addWarning(Test $test, Warning $e, $time): void
+    public function addWarning(Test $test, Warning $e, float $time): void
     {
     }
 
@@ -112,7 +113,7 @@ class OracleFixtureInjector implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addFailure(Test $test, AssertionFailedError $e, $time): void
+    public function addFailure(Test $test, AssertionFailedError $e, float $time): void
     {
     }
 
@@ -124,7 +125,7 @@ class OracleFixtureInjector implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addIncompleteTest(Test $test, \Throwable $e, $time): void
+    public function addIncompleteTest(Test $test, Throwable $e, float $time): void
     {
     }
 
@@ -136,7 +137,7 @@ class OracleFixtureInjector implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addSkippedTest(Test $test, \Throwable $e, $time): void
+    public function addSkippedTest(Test $test, Throwable $e, float $time): void
     {
     }
 
@@ -161,7 +162,7 @@ class OracleFixtureInjector implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function endTest(Test $test, $time): void
+    public function endTest(Test $test, float $time): void
     {
         if ($test instanceof TestCase) {
             $this->_fixtureManager->unload($test);
@@ -176,7 +177,7 @@ class OracleFixtureInjector implements TestListener
      * @param float $time current time
      * @return void
      */
-    public function addRiskyTest(Test $test, \Throwable $e, $time): void
+    public function addRiskyTest(Test $test, Throwable $e, float $time): void
     {
     }
 }

@@ -26,7 +26,6 @@ use UnexpectedValueException;
 
 /**
  * A factory class to manage the life cycle of test fixtures
- *
  */
 class OracleFixtureManager
 {
@@ -35,35 +34,35 @@ class OracleFixtureManager
      *
      * @var bool
      */
-    protected $_initialized = false;
+    protected bool $_initialized = false;
 
     /**
      * Holds the fixture classes that where instantiated
      *
      * @var array
      */
-    protected $_loaded = [];
+    protected array $_loaded = [];
 
     /**
      * Holds the fixture classes that where instantiated indexed by class name
      *
      * @var array
      */
-    protected $_fixtureMap = [];
+    protected array $_fixtureMap = [];
 
     /**
      * A map of connection names and the fixture currently in it.
      *
      * @var array
      */
-    protected $_insertionMap = [];
+    protected array $_insertionMap = [];
 
     /**
      * List of TestCase class name that have been processed
      *
      * @var array
      */
-    protected $_processed = [];
+    protected array $_processed = [];
 
     /**
      * Is the test runner being run with `--debug` enabled.
@@ -71,7 +70,7 @@ class OracleFixtureManager
      *
      * @var bool
      */
-    protected $_debug = false;
+    protected bool $_debug = false;
 
     /**
      * Modify the debug mode.
@@ -79,7 +78,7 @@ class OracleFixtureManager
      * @param bool $debug Whether or not fixture debug mode is enabled.
      * @return void
      */
-    public function setDebug($debug): void
+    public function setDebug(bool $debug): void
     {
         $this->_debug = $debug;
     }
@@ -90,17 +89,17 @@ class OracleFixtureManager
      * @param \Cake\TestSuite\TestCase $test The test case to inspect.
      * @return void
      */
-    public function fixturize($test): void
+    public function fixturize(TestCase $test): void
     {
         $this->_initDb();
         if (empty($test->codeFixtures) || !empty($this->_processed[$test::class])) {
             return;
         }
-        
+
         if (!is_array($test->codeFixtures)) {
             $test->codeFixtures = array_map(trim(...), explode(',', $test->codeFixtures));
         }
-        
+
         $this->_loadCodeFixtures($test);
         $this->_processed[$test::class] = true;
     }
@@ -110,7 +109,7 @@ class OracleFixtureManager
      *
      * @return array
      */
-    public function loaded()
+    public function loaded(): array
     {
         return $this->_loaded;
     }
@@ -123,7 +122,7 @@ class OracleFixtureManager
      *
      * @return void
      */
-    protected function _aliasConnections()
+    protected function _aliasConnections(): void
     {
         $connections = ConnectionManager::configured();
         ConnectionManager::alias('test', 'default');
@@ -132,18 +131,18 @@ class OracleFixtureManager
             if ($connection === 'test' || $connection === 'default') {
                 continue;
             }
-            
+
             if (isset($map[$connection])) {
                 continue;
             }
-            
+
             if (str_starts_with($connection, 'test_')) {
                 $map[substr($connection, 5)] = $connection;
             } else {
                 $map['test_' . $connection] = $connection;
             }
         }
-        
+
         foreach ($map as $alias => $connection) {
             ConnectionManager::alias($connection, $alias);
         }
@@ -154,12 +153,12 @@ class OracleFixtureManager
      *
      * @return void
      */
-    protected function _initDb()
+    protected function _initDb(): void
     {
         if ($this->_initialized) {
             return;
         }
-        
+
         $this->_aliasConnections();
         $this->_initialized = true;
     }
@@ -171,12 +170,12 @@ class OracleFixtureManager
      * @return void
      * @throws \UnexpectedValueException when a referenced fixture does not exist.
      */
-    protected function _loadCodeFixtures($test)
+    protected function _loadCodeFixtures(TestCase $test): void
     {
         if (empty($test->codeFixtures)) {
             return;
         }
-        
+
         foreach ($test->codeFixtures as $fixture) {
             if (isset($this->_loaded[$fixture])) {
                 continue;
@@ -200,7 +199,7 @@ class OracleFixtureManager
                 $baseNamespace = '';
                 $name = $fixture;
             }
-            
+
             $name = Inflector::camelize($name);
             $nameSegments = [
                 $baseNamespace,
@@ -218,7 +217,7 @@ class OracleFixtureManager
                     'Referenced fixture class "%s" not found. Fixture "%s" was referenced in test case "%s".',
                     $className,
                     $fixture,
-                    $test::class
+                    $test::class,
                 );
                 throw new UnexpectedValueException($msg);
             }
@@ -234,7 +233,7 @@ class OracleFixtureManager
      * @param bool $drop whether drop the fixture if it is already created or not
      * @return void
      */
-    protected function _setupMethod($fixture, \Cake\Datasource\ConnectionInterface $db, array $sources, $drop = true)
+    protected function _setupMethod(MethodTestFixture $fixture, ConnectionInterface $db, array $sources, bool $drop = true): void
     {
         $configName = $db->configName();
         if ($this->isFixtureSetup($configName, $fixture)) {
@@ -261,7 +260,7 @@ class OracleFixtureManager
      * @return void
      * @throws \Cake\Core\Exception\Exception When fixture records cannot be inserted.
      */
-    public function load($test): void
+    public function load(TestCase $test): void
     {
         if (empty($test->codeFixtures)) {
             return;
@@ -273,7 +272,7 @@ class OracleFixtureManager
         }
 
         try {
-            $createMethods = function (\Cake\Datasource\ConnectionInterface $db, $fixtures) use ($test): void {
+            $createMethods = function (ConnectionInterface $db, $fixtures) use ($test): void {
                 $methods = $db->methodSchemaCollection()->listMethods();
                 $configName = $db->configName();
                 if (!isset($this->_insertionMap[$configName])) {
@@ -284,14 +283,14 @@ class OracleFixtureManager
                     if (empty($this->_loaded[$fixtureKey])) {
                         continue;
                     }
-                    
+
                     $fixture = $this->_loaded[$fixtureKey];
                     if (!$this->isFixtureSetup($configName, $fixture)) {
                         $this->_setupMethod(
                             $fixture,
                             $db,
                             $methods,
-                            $this->_dropTablesEnabled($test)
+                            $this->_dropTablesEnabled($test),
                         );
                     }
                 }
@@ -310,7 +309,7 @@ class OracleFixtureManager
      * @param callable $operation The operation to run on each connection + fixture set.
      * @return void
      */
-    protected function _runOperation($fixtures, $operation)
+    protected function _runOperation(array $fixtures, callable $operation): void
     {
         $dbs = $this->_fixtureConnections($fixtures);
         foreach ($dbs as $connection => $fixtures) {
@@ -322,7 +321,7 @@ class OracleFixtureManager
             if ($logQueries && !$this->_debug) {
                 $driver->disableQueryLogging();
             }
-            
+
             $db->transactional(function (Connection $db) use ($fixtures, $operation): void {
                 $db->disableConstraints(function (Connection $db) use ($fixtures, $operation): void {
                     $operation($db, $fixtures);
@@ -354,7 +353,7 @@ class OracleFixtureManager
         if (!property_exists($test, 'autoFixtures')) {
             return true;
         }
-        
+
         $property = new ReflectionProperty($test, 'autoFixtures');
 
         return (bool)$property->getValue($test);
@@ -369,7 +368,7 @@ class OracleFixtureManager
         if (!property_exists($test, 'dropTables')) {
             return true;
         }
-        
+
         $property = new ReflectionProperty($test, 'dropTables');
 
         return (bool)$property->getValue($test);
@@ -381,7 +380,7 @@ class OracleFixtureManager
      * @param array $fixtures The array of fixtures a list of connections is needed from.
      * @return array An array of connection names.
      */
-    protected function _fixtureConnections($fixtures): array
+    protected function _fixtureConnections(array $fixtures): array
     {
         $dbs = [];
         foreach ($fixtures as $f) {
@@ -400,7 +399,7 @@ class OracleFixtureManager
      * @param \Cake\TestSuite\TestCase $test The test to inspect for fixture unloading.
      * @return void
      */
-    public function unload($test)
+    public function unload(TestCase $test): void
     {
     }
 
@@ -413,7 +412,7 @@ class OracleFixtureManager
      * @return void
      * @throws \UnexpectedValueException if $name is not a previously loaded class
      */
-    public function loadSingleMethod($name, $db = null, $drop = true): void
+    public function loadSingleMethod(string $name, ?ConnectionInterface $db = null, bool $drop = true): void
     {
         if (isset($this->_fixtureMap[$name])) {
             $fixture = $this->_fixtureMap[$name];
@@ -457,7 +456,7 @@ class OracleFixtureManager
      * @param \CakeDC\OracleDriver\TestSuite\Fixture\MethodTestFixture $fixture The fixture to check.
      * @return bool
      */
-    public function isFixtureSetup($connection, $fixture): bool
+    public function isFixtureSetup(string $connection, MethodTestFixture $fixture): bool
     {
         return isset($this->_insertionMap[$connection]) && in_array($fixture, $this->_insertionMap[$connection]);
     }

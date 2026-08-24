@@ -27,7 +27,7 @@ class MethodLogger
         if (!empty($method->params)) {
             $method->method = $this->_interpolate($method);
         }
-        
+
         $this->_log($method);
     }
 
@@ -38,7 +38,7 @@ class MethodLogger
      * @param \CakeDC\OracleDriver\Database\Log\LoggedMethod $method to be written in log
      * @return void
      */
-    protected function _log($method)
+    protected function _log(LoggedMethod $method): void
     {
         Log::write('debug', print_r($method, true), ['queriesLog']);
     }
@@ -50,7 +50,7 @@ class MethodLogger
      * @param \CakeDC\OracleDriver\Database\Log\LoggedMethod $method The method to log
      * @return string
      */
-    protected function _interpolate($method): ?string
+    protected function _interpolate(LoggedMethod $method): ?string
     {
         $params = array_map(function ($p) {
             if ($p === null) {
@@ -71,7 +71,7 @@ class MethodLogger
                 unset($params[$key]);
                 continue;
             }
-            
+
             $keys[] = is_string($key) ? "/$key\b/" : '/[?]/';
         }
 

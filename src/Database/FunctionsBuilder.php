@@ -26,7 +26,7 @@ class FunctionsBuilder
      * @param array $types list of types for each function param
      * @return \Cake\Database\Expression\FunctionExpression
      */
-    protected function _build($name, $params = [], $types = []): \Cake\Database\Expression\FunctionExpression
+    protected function _build(string $name, array $params = [], array $types = []): FunctionExpression
     {
         return new FunctionExpression($name, $params, $types);
     }
@@ -38,7 +38,7 @@ class FunctionsBuilder
      * @param mixed $expression the function argument.
      * @return array
      */
-    protected function _literalArgument($expression)
+    protected function _literalArgument(mixed $expression): array
     {
         if (is_string($expression)) {
             $expression = [$expression => 'literal'];
@@ -56,7 +56,7 @@ class FunctionsBuilder
      * @param array $types list of types to bind to the arguments
      * @return \Cake\Database\Expression\FunctionExpression
      */
-    public static function toChar($expression, $types = [])
+    public static function toChar(mixed $expression, array $types = []): FunctionExpression
     {
         $builder = self::getInstance();
         $args = [];
@@ -73,14 +73,14 @@ class FunctionsBuilder
      * @param array $types list of types to bind to the arguments
      * @return \Cake\Database\Expression\FunctionExpression
      */
-    public static function toCharWithFormat($expression, $format = null, $types = [])
+    public static function toCharWithFormat(mixed $expression, mixed $format = null, array $types = []): FunctionExpression
     {
         $builder = self::getInstance();
         $args = [];
         if ($format === null) {
             $format = $builder->_defaultDateFormat;
         }
-        
+
         $args += $builder->_literalArgument($expression);
         $args[] = $format;
 
@@ -95,14 +95,14 @@ class FunctionsBuilder
      * @param array $types list of types to bind to the arguments
      * @return \Cake\Database\Expression\FunctionExpression
      */
-    public static function toDate($expression, $format = null, $types = [])
+    public static function toDate(mixed $expression, mixed $format = null, array $types = []): FunctionExpression
     {
         $builder = self::getInstance();
         $args = [];
         if ($format === null) {
             $format = $builder->_defaultDateFormat;
         }
-        
+
         $args += $builder->_literalArgument($expression);
         $args[] = $format;
 
@@ -118,9 +118,10 @@ class FunctionsBuilder
      * params
      * @return \Cake\Database\Expression\FunctionExpression
      */
-    public function __call(string $name, array $args)
+    public function __call(string $name, array $args): FunctionExpression
     {
         $builder = self::getInstance();
+
         return match (count($args)) {
             0 => $builder->_build($name),
             1 => $builder->_build($name, $args[0]),

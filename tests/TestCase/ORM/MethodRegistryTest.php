@@ -18,6 +18,7 @@ use CakeDC\OracleDriver\ORM\Locator\LocatorInterface;
 use CakeDC\OracleDriver\ORM\Locator\MethodLocator;
 use CakeDC\OracleDriver\ORM\Method;
 use CakeDC\OracleDriver\ORM\MethodRegistry;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Test case for MethodRegistry
@@ -59,7 +60,7 @@ class MethodRegistryTest extends TestCase
      *
      * @return \CakeDC\OracleDriver\ORM\Locator\LocatorInterface
      */
-    protected function _setMockLocator(): \PHPUnit\Framework\MockObject\MockObject
+    protected function _setMockLocator(): MockObject
     {
         $locator = $this->getMockBuilder(LocatorInterface::class)->getMock();
         MethodRegistry::locator($locator);

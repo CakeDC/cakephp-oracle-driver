@@ -17,7 +17,7 @@ use Cake\Core\Exception\CakeException;
 class UnallowedDataTypeException extends CakeException
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected string $_messageTemplate = 'Column type %s not supported.';
 }

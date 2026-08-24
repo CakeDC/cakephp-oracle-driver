@@ -17,7 +17,7 @@ use CakeDC\OracleDriver\Database\OCI8\OCI8Statement as Statement;
 class Oci8Statement extends Statement
 {
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function closeCursor(): bool
     {
@@ -27,7 +27,7 @@ class Oci8Statement extends Statement
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function __destruct()
     {

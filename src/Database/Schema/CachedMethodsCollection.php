@@ -17,7 +17,6 @@ use Cake\Datasource\ConnectionInterface;
 
 /**
  * Extends the schema collection class to provide caching
- *
  */
 class CachedMethodsCollection extends MethodsCollection
 {
@@ -27,7 +26,7 @@ class CachedMethodsCollection extends MethodsCollection
      *
      * @var string|bool
      */
-    protected $_cache = false;
+    protected string|bool $_cache = false;
 
     /**
      * Constructor.
@@ -35,17 +34,16 @@ class CachedMethodsCollection extends MethodsCollection
      * @param \Cake\Datasource\ConnectionInterface $connection The connection instance.
      * @param string|bool $cacheKey The cache key or boolean false to disable caching.
      */
-    public function __construct(ConnectionInterface $connection, $cacheKey = true)
+    public function __construct(ConnectionInterface $connection, string|bool $cacheKey = true)
     {
         parent::__construct($connection);
         $this->cacheMetadata($cacheKey);
     }
 
     /**
-     * {@inheritDoc}
-     *
+     * @inheritDoc
      */
-    public function describe(string $name, array $options = []): \CakeDC\OracleDriver\Database\Schema\MethodSchema
+    public function describe(string $name, array $options = []): MethodSchema
     {
         $options += ['forceRefresh' => false];
         $cacheConfig = $this->cacheMetadata();
@@ -73,7 +71,7 @@ class CachedMethodsCollection extends MethodsCollection
      * @param string $name The name to get a cache key for.
      * @return string The cache key.
      */
-    public function cacheKey($name): string
+    public function cacheKey(string $name): string
     {
         return $this->_connection->configName() . '_' . $name;
     }
@@ -86,12 +84,12 @@ class CachedMethodsCollection extends MethodsCollection
      * @param bool $enable whether or not to enable caching
      * @return string|bool
      */
-    public function cacheMetadata($enable = null)
+    public function cacheMetadata(?bool $enable = null): string|bool
     {
         if ($enable === null) {
             return $this->_cache;
         }
-        
+
         if ($enable) {
             $enable = '_cake_method_';
         }
