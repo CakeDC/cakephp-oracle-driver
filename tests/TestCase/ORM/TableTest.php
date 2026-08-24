@@ -298,9 +298,9 @@ class TableTest extends CakeTableTest
 
         $this->assertCount(3, $result);
 
-        $postRow = array_values(array_filter($result, fn($r): bool => $r['foreign_model'] === 'Posts'));
-        $articleRows = array_values(array_filter($result, fn($r): bool => $r['foreign_model'] === 'Articles'));
-        usort($articleRows, fn($a, $b): int => $a['tag_id'] <=> $b['tag_id']);
+        $postRow = array_values(array_filter($result, fn(array $r): bool => $r['foreign_model'] === 'Posts'));
+        $articleRows = array_values(array_filter($result, fn(array $r): bool => $r['foreign_model'] === 'Articles'));
+        usort($articleRows, fn(array $a, array $b): int => $a['tag_id'] <=> $b['tag_id']);
 
         $this->assertSame('Posts', $postRow[0]['foreign_model']);
         $this->assertSame(1, $articleRows[0]['tag_id']);
