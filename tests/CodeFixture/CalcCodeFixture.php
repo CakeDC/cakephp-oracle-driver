@@ -19,11 +19,11 @@ class CalcCodeFixture extends MethodTestFixture
 {
 //    public $type = 'package';
 
-    public $name = 'CALC';
+    public string $name = 'CALC';
 
-    public $create = [];
+    public array $create = [];
 
-    public $drop = 'drop package calc';
+    public array $drop = ['drop package calc'];
 
     public function __construct()
     {

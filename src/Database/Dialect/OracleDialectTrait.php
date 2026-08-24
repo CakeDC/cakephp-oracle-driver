@@ -17,7 +17,6 @@ use Cake\Database\ExpressionInterface;
 use Cake\Database\Query;
 use Cake\Database\Query\InsertQuery;
 use Cake\Database\Query\SelectQuery;
-use Cake\Database\Schema\SchemaDialect;
 use CakeDC\OracleDriver\Database\Expression\SimpleExpression;
 use CakeDC\OracleDriver\Database\Schema\OracleSchema;
 
@@ -209,7 +208,7 @@ trait OracleDialectTrait
      *
      * @return \CakeDC\OracleDriver\Database\Schema\OracleSchema
      */
-    public function schemaDialect(): SchemaDialect
+    public function schemaDialect(): OracleSchema
     {
         if (!isset($this->_schemaDialect)) {
             $this->_schemaDialect = new OracleSchema($this);

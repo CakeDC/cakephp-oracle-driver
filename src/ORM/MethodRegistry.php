@@ -146,6 +146,16 @@ class MethodRegistry
     }
 
     /**
+     * Get all instantiated method objects.
+     *
+     * @return array<\CakeDC\OracleDriver\ORM\Method>
+     */
+    public static function genericInstances(): array
+    {
+        return static::locator()->genericInstances();
+    }
+
+    /**
      * Proxy for static calls on a locator.
      *
      * @param string $name Method name.

@@ -14,6 +14,7 @@ namespace CakeDC\OracleDriver\Database\Statement\Method;
 
 use Cake\Database\Driver;
 use Cake\Database\StatementInterface;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
 use CakeDC\OracleDriver\Database\TypeConverterTrait;
 use Countable;
 use IteratorAggregate;
@@ -194,7 +195,12 @@ class StatementDecorator implements StatementInterface, Countable, IteratorAggre
             }
         }
 
-        return $this->_driver->lastInsertId($table, $column);
+        $driver = $this->_driver;
+        if ($driver instanceof OracleBase) {
+            return $driver->lastInsertId($table, $column);
+        }
+
+        return $driver->lastInsertId($table);
     }
 
     /**

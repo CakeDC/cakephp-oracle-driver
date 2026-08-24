@@ -184,10 +184,10 @@ trait RequestTrait
      * @param array $options options to be used for setting the property. Allowed option
 
      * keys are `setter`
-     * @return $this
+     * @return \CakeDC\OracleDriver\ORM\RequestInterface
      * @throws \InvalidArgumentException
      */
-    public function set(string|array $property, mixed $value = null, array $options = [])
+    public function set(string|array $property, mixed $value = null, array $options = []): RequestInterface
     {
         $isString = is_string($property);
         if ($isString && $property !== '') {
@@ -422,9 +422,9 @@ trait RequestTrait
                 }
 
                 if ($parameter['out']) {
-                    $statement->bindParam($paramName, $this->_properties[$name], $type);
+                    $statement->bindValue($paramName, $this->_properties[$name], $type);
                 } else {
-                    $statement->bindParam($paramName, $this->_castedProperties[$name], $type);
+                    $statement->bindValue($paramName, $this->_castedProperties[$name], $type);
                 }
             }
         }

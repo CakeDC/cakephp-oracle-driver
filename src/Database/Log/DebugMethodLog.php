@@ -45,9 +45,9 @@ class DebugMethodLog extends MethodLogger
     /**
      * Total time (ms) of all queries
      *
-     * @var int
+     * @var float|int
      */
-    protected int $_totalTime = 0;
+    protected int|float $_totalTime = 0;
 
     /**
      * Total rows of all queries
@@ -91,9 +91,9 @@ class DebugMethodLog extends MethodLogger
     /**
      * Get the total time
      *
-     * @return int
+     * @return float|int
      */
-    public function totalTime(): int
+    public function totalTime(): int|float
     {
         return $this->_totalTime;
     }

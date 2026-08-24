@@ -33,7 +33,7 @@ class MyUsersMethod extends Method
      *
      * @var string
      */
-    protected $_method = 'users';
+    protected string $_method = 'users';
 }
 
 /**

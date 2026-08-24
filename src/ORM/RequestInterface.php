@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\ORM;
 
 use ArrayAccess;
-use Cake\Datasource\EntityInterface;
 use JsonSerializable;
 
 /**
@@ -31,9 +30,9 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      * first argument is also an array, in which case will be treated as $options
      * @param array $options options to be used for setting the property. Allowed option
      * keys are `setter` and `guard`
-     * @return \Cake\Datasource\EntityInterface
+     * @return \CakeDC\OracleDriver\ORM\RequestInterface
      */
-    public function set(string|array $property, mixed $value = null, array $options = []): EntityInterface;
+    public function set(string|array $property, mixed $value = null, array $options = []): RequestInterface;
 
     /**
      * Returns the value of a property by name

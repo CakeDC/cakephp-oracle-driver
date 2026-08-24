@@ -102,7 +102,7 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
             $this->_sth = $statement;
             $paramMap = [];
         } else {
-            [$statement, $paramMap] = str_split(self::convertPositionalToNamedPlaceholders($statement));
+            [$statement, $paramMap] = self::convertPositionalToNamedPlaceholders($statement);
             $this->_sth = oci_parse($dbh, $statement);
         }
 

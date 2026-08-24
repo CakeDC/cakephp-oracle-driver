@@ -69,4 +69,11 @@ interface LocatorInterface
      * @return void
      */
     public function remove(string $alias): void;
+
+    /**
+     * Get all instantiated method objects.
+     *
+     * @return array<\CakeDC\OracleDriver\ORM\Method>
+     */
+    public function genericInstances(): array;
 }

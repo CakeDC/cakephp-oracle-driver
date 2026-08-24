@@ -36,14 +36,14 @@ class OracleConnection extends Connection
      *
      * @var \CakeDC\OracleDriver\Database\Log\MethodLogger
      */
-    protected MethodLogger $_methodLogger;
+    protected ?MethodLogger $_methodLogger = null;
 
     /**
      * The methods collection object
      *
      * @var \CakeDC\OracleDriver\Database\Schema\MethodsCollection
      */
-    protected MethodsCollection $_schemaMethodsCollection;
+    protected ?MethodsCollection $_schemaMethodsCollection = null;
 
     /**
      * Builds oracle connection based on generic cakephp connection class.

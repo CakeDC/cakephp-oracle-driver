@@ -83,7 +83,7 @@ class BoolType extends BaseType implements BatchCastingInterface
      * Convert bool values to PHP booleans
      *
      * @param mixed $value The value to convert.
-     * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
      * @return bool|null
      */
     public function toPHP(mixed $value, Driver $driver): ?bool
@@ -137,7 +137,7 @@ class BoolType extends BaseType implements BatchCastingInterface
      * Get the correct PDO binding type for bool data.
      *
      * @param mixed $value The value being bound.
-     * @param \Cake\Database\DriverInterface $driver The driver.
+     * @param \Cake\Database\Driver $driver The driver.
      * @return int
      */
     public function toStatement(mixed $value, Driver $driver): int

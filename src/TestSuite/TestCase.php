@@ -10,66 +10,43 @@ declare(strict_types=1);
  * @copyright Copyright 2015 - 2020, Cake Development Corporation (http://cakedc.com)
  * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
-
 namespace CakeDC\OracleDriver\TestSuite;
 
-use Cake\TestSuite\TestCase as CakeTestCase;
+use Cake\TestSuite\TestCase as BaseTestCase;
 use CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager;
-use Exception;
 
 /**
- * CakeDC Oracle TestCase class
+ * Base test case for the Oracle driver test suite.
+ *
+ * Loads and unloads the Oracle "method" fixtures (stored procedures) via a
+ * shared `OracleFixtureManager` instance, mirroring how CakePHP core loads
+ * regular table fixtures from `TestCase::setUp()`.
  */
-abstract class TestCase extends CakeTestCase
+class TestCase extends BaseTestCase
 {
     /**
-     * The class responsible for managing PL/SQL code fixture lifecycle.
+     * Fixturizes and loads the Oracle method fixtures declared by the test.
      *
-     * @var \CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager|null
-     */
-    public ?OracleFixtureManager $methodFixtureManager = null;
-
-    /**
-     * Shared Oracle code fixture manager instance.
-     *
-     * @var \CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager|null
-     */
-    protected static ?OracleFixtureManager $oracleFixtureManager = null;
-
-    /**
-     * @inheritDoc
+     * @return void
      */
     protected function setUp(): void
     {
         parent::setUp();
 
-        if (property_exists($this, 'codeFixtures') && !empty($this->codeFixtures)) {
-            if (!self::$oracleFixtureManager instanceof OracleFixtureManager) {
-                self::$oracleFixtureManager = new OracleFixtureManager();
-            }
-
-            $this->methodFixtureManager = self::$oracleFixtureManager;
-            self::$oracleFixtureManager->fixturize($this);
-            self::$oracleFixtureManager->load($this);
-        }
+        $manager = OracleFixtureManager::instance();
+        $manager->fixturize($this);
+        $manager->load($this);
     }
 
     /**
-     * Chooses which code fixtures to load for a given test.
-     *
-     * Each parameter is a code module name that corresponds to a fixture.
+     * Unloads the Oracle method fixtures declared by the test.
      *
      * @return void
-     * @throws \Exception when no fixture manager is available.
      */
-    public function loadMethodFixtures(...$args): void
+    protected function tearDown(): void
     {
-        if (!$this->methodFixtureManager instanceof OracleFixtureManager) {
-            throw new Exception('No fixture manager to load the test fixture');
-        }
+        OracleFixtureManager::instance()->unload($this);
 
-        foreach ($args as $class) {
-            $this->methodFixtureManager->loadSingleMethod($class, null, $this->dropTables);
-        }
+        parent::tearDown();
     }
 }

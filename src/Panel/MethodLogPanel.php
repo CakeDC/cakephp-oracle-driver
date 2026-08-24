@@ -24,7 +24,7 @@ use DebugKit\DebugPanel;
  */
 class MethodLogPanel extends DebugPanel
 {
-    public $plugin = 'OracleDriver';
+    public string $plugin = 'OracleDriver';
 
     /**
      * Loggers connected

@@ -30,6 +30,27 @@ use UnexpectedValueException;
 class OracleFixtureManager
 {
     /**
+     * The shared fixture manager instance used across the test run.
+     *
+     * @var self|null
+     */
+    protected static ?OracleFixtureManager $_instance = null;
+
+    /**
+     * Returns the shared fixture manager instance.
+     *
+     * @return self
+     */
+    public static function instance(): OracleFixtureManager
+    {
+        if (self::$_instance === null) {
+            self::$_instance = new self();
+        }
+
+        return self::$_instance;
+    }
+
+    /**
      * Was this instance already initialized?
      *
      * @var bool
@@ -258,7 +279,7 @@ class OracleFixtureManager
      *
      * @param \Cake\TestSuite\TestCase $test The test to inspect for fixture loading.
      * @return void
-     * @throws \Cake\Core\Exception\Exception When fixture records cannot be inserted.
+     * @throws \Cake\Core\Exception\CakeException When fixture records cannot be inserted.
      */
     public function load(TestCase $test): void
     {

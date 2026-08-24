@@ -181,7 +181,7 @@ class ResultSet implements ResultSetInterface
      *
      * Part of Iterator interface.
      *
-     * @throws \Cake\Database\Exception
+     * @throws \Cake\Database\Exception\DatabaseException
      * @return void
      */
     public function rewind(): void
@@ -367,7 +367,7 @@ class ResultSet implements ResultSetInterface
     {
         $types = [];
         $schema = $this->_schema;
-        $map = array_keys(TypeFactory::map() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
+        $map = array_keys((array)TypeFactory::getMap() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
         $typeMap = array_combine(
             $map,
             array_map(['Cake\Database\Type', 'build'], $map),

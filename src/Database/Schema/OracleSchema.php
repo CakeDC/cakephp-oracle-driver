@@ -15,6 +15,7 @@ namespace CakeDC\OracleDriver\Database\Schema;
 use Cake\Database\Schema\ForeignKey;
 use Cake\Database\Schema\SchemaDialect;
 use Cake\Database\Schema\TableSchema;
+use Cake\Database\Schema\TableSchemaInterface;
 use Cake\Utility\Hash;
 use CakeDC\OracleDriver\Database\Exception\UnallowedDataTypeException;
 
@@ -938,7 +939,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
     /**
      * @inheritDoc
      */
-    public function columnSql(TableSchema $schema, string $name): string
+    public function columnSql(TableSchemaInterface $schema, string $name): string
     {
         $data = $schema->getColumn($name);
 

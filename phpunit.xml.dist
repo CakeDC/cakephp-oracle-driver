@@ -3,41 +3,27 @@
     colors="true"
     processIsolation="false"
     stopOnFailure="false"
-    syntaxCheck="false"
     bootstrap="./tests/bootstrap.php"
     >
 
     <!-- Add any additional test suites you want to run here -->
 	<testsuites>
 		<testsuite name="Database Test Suite">
-			<file>./tests/TestCase/DatabaseSuite.php</file>
+			<directory>./tests/TestCase</directory>
 		</testsuite>
 	</testsuites>
 
-	<listeners>
-		<listener
-				class="\Cake\TestSuite\Fixture\FixtureInjector"
-				file="./vendor/cakephp/cakephp/src/TestSuite/Fixture/FixtureInjector.php">
-			<arguments>
-				<object class="\Cake\TestSuite\Fixture\FixtureManager"/>
-			</arguments>
-		</listener>
-		<listener
-				class="\CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureInjector"
-				file="./src/TestSuite/Fixture/OracleFixtureInjector.php">
-			<arguments>
-				<object class="\CakeDC\OracleDriver\TestSuite\Fixture\OracleFixtureManager"/>
-			</arguments>
-		</listener>
-	</listeners>
+	<extensions>
+		<extension class="CakeDC\OracleDriver\Test\TestCase\DatabaseSuite"/>
+	</extensions>
 
 	<!-- Prevent coverage reports from looking in tests, vendors, config folders -->
-	<filter>
-		<whitelist>
+	<source>
+		<include>
 			<directory suffix=".php">./src/</directory>
 			<directory suffix=".ctp">./src/</directory>
-		</whitelist>
-	</filter>
+		</include>
+	</source>
 
 	<php>
         <ini name="memory_limit" value="-1"/>
@@ -56,4 +42,3 @@
 		-->
 	</php>
 </phpunit>
-

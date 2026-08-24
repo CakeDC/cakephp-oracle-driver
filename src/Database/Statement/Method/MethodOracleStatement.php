@@ -19,7 +19,7 @@ use PDO;
  */
 class MethodOracleStatement extends MethodStatementDecorator
 {
-    public $queryString;
+    public string $queryString;
 
     public $paramMap;
 

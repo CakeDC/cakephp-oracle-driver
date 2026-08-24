@@ -223,7 +223,7 @@ class MethodLocator implements LocatorInterface
     /**
      * @inheritDoc
      */
-    public function set($alias, Method $object)
+    public function set(string $alias, Method $object): Method
     {
         return $this->_instances[$alias] = $object;
     }

@@ -81,7 +81,7 @@ class IntegerType extends BaseType implements BatchCastingInterface
      * Convert integer data into the database format.
      *
      * @param mixed $value The value to convert.
-     * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
      * @return int|null
      */
     public function toDatabase(mixed $value, Driver $driver): ?int
@@ -99,7 +99,7 @@ class IntegerType extends BaseType implements BatchCastingInterface
      * Convert integer values to PHP integers
      *
      * @param mixed $value The value to convert.
-     * @param \Cake\Database\DriverInterface $driver The driver instance to convert with.
+     * @param \Cake\Database\Driver $driver The driver instance to convert with.
      * @return int|null
      */
     public function toPHP(mixed $value, Driver $driver): ?int

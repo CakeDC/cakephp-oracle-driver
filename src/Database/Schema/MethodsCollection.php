@@ -12,9 +12,8 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database\Schema;
 
+use Cake\Database\Connection;
 use Cake\Database\Exception\DatabaseException;
-use Cake\Database\Schema\BaseSchema;
-use Cake\Datasource\ConnectionInterface;
 use PDOException;
 
 /**
@@ -28,21 +27,21 @@ class MethodsCollection
     /**
      * Connection object
      */
-    protected ConnectionInterface $_connection;
+    protected Connection $_connection;
 
     /**
      * Schema dialect instance.
      *
-     * @var \Cake\Database\Schema\BaseSchema
+     * @var \CakeDC\OracleDriver\Database\Schema\OracleSchema
      */
-    protected BaseSchema $_dialect;
+    protected OracleSchema $_dialect;
 
     /**
      * Constructor.
      *
-     * @param \Cake\Datasource\ConnectionInterface $connection The connection instance.
+     * @param \Cake\Database\Connection $connection The connection instance.
      */
-    public function __construct(ConnectionInterface $connection)
+    public function __construct(Connection $connection)
     {
         $this->_connection = $connection;
         $this->_dialect = $connection->getDriver()->schemaDialect();
@@ -104,7 +103,7 @@ class MethodsCollection
      * @param string $name The name of the method to describe.
      * @param array $options The options to use, see above.
      * @return \CakeDC\OracleDriver\Database\Schema\MethodSchema Object with method metadata.
-     * @throws \Cake\Database\Exception when method cannot be described.
+     * @throws \Cake\Database\Exception\DatabaseException when method cannot be described.
      */
     public function describe(string $name, array $options = []): MethodSchema
     {
@@ -128,7 +127,7 @@ class MethodsCollection
      * @param string $name The method name.
      * @param array $config The config data.
      * @return void
-     * @throws \Cake\Database\Exception on query failure.
+     * @throws \Cake\Database\Exception\DatabaseException on query failure.
      */
     protected function _reflect(MethodSchema $method, string $name, array $config): void
     {

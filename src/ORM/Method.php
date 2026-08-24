@@ -93,12 +93,12 @@ class Method
     }
 
     /**
-     * Returns the database method name or sets a new one
+     * Sets the database method name.
      *
      * @param string $method the new method name
-     * @return string
+     * @return \CakeDC\OracleDriver\ORM\Method
      */
-    public function setMethod(string $method): string
+    public function setMethod(string $method): Method
     {
         $this->_method = $method;
 

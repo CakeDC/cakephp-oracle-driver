@@ -61,6 +61,7 @@ _define('CORE_TEST_CASES', CORE_TESTS . 'TestCase');
 _define('TEST_APP', CORE_TESTS . 'test_app' . DS);
 
 require_once ROOT . '/vendor/autoload.php';
+require_once ROOT . '/vendor/cakephp/cakephp/src/functions.php';
 require_once CORE_PATH . 'config/bootstrap.php';
 
 Configure::write('App', [

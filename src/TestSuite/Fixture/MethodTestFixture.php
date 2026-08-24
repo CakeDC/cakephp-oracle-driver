@@ -55,7 +55,7 @@ class MethodTestFixture
     /**
      * Instantiate the fixture.
      *
-     * @throws \Cake\Core\Exception\Exception on invalid datasource usage.
+     * @throws \Cake\Core\Exception\CakeException on invalid datasource usage.
      */
     public function __construct()
     {
