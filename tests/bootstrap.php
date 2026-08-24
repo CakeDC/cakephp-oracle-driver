@@ -150,7 +150,9 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
     $tables = include $schemaFile;
     /** @var \Cake\Database\Connection $connection */
     $connection = ConnectionManager::get('test');
-    $connection->getDriver()->enableAutoQuoting(true);
+    $quotingEnv = getenv('ORACLE_IDENTIFIER_QUOTING');
+    $quotingEnabled = $quotingEnv === false || $quotingEnv === '1';
+    $connection->getDriver()->enableAutoQuoting($quotingEnabled);
     $driver = $connection->getDriver();
     $recreateSchema = filter_var(
         getenv('ORACLE_RECREATE_SCHEMA') ?: '0',

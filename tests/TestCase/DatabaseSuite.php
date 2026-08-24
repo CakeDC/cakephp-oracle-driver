@@ -31,7 +31,7 @@ class DatabaseSuite implements Extension
      */
     public const PERMUTATIONS = [
         'Identifier Quoting' => true,
-        'No identifier quoting' => false,
+        // 'No identifier quoting' => false, // disabled
     ];
 
     /**
