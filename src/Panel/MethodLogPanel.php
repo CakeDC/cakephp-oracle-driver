@@ -65,7 +65,7 @@ class MethodLogPanel extends DebugPanel
 
             $logger = new DebugMethodLog($logger, $name);
 
-            $connection->enableQueryLogging(true);
+            $connection->getDriver()->enableQueryLogging();
             $connection->methodLogger($logger);
             $this->_loggers[] = $logger;
         }
@@ -79,7 +79,7 @@ class MethodLogPanel extends DebugPanel
     public function data(): array
     {
         return [
-            'methods' => array_map(fn($method) => $method->method(), MethodRegistry::genericInstances()),
+            'methods' => array_map(fn($method) => $method->getMethod(), MethodRegistry::genericInstances()),
             'loggers' => $this->_loggers,
         ];
     }

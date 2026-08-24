@@ -22,9 +22,9 @@ trait LocatorAwareTrait
     /**
      * Method locator instance
      *
-     * @var \CakeDC\OracleDriver\ORM\Locator\LocatorInterface
+     * @var \CakeDC\OracleDriver\ORM\Locator\LocatorInterface|null
      */
-    protected LocatorInterface $_methodLocator;
+    protected ?LocatorInterface $_methodLocator = null;
 
     /**
      * Sets the method locator.
@@ -39,7 +39,7 @@ trait LocatorAwareTrait
             $this->_methodLocator = $methodLocator;
         }
 
-        if (!$this->_methodLocator) {
+        if ($this->_methodLocator === null) {
             $this->_methodLocator = MethodRegistry::locator();
         }
 

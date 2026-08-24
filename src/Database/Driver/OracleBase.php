@@ -441,6 +441,16 @@ abstract class OracleBase extends Driver
     }
 
     /**
+     * Returns whether query logging is enabled on this driver.
+     *
+     * @return bool
+     */
+    public function isQueryLoggingEnabled(): bool
+    {
+        return $this->logQueries;
+    }
+
+    /**
      * Prepares a PL/SQL statement to be executed.
      *
      * @param string $queryString The PL/SQL to convert into a prepared statement.

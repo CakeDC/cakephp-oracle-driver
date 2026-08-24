@@ -63,5 +63,5 @@ interface RequestInterface extends ArrayAccess, JsonSerializable
      * @return bool If it is known whether the entity was already persisted
      * null otherwise
      */
-    public function isNew(?bool $new = null): bool;
+    public function isNew(mixed $new = null): bool;
 }

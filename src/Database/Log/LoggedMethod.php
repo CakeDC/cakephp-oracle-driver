@@ -38,9 +38,9 @@ class LoggedMethod implements Stringable
     /**
      * Associative array with the params bound to the method string
      *
-     * @var string
+     * @var array
      */
-    public string $params = [];
+    public array $params = [];
 
     /**
      * Number of rows affected or returned by the method execution

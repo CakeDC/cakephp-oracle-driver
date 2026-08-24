@@ -34,9 +34,9 @@ class ResultSet implements ResultSetInterface
     /**
      * Database statement holding the results
      *
-     * @var \Cake\Database\StatementInterface
+     * @var \Cake\Database\StatementInterface|null
      */
-    protected StatementInterface $_statement;
+    protected ?StatementInterface $_statement = null;
 
     /**
      * Points to the next record number that should be fetched
@@ -48,9 +48,9 @@ class ResultSet implements ResultSetInterface
     /**
      * Last record fetched from the statement
      *
-     * @var array
+     * @var array|object|false
      */
-    protected array $_current;
+    protected mixed $_current = false;
 
     /**
      * Results that have been fetched or hydrated into the results.
@@ -83,9 +83,9 @@ class ResultSet implements ResultSetInterface
     /**
      * Holds the count of records in this result set
      *
-     * @var int
+     * @var int|null
      */
-    protected int $_count;
+    protected ?int $_count = null;
 
     /**
      * Type cache for type converters.
@@ -145,9 +145,9 @@ class ResultSet implements ResultSetInterface
      *
      * Part of Iterator interface.
      *
-     * @return object|array
+     * @return object|array|false
      */
-    public function current(): array|object
+    public function current(): mixed
     {
         return $this->_current;
     }
@@ -238,7 +238,7 @@ class ResultSet implements ResultSetInterface
      * Helper function to fetch the next result from the statement or
      * seeded results.
      *
-     * @return mixed
+     * @return false|object|array
      */
     protected function _fetchResult(): false|object|array
     {
@@ -257,14 +257,14 @@ class ResultSet implements ResultSetInterface
     /**
      * Correctly nests results keys including those coming from associations
      *
-     * @param mixed $row Array containing columns and values or false if there is no results
-     * @return array Results
+     * @param array $row Array containing columns and values
+     * @return object|array Results
      */
     protected function _groupResult(array $row): object|array
     {
         $results = $this->_castValues($row);
         $options = [];
-        if ($this->_hydrate && !($results instanceof EntityInterface)) {
+        if ($this->_hydrate) {
             return new $this->_entityClass($results, $options);
         }
 
@@ -276,7 +276,7 @@ class ResultSet implements ResultSetInterface
      *
      * This method will also close the underlying statement cursor.
      *
-     * @return object|array
+     * @return object|array|false
      */
     public function first(): mixed
     {
@@ -287,6 +287,8 @@ class ResultSet implements ResultSetInterface
 
             return $result;
         }
+
+        return false;
     }
 
     /**

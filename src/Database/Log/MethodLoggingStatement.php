@@ -67,11 +67,11 @@ class MethodLoggingStatement extends MethodStatementDecorator
      * to the logging system.
      *
      * @param \CakeDC\OracleDriver\Database\Log\LoggedMethod $method The method to log.
-     * @param array $params List of values to be bound to method.
+     * @param array|null $params List of values to be bound to method.
      * @param float $startTime The microtime when the method was executed.
      * @return void
      */
-    protected function _log(LoggedMethod $method, array $params, float $startTime): void
+    protected function _log(LoggedMethod $method, ?array $params, float $startTime): void
     {
         $method->took = round((microtime(true) - $startTime) * 1000, 0);
         $method->params = $params ?: $this->_compiledParams;

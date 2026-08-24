@@ -104,11 +104,11 @@ trait RequestTrait
     /**
      * Returns the value of a property by name
      *
-     * @param string $property the name of the property to retrieve
+     * @param mixed $property the name of the property to retrieve
      * @return mixed
      * @throws \InvalidArgumentException if an empty property name is passed
      */
-    public function &get(string $property): mixed
+    public function &get(mixed $property): mixed
     {
         if (!strlen((string)$property)) {
             throw new InvalidArgumentException('Cannot get an empty property');
@@ -175,7 +175,7 @@ trait RequestTrait
      * $request->set(['name' => 'Andrew', 'id' => 1], ['setter' => false]);
      * ```
      *
-     * @param array|string $property the name of property to set or a list of
+     * @param mixed $property the name of property to set or a list of
 
      * properties with their respective values
      * @param mixed $value The value to set to the property or an array if the
@@ -187,7 +187,7 @@ trait RequestTrait
      * @return \CakeDC\OracleDriver\ORM\RequestInterface
      * @throws \InvalidArgumentException
      */
-    public function set(string|array $property, mixed $value = null, array $options = []): RequestInterface
+    public function set(mixed $property, mixed $value = null, array $options = []): RequestInterface
     {
         $isString = is_string($property);
         if ($isString && $property !== '') {
@@ -422,7 +422,7 @@ trait RequestTrait
                 }
 
                 if ($parameter['out']) {
-                    $statement->bindValue($paramName, $this->_properties[$name], $type);
+                    $statement->bindParam($paramName, $this->_properties[$name], $type);
                 } else {
                     $statement->bindValue($paramName, $this->_castedProperties[$name], $type);
                 }
@@ -469,18 +469,16 @@ trait RequestTrait
      * If called with a boolean it will set the known status of this request,
      * true means that the it is not yet called, false that it already is.
      *
-     * @param bool|null $new true if it is known this request was called
+     * @param mixed $new true if it is known this request was called
      * @return bool Whether or not the request has been called.
      */
-    public function isNew(?bool $new = null): bool
+    public function isNew(mixed $new = null): bool
     {
         if ($new === null) {
             return $this->_new;
         }
 
-        $new = (bool)$new;
-
-        return $this->_new = $new;
+        return $this->_new = (bool)$new;
     }
 
     /**

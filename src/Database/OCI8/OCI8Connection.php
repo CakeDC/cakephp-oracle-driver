@@ -104,7 +104,7 @@ class OCI8Connection extends PDO
      * Returns oracle version.
      *
      * @throws \UnexpectedValueException if the version string returned by the database server does not parsed
-     * @return int Version number
+     * @return string Version number
      */
     public function getServerVersion(): string
     {

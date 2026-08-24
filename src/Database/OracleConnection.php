@@ -87,16 +87,21 @@ class OracleConnection extends Connection
      *
      * @param string $sql The PL/SQL to convert into a prepared statement.
      * @param array $options Method options used on method constructing.
-     * @return \Cake\Database\StatementInterface
+     * @return \CakeDC\OracleDriver\Database\Log\MethodLoggingStatement
      */
     public function prepareMethod(string $sql, array $options = []): MethodLoggingStatement
     {
-        if (!method_exists($this->getDriver(), 'isOci') || !$this->getDriver()->isOci()) {
+        $driver = $this->getDriver();
+        if (!$driver instanceof OracleBase) {
+            throw new CakeException('Method calls require an OracleBase driver');
+        }
+
+        if (!$driver->isOci()) {
             throw new CakeException('Method calls using PDO layer not supported');
         }
 
         $options += ['bufferResult' => false];
-        $statement = $this->getDriver()->prepareMethod($sql, $options);
+        $statement = $driver->prepareMethod($sql, $options);
 
         return $this->_getMethodLogger($statement);
     }
@@ -106,7 +111,7 @@ class OracleConnection extends Connection
      * for the passed original statement instance.
      *
      * @param \Cake\Database\StatementInterface $statement the instance to be decorated
-     * @return \Cake\Database\StatementInterface
+     * @return \CakeDC\OracleDriver\Database\Log\MethodLoggingStatement
      */
     protected function _getMethodLogger(StatementInterface $statement): MethodLoggingStatement
     {
@@ -134,6 +139,23 @@ class OracleConnection extends Connection
         }
 
         $this->_methodLogger = $instance;
+
+        return $instance;
+    }
+
+    /**
+     * Returns whether query logging is enabled for this connection's driver.
+     *
+     * @return bool
+     */
+    public function isQueryLoggingEnabled(): bool
+    {
+        $driver = $this->getDriver();
+        if (!$driver instanceof OracleBase) {
+            return false;
+        }
+
+        return $driver->isQueryLoggingEnabled();
     }
 
     /**

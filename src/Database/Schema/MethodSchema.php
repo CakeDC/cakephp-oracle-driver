@@ -36,7 +36,7 @@ class MethodSchema
      *
      * @var bool
      */
-    protected bool $_isFunction;
+    protected bool $_isFunction = false;
 
     /**
      * Parameters in the method.
@@ -115,9 +115,6 @@ class MethodSchema
     public function addParameter(string $name, array $attrs)
     {
         $attrs += ['function' => null];
-        if (is_string($attrs)) {
-            $attrs = ['type' => $attrs];
-        }
 
         $valid = static::$_columnParameters;
         if (isset(static::$_columnExtras[$attrs['type']])) {
@@ -231,9 +228,9 @@ class MethodSchema
     /**
      * Get the method type.
      *
-     * @return array
+     * @return bool
      */
-    public function isFunction(): array
+    public function isFunction(): bool
     {
         return $this->_isFunction;
     }

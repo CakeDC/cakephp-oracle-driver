@@ -98,9 +98,7 @@ trait OracleDialectTrait
         }
 
         $original->decorateResults(function (array $row): array {
-            if (is_object($row) && property_exists($row, '_cake_page_rownum_')) {
-                unset($row->_cake_page_rownum_);
-            } elseif (isset($row['_cake_page_rownum_'])) {
+            if (isset($row['_cake_page_rownum_'])) {
                 unset($row['_cake_page_rownum_']);
             }
 

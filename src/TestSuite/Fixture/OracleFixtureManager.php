@@ -18,6 +18,8 @@ use Cake\Database\Connection;
 use Cake\Database\Driver;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Datasource\ConnectionManager;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
+use CakeDC\OracleDriver\Database\OracleConnection;
 use Cake\TestSuite\TestCase;
 use Cake\Utility\Inflector;
 use PDOException;
@@ -293,7 +295,7 @@ class OracleFixtureManager
         }
 
         try {
-            $createMethods = function (ConnectionInterface $db, $fixtures) use ($test): void {
+            $createMethods = function (OracleConnection $db, $fixtures) use ($test): void {
                 $methods = $db->methodSchemaCollection()->listMethods();
                 $configName = $db->configName();
                 if (!isset($this->_insertionMap[$configName])) {
@@ -335,7 +337,7 @@ class OracleFixtureManager
         $dbs = $this->_fixtureConnections($fixtures);
         foreach ($dbs as $connection => $fixtures) {
             $db = ConnectionManager::get($connection, false);
-            assert($db instanceof Connection);
+            assert($db instanceof OracleConnection);
             $driver = $db->getDriver();
             $logQueries = $this->_isQueryLoggingEnabled($driver);
 
@@ -360,9 +362,11 @@ class OracleFixtureManager
      */
     protected function _isQueryLoggingEnabled(Driver $driver): bool
     {
-        $property = new ReflectionProperty($driver, 'logQueries');
+        if (!$driver instanceof OracleBase) {
+            return false;
+        }
 
-        return (bool)$property->getValue($driver);
+        return $driver->isQueryLoggingEnabled();
     }
 
     /**
@@ -441,6 +445,7 @@ class OracleFixtureManager
                 $db = ConnectionManager::get($fixture->connection());
             }
 
+            assert($db instanceof OracleConnection);
             if (!$this->isFixtureSetup($db->configName(), $fixture)) {
                 $methods = $db->methodSchemaCollection()->listMethods();
                 $this->_setupMethod($fixture, $db, $methods, $drop);

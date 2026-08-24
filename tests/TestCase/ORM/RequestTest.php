@@ -206,7 +206,7 @@ class RequestTest extends TestCase
             ->getMock();
         $request->expects($this->exactly(2))
             ->method('set')
-            ->willReturnCallback(function (array $properties, array $options = []): void {
+            ->willReturnCallback(function (array $properties, array $options = []) use ($request) {
                 static $call = 0;
                 $call++;
                 if ($call === 1) {
@@ -216,6 +216,8 @@ class RequestTest extends TestCase
                     $this->assertSame(['foo' => 'bar'], $properties);
                     $this->assertSame(['setter' => false], $options);
                 }
+
+                return $request;
             });
 
         $request->__construct(['a' => 'b', 'c' => 'd']);

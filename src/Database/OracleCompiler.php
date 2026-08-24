@@ -12,9 +12,11 @@ declare(strict_types=1);
  */
 namespace CakeDC\OracleDriver\Database;
 
+use Cake\Database\Exception\DatabaseException;
 use Cake\Database\Query;
 use Cake\Database\QueryCompiler;
 use Cake\Database\ValueBinder;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
 
 class OracleCompiler extends QueryCompiler
 {
@@ -72,6 +74,10 @@ class OracleCompiler extends QueryCompiler
     protected function _buildInsertPart(array $parts, Query $query, ValueBinder $generator): string
     {
         $driver = $query->getConnection()->getDriver();
+        if (!$driver instanceof OracleBase) {
+            throw new DatabaseException('Oracle compiler requires an OracleBase driver');
+        }
+
         $table = $driver->quoteIfAutoQuote($parts[0]);
         $columns = $this->_stringifyExpressions($parts[1], $generator);
         $modifiers = $this->_buildModifierPart($query->clause('modifier'), $query, $generator);

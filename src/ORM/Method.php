@@ -27,28 +27,28 @@ class Method
      *
      * @var string
      */
-    protected string $_method;
+    protected ?string $_method = null;
 
     /**
      * Connection instance
      *
-     * @var \Cake\Datasource\ConnectionInterface
+     * @var \Cake\Datasource\ConnectionInterface|null
      */
-    protected ConnectionInterface $_connection;
+    protected ?ConnectionInterface $_connection = null;
 
     /**
      * The schema object containing a description of this method fields
      *
-     * @var \CakeDC\OracleDriver\Database\Schema\MethodSchema
+     * @var \CakeDC\OracleDriver\Database\Schema\MethodSchema|null
      */
-    protected MethodSchema $_schema;
+    protected ?MethodSchema $_schema = null;
 
     /**
      * The request class name for the method.
      *
      * @var string
      */
-    protected string $_requestClass;
+    protected string $_requestClass = '';
 
     /**
      * Method constructor.
@@ -302,7 +302,7 @@ class Method
     protected function _generateSql(): string
     {
         $query = '';
-        if ($this->getSchema()->isFunction() !== null) {
+        if ($this->getSchema()->isFunction()) {
             $query = ':result := ';
         }
 

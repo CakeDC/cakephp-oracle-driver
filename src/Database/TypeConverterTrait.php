@@ -33,10 +33,8 @@ trait TypeConverterTrait
             $type = TypeFactory::build($type);
         }
 
-        if ($type instanceof TypeInterface) {
-            $value = $type->toDatabase($value, $this->_driver);
-            $type = $type->toStatement($value, $this->_driver);
-        }
+        $value = $type->toDatabase($value, $this->_driver);
+        $type = $type->toStatement($value, $this->_driver);
 
         return [$value, $type];
     }

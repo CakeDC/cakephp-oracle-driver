@@ -17,6 +17,13 @@ use Cake\Core\Exception\CakeException;
 class OCI8Exception extends CakeException
 {
     /**
+     * The SQL query string associated with the error, when available.
+     *
+     * @var string|null
+     */
+    public ?string $queryString = null;
+
+    /**
      * OCI Error builder.
      *
      * @param array $error Error information that includes error message and code.

@@ -46,9 +46,9 @@ class MethodRegistry
     /**
      * LocatorInterface implementation instance.
      *
-     * @var \Cake\ORM\Locator\LocatorInterface
+     * @var \CakeDC\OracleDriver\ORM\Locator\LocatorInterface|null
      */
-    protected static \Cake\ORM\Locator\LocatorInterface $_locator;
+    protected static ?LocatorInterface $_locator = null;
 
     /**
      * Default LocatorInterface implementation class.
@@ -82,7 +82,7 @@ class MethodRegistry
             static::$_locator = $locator;
         }
 
-        if (!static::$_locator) {
+        if (static::$_locator === null) {
             static::$_locator = new static::$_defaultLocatorClass();
         }
 

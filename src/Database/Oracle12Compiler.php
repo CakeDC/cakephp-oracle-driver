@@ -16,6 +16,7 @@ use Cake\Database\Exception\DatabaseException;
 use Cake\Database\Query;
 use Cake\Database\QueryCompiler;
 use Cake\Database\ValueBinder;
+use CakeDC\OracleDriver\Database\Driver\OracleBase;
 
 class Oracle12Compiler extends QueryCompiler
 {
@@ -83,6 +84,10 @@ class Oracle12Compiler extends QueryCompiler
         }
 
         $driver = $query->getConnection()->getDriver();
+        if (!$driver instanceof OracleBase) {
+            throw new DatabaseException('Oracle compiler requires an OracleBase driver');
+        }
+
         $table = $driver->quoteIfAutoQuote($parts[0]);
         $columns = $this->_stringifyExpressions($parts[1], $generator);
         $modifiers = $this->_buildModifierPart($query->clause('modifier'), $query, $generator);

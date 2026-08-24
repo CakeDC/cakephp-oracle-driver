@@ -31,9 +31,9 @@ class MyUsersMethod extends Method
     /**
      * Overrides default method name
      *
-     * @var string
+     * @var string|null
      */
-    protected string $_method = 'users';
+    protected ?string $_method = 'users';
 }
 
 /**
