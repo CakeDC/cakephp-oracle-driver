@@ -163,14 +163,14 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
     $ignoreMissing = static function (callable $operation): void {
         try {
             $operation();
-        } catch (Throwable $exception) {
-            $message = $exception->getMessage();
+        } catch (Throwable $throwable) {
+            $message = $throwable->getMessage();
             if (
                 !str_contains($message, 'ORA-00942')
                 && !str_contains($message, 'ORA-02289')
                 && !str_contains($message, 'ORA-00903')
             ) {
-                throw $exception;
+                throw $throwable;
             }
         }
     };
@@ -201,6 +201,7 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
                 $connection->execute(sprintf('DROP SEQUENCE %s', $sequenceName));
             });
         }
+
         ConnectionHelper::dropTables('test');
     }
 

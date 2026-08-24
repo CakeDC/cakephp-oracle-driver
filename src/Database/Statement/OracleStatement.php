@@ -132,6 +132,7 @@ class OracleStatement extends Statement
             foreach ($row as &$value) {
                 $value = $this->readLobValue($value);
             }
+
             unset($value);
 
             return $row;

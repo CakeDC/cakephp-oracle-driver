@@ -78,6 +78,7 @@ jobs:
           ORACLE_RECREATE_SCHEMA: "1"
 
       - name: Run Oracle test suite PDO
+        if: success() || failure()
         run: php tests/run-database-tests.php
         env:
           db_dsn: "oracle://app_user:AppUserTest123@FREEPDB1?className=CakeDC\\OracleDriver\\Database\\OracleConnection&driver=CakeDC\\OracleDriver\\Database\\Driver\\OraclePDO&host=127.0.0.1&port=1521&database=FREEPDB1&server_version=23&autoincrement=1&persistent=0"
@@ -114,7 +115,9 @@ jobs:
         run: composer cs-check
 
       - name: Run rector
+        if: success() || failure()
         run: composer rector-check
 
       - name: Run phpstan
+        if: success() || failure()
         run: composer stan
