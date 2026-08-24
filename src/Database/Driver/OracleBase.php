@@ -427,7 +427,53 @@ abstract class OracleBase extends Driver
             return $this->quoteIdentifier($identifier);
         }
 
-        return $identifier;
+        return $this->_upperIdentifier($identifier);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * When automatic quoting is disabled Oracle still folds unquoted identifiers
+     * to uppercase and keeps quoted ones case-sensitive. Emitting identifiers as
+     * uppercase + unquoted makes quoted and unquoted code paths (e.g. table
+     * names vs. quoted SELECT aliases) resolve to the same object, allowing the
+     * driver to run with identifier quoting turned off.
+     *
+     * @param string $identifier The identifier to quote.
+     * @return string
+     */
+    public function quoteIdentifier(string $identifier): string
+    {
+        if ($this->isAutoQuotingEnabled()) {
+            return parent::quoteIdentifier($identifier);
+        }
+
+        return $this->_upperIdentifier($identifier);
+    }
+
+    /**
+     * Uppercases an identifier for Oracle when automatic quoting is disabled.
+     *
+     * Oracle treats "FOO" and FOO identically only when the content is
+     * uppercase, so emitting uppercase unquoted identifiers keeps CREATE,
+     * SELECT and constraint SQL consistent.
+     *
+     * @param string $identifier The identifier to uppercase.
+     * @return string
+     */
+    protected function _upperIdentifier(string $identifier): string
+    {
+        if (str_contains($identifier, '.')) {
+            return implode(
+                '.',
+                array_map(
+                    fn (string $part): string => $this->_upperIdentifier($part),
+                    explode('.', $identifier),
+                ),
+            );
+        }
+
+        return strtoupper($identifier);
     }
 
     /**

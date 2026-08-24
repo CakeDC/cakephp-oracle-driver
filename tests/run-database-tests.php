@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require __DIR__ . '/../vendor/autoload.php';
+
 use CakeDC\OracleDriver\Test\TestCase\DatabaseSuite;
 
 $phpunit = escapeshellarg(__DIR__ . '/../vendor/bin/phpunit');

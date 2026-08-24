@@ -5,6 +5,7 @@ on:
     branches:
       - '5.x'
       - '5.next'
+      - '6.next-cake5'
   pull_request:
     branches:
       - '*'
@@ -20,11 +21,11 @@ jobs:
 
     services:
       oracle:
-        image: gvenzl/oracle-free:23-slim
+        image: gvenzl/oracle-free:23-slim-faststart
         env:
           # SYS / SYSTEM password
-          ORACLE_PASSWORD: oracle_sys_password
-          # Application user created inside FREEPDB1 (matches phpunit.xml db_dsn)
+          ORACLE_PASSWORD: OracleTest123
+          # Application user created inside FREEPDB1 (matches phpunit db_dsn)
           APP_USER: app_user
           APP_USER_PASSWORD: AppUserTest123
         ports:
@@ -33,12 +34,13 @@ jobs:
           --health-cmd healthcheck.sh
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 20
+          --health-retries 30
+          --health-start-period 120s
 
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.3']
+        php-version: ['8.2', '8.3', '8.4', '8.5']
 
     steps:
       - name: Checkout
@@ -50,7 +52,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          extensions: mbstring, intl, apcu, oci8, pdo
+          extensions: mbstring, intl, apcu, oci8, pdo_oci, pdo
           ini-values: apc.enable_cli = 1, zend.assertions = 1, date.timezone = UTC
           coverage: none
 
@@ -71,9 +73,41 @@ jobs:
       - name: Run Oracle test suite
         run: php tests/run-database-tests.php
         env:
-          # Points the active phpunit.xml (db_dsn) at the service container.
-          # host=oracle matches the service name; FREEPDB1 + app_user are
-          # created by the gvenzl image above.
           db_dsn: "oracle://app_user:AppUserTest123@FREEPDB1?className=CakeDC\\OracleDriver\\Database\\OracleConnection&driver=CakeDC\\OracleDriver\\Database\\Driver\\OracleOCI&host=oracle&port=1521&database=FREEPDB1&server_version=23&autoincrement=1&persistent=0"
           FIXTURE_SCHEMA_METADATA: "./tests/schema.php"
           ORACLE_RECREATE_SCHEMA: "1"
+
+  cs-stan:
+    name: Coding Standard & Static Analysis
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, intl
+          coverage: none
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
+
+      - name: Composer install
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run PHP CodeSniffer
+        run: composer cs-check
+
+      - name: Run rector
+        run: composer rector-check
+
+      - name: Run phpstan
+        run: composer stan
