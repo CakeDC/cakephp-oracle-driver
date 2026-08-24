@@ -8,6 +8,7 @@ use Cake\Database\Schema\TableSchema;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\FactoryLocator;
 use Cake\ORM\Locator\TableLocator;
+use Cake\TestSuite\ConnectionHelper;
 use Cake\Utility\Security;
 use CakeDC\OracleDriver\Test\App\Application;
 use CakeDC\OracleDriver\Test\App\Controller\AppController;
@@ -159,34 +160,48 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
         FILTER_VALIDATE_BOOLEAN,
     );
 
+    $ignoreMissing = static function (callable $operation): void {
+        try {
+            $operation();
+        } catch (Throwable $exception) {
+            $message = $exception->getMessage();
+            if (
+                !str_contains($message, 'ORA-00942')
+                && !str_contains($message, 'ORA-02289')
+                && !str_contains($message, 'ORA-00903')
+            ) {
+                throw $exception;
+            }
+        }
+    };
+
     if ($recreateSchema) {
         foreach (array_reverse(array_keys($tables)) as $tableKey) {
             $tableName = $tables[$tableKey]['table'] ?? $tableKey;
-            try {
+            $sequenceName = 'SEQ_' . strtoupper((string)$tableName);
+            $ignoreMissing(static function () use ($connection, $driver, $tableName): void {
                 $connection->execute(sprintf(
                     'DROP TABLE %s CASCADE CONSTRAINTS PURGE',
                     $driver->quoteIdentifier($tableName),
                 ));
-            } catch (Throwable $dropException) {
-                if (!str_contains($dropException->getMessage(), 'ORA-00942')) {
-                    throw $dropException;
-                }
-            }
-
-            try {
+            });
+            $ignoreMissing(static function () use ($connection, $tableName): void {
+                $connection->execute(sprintf(
+                    'DROP TABLE %s CASCADE CONSTRAINTS PURGE',
+                    strtoupper((string)$tableName),
+                ));
+            });
+            $ignoreMissing(static function () use ($connection, $driver, $sequenceName): void {
                 $connection->execute(sprintf(
                     'DROP SEQUENCE %s',
-                    $driver->quoteIdentifier('SEQ_' . strtoupper($tableName)),
+                    $driver->quoteIdentifier($sequenceName),
                 ));
-            } catch (Throwable $sequenceDropException) {
-                if (
-                    !str_contains($sequenceDropException->getMessage(), 'ORA-02289')
-                    && !str_contains($sequenceDropException->getMessage(), 'ORA-00942')
-                ) {
-                    throw $sequenceDropException;
-                }
-            }
+            });
+            $ignoreMissing(static function () use ($connection, $sequenceName): void {
+                $connection->execute(sprintf('DROP SEQUENCE %s', $sequenceName));
+            });
         }
+        ConnectionHelper::dropTables('test');
     }
 
     foreach ($tables as $tableName => $table) {
@@ -208,7 +223,7 @@ if (getenv('FIXTURE_SCHEMA_METADATA')) {
             try {
                 $connection->execute($sql);
             } catch (Throwable $createException) {
-                if (!str_contains($createException->getMessage(), 'ORA-00955')) {
+                if ($recreateSchema || !str_contains($createException->getMessage(), 'ORA-00955')) {
                     throw $createException;
                 }
             }

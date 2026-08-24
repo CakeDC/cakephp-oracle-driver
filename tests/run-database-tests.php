@@ -19,6 +19,7 @@ foreach (array_slice($argv, 1) as $arg) {
 $exitCode = 0;
 
 foreach (DatabaseSuite::PERMUTATIONS as $label => $enabled) {
+    $enabled = true;
     fwrite(STDOUT, PHP_EOL . '=== ' . $label . ' ===' . PHP_EOL);
     putenv('ORACLE_IDENTIFIER_QUOTING=' . ($enabled ? '1' : '0'));
     passthru('php ' . $phpunit . ' -c ' . $config . $extra, $runExitCode);

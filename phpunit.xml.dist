@@ -30,6 +30,8 @@
         <ini name="memory_limit" value="-1"/>
         <ini name="date.timezone" value="UTC"/>
 		<env name="FIXTURE_SCHEMA_METADATA" value="./tests/schema.php"/>
+		<env name="ORACLE_IDENTIFIER_QUOTING" value="1"/>
+		<env name="ORACLE_RECREATE_SCHEMA" value="1"/>
 		<env name="db_dsn" force="false"
 			 value="oracle://username:password@XE?className=CakeDC\OracleDriver\Database\OracleConnection&amp;driver=CakeDC\OracleDriver\Database\Driver\OracleOCI&amp;host=oracle11g&amp;database=XE"/>
 		<!-- oracle pdo
