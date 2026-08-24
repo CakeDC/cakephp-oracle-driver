@@ -71,7 +71,7 @@ jobs:
         uses: ramsey/composer-install@v4
 
       - name: Run Oracle test suite OCI8
-        run: php tests/run-database-tests.php
+        run: php tests/run-database-tests.php --display-phpunit-notices
         env:
           db_dsn: "oracle://app_user:AppUserTest123@FREEPDB1?className=CakeDC\\OracleDriver\\Database\\OracleConnection&driver=CakeDC\\OracleDriver\\Database\\Driver\\OracleOCI&host=127.0.0.1&port=1521&database=FREEPDB1&server_version=23&autoincrement=1&persistent=0"
           FIXTURE_SCHEMA_METADATA: "./tests/schema.php"
