@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace CakeDC\OracleDriver\Database\Dialect;
 
 use Cake\Database\Expression\FunctionExpression;
+use Cake\Database\Expression\StringAggExpression;
 use Cake\Database\ExpressionInterface;
 use Cake\Database\Query;
 use Cake\Database\Query\InsertQuery;
@@ -135,8 +136,23 @@ trait OracleDialectTrait
     protected function _expressionTranslators(): array
     {
         return [
+            StringAggExpression::class => '_transformStringAggExpression',
             FunctionExpression::class => '_transformFunctionExpression',
         ];
+    }
+
+    /**
+     * Receives a StringAggExpression and changes it so that it conforms to
+     * Oracle SQL dialect (`LISTAGG ... WITHIN GROUP`).
+     *
+     * @param \Cake\Database\Expression\StringAggExpression $expression The expression to convert.
+     * @return void
+     */
+    protected function _transformStringAggExpression(StringAggExpression $expression): void
+    {
+        $expression
+            ->setName('LISTAGG')
+            ->setSyntax(StringAggExpression::SYNTAX_WITHIN_GROUP);
     }
 
     /**
@@ -202,6 +218,7 @@ trait OracleDialectTrait
                     ->add(['d']);
                 break;
             case 'JSON_VALUE':
+                // Oracle 12c+ supports JSON_VALUE natively; no translation needed.
                 break;
         }
     }

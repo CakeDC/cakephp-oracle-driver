@@ -56,4 +56,20 @@ class CompositeKeysTest extends CakeCompositeKeysTest
             'Oracle does not support the requirements of this test or test not ready yet.',
         );
     }
+
+    /**
+     * The main query selects the `body` CLOB (TEXT maps to CLOB on Oracle)
+     * alongside GROUP BY. Oracle can neither GROUP BY a CLOB (ORA-22848) nor
+     * select it ungrouped next to GROUP BY (ORA-00979), so no valid SQL exists
+     * on this platform. Every other platform maps TEXT to a groupable type,
+     * which is why the core test passes elsewhere. The compiler GROUP BY
+     * rescue still covers the sibling subquery cases below.
+     *
+     * @return void
+     */
+    public function testBelongsToManySubqueryCompositeKeysWithHavingAlias(): void
+    {
+        $this->skipIfOracle();
+        parent::testBelongsToManySubqueryCompositeKeysWithHavingAlias();
+    }
 }

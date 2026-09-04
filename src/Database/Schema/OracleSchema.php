@@ -220,7 +220,32 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
     {
         $row = array_change_key_case($row);
         $field = [];
-        switch ($row['type']) {
+        $upperType = strtoupper(trim((string)$row['type']));
+        if (
+            str_contains($upperType, 'WITH TIME ZONE') ||
+            str_contains($upperType, 'WITH LOCAL TIME ZONE')
+        ) {
+            $field = [
+                'type' => TableSchema::TYPE_TIMESTAMP_TIMEZONE,
+                'length' => null,
+            ];
+        } elseif ($upperType === 'JSON') {
+            $field = [
+                'type' => TableSchema::TYPE_JSON,
+                'length' => null,
+            ];
+        } elseif ($upperType === 'XMLTYPE') {
+            $field = [
+                'type' => TableSchema::TYPE_TEXT,
+                'length' => null,
+            ];
+        } elseif (str_starts_with($upperType, 'INTERVAL')) {
+            $field = [
+                'type' => TableSchema::TYPE_STRING,
+                'length' => null,
+            ];
+        } else {
+            switch ($row['type']) {
             case 'DATE':
                 $field = [
                     'type' => TableSchema::TYPE_DATETIME,
@@ -296,17 +321,61 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
                 }
 
                 throw new UnallowedDataTypeException(['type' => $row['type']]);
+            }
         }
 
+        $default = $this->_defaultValue($row['default'] ?? null);
+        if ($field['type'] === TableSchema::TYPE_BOOLEAN) {
+            if ($default === 'true') {
+                $default = 1;
+            } elseif ($default === 'false') {
+                $default = 0;
+            }
+        }
         $isIdentity = isset($row['identity_column']) && strtoupper((string)$row['identity_column']) === 'YES';
         $field += [
             'null' => $row['null'] === 'Y',
-            'default' => $row['default'],
+            'default' => $default,
             'comment' => $row['comment'],
             'autoIncrement' => $isIdentity ?: null,
             'generated' => $isIdentity ? self::GENERATED_BY_DEFAULT : null,
         ];
         $schema->addColumn($this->_transformValueCase($row['name']), $field);
+    }
+
+    /**
+     * Normalizes an Oracle `data_default` value into an abstract default.
+     *
+     * Oracle reports defaults CHAR-padded, uses the literal string `'NULL'`
+     * when there is no default, and embeds sequence references
+     * (`"SCHEMA"."SEQ_X".nextval`) for identity-adjacent columns.
+     *
+     * @param mixed $default Raw `data_default` value.
+     * @return mixed Normalized default or null when there is none.
+     */
+    protected function _defaultValue(mixed $default): mixed
+    {
+        if ($default === null) {
+            return null;
+        }
+        if (is_int($default) || is_float($default)) {
+            return $default;
+        }
+        if (!is_string($default)) {
+            return $default;
+        }
+        $default = trim($default);
+        if ($default === '' || strtoupper($default) === 'NULL') {
+            return null;
+        }
+        if (preg_match('/\.nextval\b/i', $default)) {
+            return null;
+        }
+        if (str_starts_with($default, 'NULL::')) {
+            return null;
+        }
+
+        return $default;
     }
 
     /**
@@ -562,10 +631,15 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
         }
 
         if ($isIndex) {
-            $schema->addIndex($keyName, [
+            $options = [
                 'type' => $type,
                 'columns' => $columns,
-            ]);
+            ];
+            $indexType = strtoupper((string)($tableIndex['type'] ?? ''));
+            if (str_contains($indexType, 'BITMAP')) {
+                $options['accessMethod'] = 'BITMAP';
+            }
+            $schema->addIndex($keyName, $options);
         } else {
             $schema->addConstraint($keyName, [
                 'type' => $type,
@@ -730,7 +804,8 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             'type' => TableSchema::CONSTRAINT_FOREIGN,
             'columns' => [$columnName],
             'references' => [$referencedTable, $referencedColumnName],
-            'update' => TableSchema::ACTION_SET_NULL,
+            // Oracle has no ON UPDATE clause; the rule is effectively NO ACTION.
+            'update' => TableSchema::ACTION_NO_ACTION,
             'delete' => $this->_convertOnClause($row['delete_rule']),
             'deferrable' => $this->convertDeferrable($row),
         ]);
@@ -968,9 +1043,17 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             TableSchema::TYPE_DATE => ' TIMESTAMP',
             TableSchema::TYPE_TIME => ' TIMESTAMP',
             TableSchema::TYPE_DATETIME => ' TIMESTAMP',
+            TableSchema::TYPE_DATETIME_FRACTIONAL => ' TIMESTAMP',
             TableSchema::TYPE_TIMESTAMP => ' TIMESTAMP',
+            TableSchema::TYPE_TIMESTAMP_FRACTIONAL => ' TIMESTAMP',
+            TableSchema::TYPE_TIMESTAMP_TIMEZONE => ' TIMESTAMP WITH TIME ZONE',
             TableSchema::TYPE_UUID => ' VARCHAR2(36)',
             TableSchema::TYPE_BINARY_UUID => ' RAW(16)',
+            TableSchema::TYPE_NATIVE_UUID => ' RAW(16)',
+            TableSchema::TYPE_CHAR => ' CHAR',
+            TableSchema::TYPE_CITEXT => ' VARCHAR2',
+            TableSchema::TYPE_JSON => ' CLOB',
+            TableSchema::TYPE_INTERVAL => ' INTERVAL DAY TO SECOND',
         ];
 
         if (!isset($typeMap[$data['type']]) && $data['type'] != TableSchema::TYPE_STRING) {
@@ -993,6 +1076,16 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
                 $data['length'] = 255;
             }
 
+            $out .= '(' . (int)$data['length'] . ')';
+        }
+
+        if (
+            $data['type'] === TableSchema::TYPE_CHAR ||
+            $data['type'] === TableSchema::TYPE_CITEXT
+        ) {
+            if (!isset($data['length'])) {
+                $data['length'] = 255;
+            }
             $out .= '(' . (int)$data['length'] . ')';
         }
 
@@ -1023,13 +1116,30 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             unset($data['default']);
         }
 
-        if (isset($data['default']) && $data['type'] !== TableSchema::TYPE_TIMESTAMP) {
+        if (isset($data['default'])) {
             $defaultValue = $data['default'];
             if ($data['type'] === TableSchema::TYPE_BOOLEAN) {
                 $defaultValue = (int)$defaultValue;
             }
 
-            $out .= ' DEFAULT ' . $this->_driver->schemaValue($defaultValue);
+            $datetimeTypes = [
+                TableSchema::TYPE_DATE,
+                TableSchema::TYPE_TIME,
+                TableSchema::TYPE_DATETIME,
+                TableSchema::TYPE_DATETIME_FRACTIONAL,
+                TableSchema::TYPE_TIMESTAMP,
+                TableSchema::TYPE_TIMESTAMP_FRACTIONAL,
+                TableSchema::TYPE_TIMESTAMP_TIMEZONE,
+            ];
+            if (
+                in_array($data['type'], $datetimeTypes, true) &&
+                is_string($defaultValue) &&
+                in_array(strtoupper(trim($defaultValue)), ['CURRENT_TIMESTAMP', 'SYSTIMESTAMP', 'LOCALTIMESTAMP', 'SYSDATE'], true)
+            ) {
+                $out .= ' DEFAULT ' . strtoupper(trim($defaultValue));
+            } else {
+                $out .= ' DEFAULT ' . $this->_driver->schemaValue($defaultValue);
+            }
         }
 
         if (isset($data['null']) && $data['null'] === false) {
@@ -1130,6 +1240,10 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
 
     /**
      * Helper method for generating key SQL snippets.
+     *
+     * Note: Oracle has no `ON UPDATE` clause for foreign keys, so only
+     * `ON DELETE` is emitted even though the abstract constraint carries
+     * an `update` rule (NO ACTION) for parity.
      *
      * @param string $prefix The key prefix
      * @param array $data Key data.
