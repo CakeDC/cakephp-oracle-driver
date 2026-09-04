@@ -153,7 +153,8 @@ class OracleCompilerTest extends TestCase
         $found = false;
         foreach ((array)$group as $g) {
             $ref = $g instanceof IdentifierExpression ? $g->getIdentifier() : (string)$g;
-            if (strtolower(trim($ref, '"')) === 'articles.title') {
+            $flat = strtolower((string)preg_replace('/["`\s\[\]]/', '', $ref));
+            if ($flat === 'articles.title') {
                 $found = true;
             }
         }
@@ -170,7 +171,8 @@ class OracleCompilerTest extends TestCase
     public function testGroupByRescueScalarFunction(): void
     {
         $connection = $this->_oracleConnection();
-        $query = $connection->selectQuery()
+        $query = $connection->selectQuery();
+        $query
             ->select([
                 'id',
                 'title_length' => $query->func()->length(['Articles.title' => 'identifier']),
@@ -184,7 +186,8 @@ class OracleCompilerTest extends TestCase
         $found = false;
         foreach ((array)$query->clause('group') as $g) {
             $ref = $g instanceof IdentifierExpression ? $g->getIdentifier() : (string)$g;
-            if (strtolower(trim($ref, '"')) === 'articles.title') {
+            $flat = strtolower((string)preg_replace('/["`\s\[\]]/', '', $ref));
+            if ($flat === 'articles.title') {
                 $found = true;
             }
         }
@@ -200,7 +203,8 @@ class OracleCompilerTest extends TestCase
     public function testGroupByRescueSkipsAggregates(): void
     {
         $connection = $this->_oracleConnection();
-        $query = $connection->selectQuery()
+        $query = $connection->selectQuery();
+        $query
             ->select(['author_id', 'total' => $query->func()->count('*')])
             ->from('articles')
             ->groupBy(['author_id']);
@@ -217,8 +221,9 @@ class OracleCompilerTest extends TestCase
     public function testStringAggCompilesToListagg(): void
     {
         $connection = $this->_oracleConnection();
-        $query = $connection->selectQuery()
-            ->select(['tags' => $query->func()->stringAgg(['title' => 'identifier', "', '"])])
+        $query = $connection->selectQuery();
+        $query
+            ->select(['tags' => $query->func()->stringAgg('title', ', ')])
             ->from('articles')
             ->groupBy(['author_id']);
 
