@@ -18,6 +18,7 @@ use Cake\Datasource\ConnectionManager;
 use Cake\TestSuite\TestCase;
 use CakeDC\OracleDriver\ORM\Locator\MethodLocator;
 use CakeDC\OracleDriver\ORM\Method;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use RuntimeException;
 use TestApp\Model\Entity\Article;
 use TestPlugin\Model\Entity\Comment;
@@ -26,6 +27,7 @@ use TestPlugin\Plugin as TestPluginPlugin;
 /**
  * Test case for MethodLocator
  */
+#[AllowMockObjectsWithoutExpectations]
 class MethodLocatorTest extends TestCase
 {
     /**

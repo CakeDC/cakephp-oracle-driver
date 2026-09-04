@@ -526,7 +526,6 @@ abstract class OracleBase extends Driver
             DriverFeatureEnum::CTE,
             DriverFeatureEnum::CHECK_CONSTRAINTS => $version >= 12,
             DriverFeatureEnum::WINDOW => $version >= 21,
-            default => false,
         };
     }
 }

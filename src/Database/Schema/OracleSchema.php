@@ -246,81 +246,81 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             ];
         } else {
             switch ($row['type']) {
-            case 'DATE':
-                $field = [
+                case 'DATE':
+                    $field = [
                     'type' => TableSchema::TYPE_DATETIME,
                     'length' => null,
-                ];
-                break;
-            case 'TIMESTAMP':
-            case 'TIMESTAMP(6)':
-            case 'TIMESTAMP(9)':
-                $field = [
+                    ];
+                    break;
+                case 'TIMESTAMP':
+                case 'TIMESTAMP(6)':
+                case 'TIMESTAMP(9)':
+                    $field = [
                     'type' => TableSchema::TYPE_TIMESTAMP,
                     'length' => null,
-                ];
-                break;
-            case 'NUMBER':
-            case 'INTEGER':
-            case 'PLS_INTEGER':
-            case 'BINARY_INTEGER':
-                $field = $this->_numberFieldDefinition($row);
-                break;
-            case 'FLOAT':
-            case 'BINARY_FLOAT':
-            case 'BINARY_DOUBLE':
-                $field = [
+                    ];
+                    break;
+                case 'NUMBER':
+                case 'INTEGER':
+                case 'PLS_INTEGER':
+                case 'BINARY_INTEGER':
+                    $field = $this->_numberFieldDefinition($row);
+                    break;
+                case 'FLOAT':
+                case 'BINARY_FLOAT':
+                case 'BINARY_DOUBLE':
+                    $field = [
                     'type' => TableSchema::TYPE_FLOAT,
                     'length' => $row['data_precision'],
-                ];
-                break;
-            case 'NCHAR':
-            case 'NVARCHAR2':
-            case 'CHAR':
-            case 'VARCHAR2':
-            case 'LONG':
-            case 'ROWID':
-            case 'UROWID':
-                $length = $row['char_length'];
-                if ($length == 36) {
-                    $field = [
+                    ];
+                    break;
+                case 'NCHAR':
+                case 'NVARCHAR2':
+                case 'CHAR':
+                case 'VARCHAR2':
+                case 'LONG':
+                case 'ROWID':
+                case 'UROWID':
+                    $length = $row['char_length'];
+                    if ($length == 36) {
+                        $field = [
                         'type' => TableSchema::TYPE_UUID,
                         'length' => null,
-                    ];
-                } else {
-                    $field = [
+                        ];
+                    } else {
+                        $field = [
                         'type' => TableSchema::TYPE_STRING,
                         'length' => $length,
-                    ];
-                }
+                        ];
+                    }
 
-                break;
-            case 'NCLOB':
-            case 'CLOB':
-                $field = [
+                    break;
+                case 'NCLOB':
+                case 'CLOB':
+                    $field = [
                     'type' => TableSchema::TYPE_TEXT,
                     'length' => $row['char_length'],
-                ];
-                break;
-            case 'RAW':
-            case 'LONG RAW':
-            case 'BLOB':
-                $field = [
+                    ];
+                    break;
+                case 'RAW':
+                case 'LONG RAW':
+                case 'BLOB':
+                    $field = [
                     'type' => TableSchema::TYPE_BINARY,
                     'length' => $row['char_length'],
-                ];
-                break;
-            default:
-                $pluginType = $this->_applyTypeSpecificColumnConversion(
-                    strtolower($row['type']),
-                    ['length' => null, 'precision' => null, 'scale' => null],
-                );
-                if ($pluginType !== null) {
-                    $field = $pluginType;
+                    ];
                     break;
-                }
+                default:
+                    $pluginType = $this->_applyTypeSpecificColumnConversion(
+                        strtolower($row['type']),
+                        ['length' => null, 'precision' => null, 'scale' => null],
+                    );
+                    if ($pluginType !== null) {
+                        $field = $pluginType;
+                        break;
+                    }
 
-                throw new UnallowedDataTypeException(['type' => $row['type']]);
+                    throw new UnallowedDataTypeException(['type' => $row['type']]);
             }
         }
 
@@ -332,6 +332,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
                 $default = 0;
             }
         }
+
         $isIdentity = isset($row['identity_column']) && strtoupper((string)$row['identity_column']) === 'YES';
         $field += [
             'null' => $row['null'] === 'Y',
@@ -358,19 +359,24 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
         if ($default === null) {
             return null;
         }
+
         if (is_int($default) || is_float($default)) {
             return $default;
         }
+
         if (!is_string($default)) {
             return $default;
         }
+
         $default = trim($default);
         if ($default === '' || strtoupper($default) === 'NULL') {
             return null;
         }
+
         if (preg_match('/\.nextval\b/i', $default)) {
             return null;
         }
+
         if (str_starts_with($default, 'NULL::')) {
             return null;
         }
@@ -639,6 +645,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             if (str_contains($indexType, 'BITMAP')) {
                 $options['accessMethod'] = 'BITMAP';
             }
+
             $schema->addIndex($keyName, $options);
         } else {
             $schema->addConstraint($keyName, [
@@ -1086,6 +1093,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             if (!isset($data['length'])) {
                 $data['length'] = 255;
             }
+
             $out .= '(' . (int)$data['length'] . ')';
         }
 

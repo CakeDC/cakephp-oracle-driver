@@ -22,11 +22,13 @@ use Cake\ORM\Exception\PersistenceFailedException;
 use Cake\ORM\Table;
 use Cake\Test\TestCase\ORM\TableTest as CakeTableTest;
 use Cake\Validation\Validator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use TestApp\Model\Entity\ProtectedEntity;
 
 /**
  * Tests Table class
  */
+#[AllowMockObjectsWithoutExpectations]
 class TableTest extends CakeTableTest
 {
     protected array $fixtures = [

@@ -17,6 +17,7 @@ use Cake\Database\Expression\AggregateExpression;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\ExpressionInterface;
 use Cake\Database\Query;
+use Cake\Database\Query\SelectQuery;
 use Cake\Database\QueryCompiler;
 use Cake\Database\ValueBinder;
 use CakeDC\OracleDriver\Database\Driver\OracleBase;
@@ -82,7 +83,9 @@ class Oracle12Compiler extends QueryCompiler
      */
     public function compile(Query $query, ValueBinder $binder): string
     {
-        $this->_ensureGroupByCompleteness($query);
+        if ($query instanceof SelectQuery) {
+            $this->_ensureGroupByCompleteness($query);
+        }
 
         return parent::compile($query, $binder);
     }
@@ -100,22 +103,25 @@ class Oracle12Compiler extends QueryCompiler
      * inside scalar functions such as `LENGTH(name)`); aggregates and nested
      * subqueries are left alone.
      *
-     * @param \Cake\Database\Query $query The query being compiled.
+     * @param \Cake\Database\Query\SelectQuery $query The query being compiled.
      * @return void
      */
-    protected function _ensureGroupByCompleteness(Query $query): void
+    protected function _ensureGroupByCompleteness(SelectQuery $query): void
     {
         if ($query->type() !== 'select') {
             return;
         }
+
         $group = $query->clause('group');
         if (empty($group)) {
             return;
         }
+
         $select = $query->clause('select');
         if (empty($select)) {
             return;
         }
+
         $grouped = [];
         foreach ((array)$group as $g) {
             $sql = $g instanceof ExpressionInterface ? $g->sql(new ValueBinder()) : (string)$g;
@@ -126,9 +132,11 @@ class Oracle12Compiler extends QueryCompiler
         foreach ($select as $expr) {
             static::_collectBareColumns($expr, $columns);
         }
+
         foreach ((array)$group as $g) {
             static::_collectBareColumns($g, $columns);
         }
+
         $missing = [];
         foreach ($columns as $norm => $ref) {
             if (!isset($grouped[$norm])) {
@@ -136,6 +144,7 @@ class Oracle12Compiler extends QueryCompiler
                 $grouped[$norm] = true;
             }
         }
+
         if ($missing) {
             $query->groupBy($missing);
         }
@@ -169,12 +178,14 @@ class Oracle12Compiler extends QueryCompiler
         if ($expr instanceof Query || $expr instanceof AggregateExpression) {
             return;
         }
+
         if ($expr instanceof IdentifierExpression) {
             $ref = $expr->getIdentifier();
             $columns[static::_normalizeColumnRef($ref)] = $ref;
 
             return;
         }
+
         if ($expr instanceof ExpressionInterface) {
             $scopes = [];
             $expr->traverse(function ($node) use (&$scopes): void {
@@ -205,17 +216,21 @@ class Oracle12Compiler extends QueryCompiler
 
             return;
         }
+
         if (is_string($expr)) {
             $t = trim($expr);
             if ($t === '' || $t === '*' || is_numeric($t)) {
                 return;
             }
+
             if (preg_match('/^\s*\(?\s*SELECT\b/i', $t)) {
                 return;
             }
+
             if (str_contains($t, '(')) {
                 return;
             }
+
             if (preg_match('/^[\w."\`\[\]]+$/', $t)) {
                 $columns[static::_normalizeColumnRef($t)] = $t;
             }

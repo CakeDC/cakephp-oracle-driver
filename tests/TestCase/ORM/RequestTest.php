@@ -16,12 +16,14 @@ namespace CakeDC\OracleDriver\Test\TestCase\ORM;
 use Cake\TestSuite\TestCase;
 use CakeDC\OracleDriver\ORM\Request;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Request test case.
  */
+#[AllowMockObjectsWithoutExpectations]
 class RequestTest extends TestCase
 {
     /**

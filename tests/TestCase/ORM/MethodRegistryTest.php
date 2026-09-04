@@ -18,11 +18,13 @@ use CakeDC\OracleDriver\ORM\Locator\LocatorInterface;
 use CakeDC\OracleDriver\ORM\Locator\MethodLocator;
 use CakeDC\OracleDriver\ORM\Method;
 use CakeDC\OracleDriver\ORM\MethodRegistry;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Test case for MethodRegistry
  */
+#[AllowMockObjectsWithoutExpectations]
 class MethodRegistryTest extends TestCase
 {
     /**
