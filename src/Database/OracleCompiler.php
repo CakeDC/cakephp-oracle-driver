@@ -145,7 +145,7 @@ class OracleCompiler extends QueryCompiler
             }
         }
 
-        if ($missing) {
+        if ($missing !== []) {
             $query->groupBy($missing);
         }
     }

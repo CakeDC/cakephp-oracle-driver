@@ -82,9 +82,7 @@ class MethodPDOStatement extends MethodStatementDecorator
      */
     public function bindValue(string|int $column, mixed $value, string|int|null $type = 'string'): void
     {
-        if ($type === null) {
-            $type = 'string';
-        }
+        $type ??= 'string';
 
         if (!ctype_digit((string)$type)) {
             [$value, $type] = $this->cast($value, $type);

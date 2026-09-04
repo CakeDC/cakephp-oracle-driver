@@ -116,7 +116,7 @@ class DebugMethodLog extends MethodLogger
      */
     public function log(LoggedMethod $method): void
     {
-        if ($this->_logger) {
+        if ($this->_logger instanceof MethodLogger) {
             $this->_logger->log($method);
         }
 

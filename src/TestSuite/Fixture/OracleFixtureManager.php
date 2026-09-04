@@ -298,9 +298,7 @@ class OracleFixtureManager
             $createMethods = function (OracleConnection $db, $fixtures) use ($test): void {
                 $methods = $db->methodSchemaCollection()->listMethods();
                 $configName = $db->configName();
-                if (!isset($this->_insertionMap[$configName])) {
-                    $this->_insertionMap[$configName] = [];
-                }
+                $this->_insertionMap[$configName] ??= [];
 
                 foreach ($test->codeFixtures as $fixtureKey) {
                     if (empty($this->_loaded[$fixtureKey])) {

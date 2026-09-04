@@ -95,9 +95,7 @@ class MethodLoggingStatement extends MethodStatementDecorator
     public function bindValue(string|int $column, mixed $value, string|int|null $type = 'string'): void
     {
         parent::bindValue($column, $value, $type);
-        if ($type === null) {
-            $type = 'string';
-        }
+        $type ??= 'string';
 
         if (!ctype_digit((string)$type)) {
             $value = $this->cast($value, $type)[0];

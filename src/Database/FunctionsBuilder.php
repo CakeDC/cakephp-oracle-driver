@@ -82,9 +82,7 @@ class FunctionsBuilder
     {
         $builder = self::getInstance();
         $args = [];
-        if ($format === null) {
-            $format = $builder->_defaultDateFormat;
-        }
+        $format ??= $builder->_defaultDateFormat;
 
         $args += $builder->_literalArgument($expression);
         $args[] = $format;
@@ -104,9 +102,7 @@ class FunctionsBuilder
     {
         $builder = self::getInstance();
         $args = [];
-        if ($format === null) {
-            $format = $builder->_defaultDateFormat;
-        }
+        $format ??= $builder->_defaultDateFormat;
 
         $args += $builder->_literalArgument($expression);
         $args[] = $format;

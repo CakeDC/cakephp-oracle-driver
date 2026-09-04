@@ -230,9 +230,7 @@ trait OracleDialectTrait
      */
     public function schemaDialect(): OracleSchema
     {
-        if ($this->_oracleSchemaDialect === null) {
-            $this->_oracleSchemaDialect = new OracleSchema($this);
-        }
+        $this->_oracleSchemaDialect ??= new OracleSchema($this);
 
         return $this->_oracleSchemaDialect;
     }

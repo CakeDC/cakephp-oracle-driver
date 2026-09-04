@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   oracle-tests:
-    name: PHP ${{ matrix.php-version }} & Oracle (OCI8)
+    name: PHP ${{ matrix.php-version }} & Oracle on OCI8 and PDO
     runs-on: ubuntu-24.04
 
     services:

@@ -57,6 +57,7 @@ class AssociationProxyTest extends CakeAssociationProxyTest
 
         $authors->hasMany('Articles', ['conditions' => ['Articles.published' => 'Y']]);
         $authors->Articles->updateAll(['published' => '?'], '1=1');
+
         $missed = $articles->find()->where(['published' => 'Y'])->count();
         $this->assertSame(0, $missed);
 
@@ -82,6 +83,7 @@ class AssociationProxyTest extends CakeAssociationProxyTest
 
         $authors->hasMany('Articles', ['conditions' => ['Articles.published' => 'Y']]);
         $authors->Articles->deleteAll('1=1');
+
         $remaining = $articles->find()->all();
         $this->assertCount(1, $remaining);
         $this->assertSame(['N'], $remaining->extract('published')->toList());

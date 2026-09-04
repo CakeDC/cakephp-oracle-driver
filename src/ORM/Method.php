@@ -127,7 +127,7 @@ class Method
      */
     public function getConnection(): OracleConnection
     {
-        if (!$this->_connection) {
+        if (!$this->_connection instanceof OracleConnection) {
             /** @var \CakeDC\OracleDriver\Database\OracleConnection $connection */
             $connection = ConnectionManager::get(static::defaultConnectionName());
             $this->_connection = $connection;

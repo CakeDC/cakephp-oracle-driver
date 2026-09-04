@@ -446,7 +446,7 @@ class OCI8Statement extends PDOStatement implements IteratorAggregate
                         $arguments = $this->_fetchArguments;
                     }
 
-                    if ($arguments) {
+                    if ($arguments !== []) {
                         $reflectionClass = new ReflectionClass($className);
                         $object = $reflectionClass->newInstanceArgs($arguments);
                     } else {

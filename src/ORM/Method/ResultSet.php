@@ -241,7 +241,7 @@ class ResultSet implements ResultSetInterface
      */
     protected function _fetchResult(): false|object|array
     {
-        if (!$this->_statement) {
+        if (!$this->_statement instanceof StatementInterface) {
             return false;
         }
 
@@ -280,7 +280,7 @@ class ResultSet implements ResultSetInterface
     public function first(): mixed
     {
         foreach ($this as $result) {
-            if ($this->_statement && !$this->_useBuffering) {
+            if ($this->_statement instanceof StatementInterface && !$this->_useBuffering) {
                 $this->_statement->closeCursor();
             }
 
@@ -334,7 +334,7 @@ class ResultSet implements ResultSetInterface
             return $this->_count;
         }
 
-        if ($this->_statement) {
+        if ($this->_statement instanceof StatementInterface) {
             return $this->_count = $this->_statement->rowCount();
         }
 

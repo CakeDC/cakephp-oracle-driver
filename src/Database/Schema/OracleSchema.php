@@ -1079,9 +1079,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             }
 
             $out .= $type;
-            if (!isset($data['length'])) {
-                $data['length'] = 255;
-            }
+            $data['length'] ??= 255;
 
             $out .= '(' . (int)$data['length'] . ')';
         }
@@ -1090,9 +1088,7 @@ WHERE 1=1 " . ($useOwner ? $ownerCondition : '') . $objectCondition . ' ORDER BY
             $data['type'] === TableSchema::TYPE_CHAR ||
             $data['type'] === TableSchema::TYPE_CITEXT
         ) {
-            if (!isset($data['length'])) {
-                $data['length'] = 255;
-            }
+            $data['length'] ??= 255;
 
             $out .= '(' . (int)$data['length'] . ')';
         }

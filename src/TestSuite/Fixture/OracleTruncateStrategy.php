@@ -24,7 +24,7 @@ class OracleTruncateStrategy extends TruncateStrategy
      */
     public function setupTest(array $fixtureNames): void
     {
-        if (!$fixtureNames) {
+        if ($fixtureNames === []) {
             return;
         }
 
