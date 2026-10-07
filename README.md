@@ -1,4 +1,4 @@
-# CakePHP 4 Driver for Oracle Database
+# CakePHP Driver for Oracle Database
 
 [![Downloads](https://poser.pugx.org/cakedc/cakephp-oracle-driver/d/total.png)](https://packagist.org/packages/cakedc/cakephp-oracle-driver)
 [![Latest Version](https://poser.pugx.org/cakedc/cakephp-oracle-driver/v/stable.png)](https://packagist.org/packages/cakedc/cakephp-oracle-driver)
@@ -8,7 +8,8 @@ Versions and branches
 
 | CakePHP | CakeDC Oracle Driver Plugin | Tag   | Notes |
 | :-------------: | :------------------------: | :--:  | :---- |
-| 4.0             | [5.x](https://github.com/CakeDC/cakephp-oracle-driver/tree/5.x)                  | 5.0.0 | stable
+| ^5.0             | [6.x](https://github.com/CakeDC/cakephp-oracle-driver/tree/6.next-cake5)                  | 6.0.0 | stable
+| 4.0        <5.0 | [5.x](https://github.com/CakeDC/cakephp-oracle-driver/tree/5.x)                  | 5.0.0 | stable
 | ^3.8       <4.0 | [4.x](https://github.com/CakeDC/cakephp-oracle-driver/tree/4.x)                  | 4.0.0 | stable |
 | ^3.7            | [3.x](https://github.com/CakeDC/cakephp-oracle-driver/tree/3.x)                  | 3.0.0 | stable |
 
